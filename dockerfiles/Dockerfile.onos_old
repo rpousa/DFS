@@ -1,0 +1,58 @@
+FROM onosproject/onos:latest
+
+ENV TZ=Europe/Paris \
+    ONOS_IP=192.168.71.168 \
+    ONOS_ROOT=/opt/onos \
+    ONOS_USER=onos \
+    ONOS_GROUP=onos \
+    ONOS_VERSION=2.6.0 \
+    ONOS_HOME=/opt/onos \
+    ONOS_APPS=/opt/onos/apps \
+    ONOS_LOG_DIR=/var/log/onos \
+    ONOS_PID_DIR=/var/run/onos \
+    ONOS_DATA_DIR=/var/lib/onos
+
+#RUN ln -fs /usr/share/zoneinfo/UTC /etc/localtime && dpkg-reconfigure -f noninteractive tzdata
+
+# Base commands to let the container be configured for Mininet integration
+RUN apt update --fix-missing && apt upgrade -y && \
+    apt install --reinstall ubuntu-keyring -y && \
+    apt-get install apt-utils net-tools iputils-ping -y && \
+    apt-get install bash bash-completion ethtool -y && \
+    apt-get install iproute2 busybox-static iperf -y && \
+    apt-get install stress-ng curl tcpdump netcat-openbsd -y && \
+    apt-get install maven git openjdk-11-jdk -y && \
+    #apt-get install ssh && \    
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN apt update -y && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata && \
+    apt install ssh openssh-server -y && \
+    apt clean && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /opt
+
+RUN wget -c https://repo1.maven.org/maven2/org/onosproject/onos-releases/2.6.0/onos-2.6.0.tar.gz && \
+    tar -xzf onos-2.6.0.tar.gz && \
+    mv onos-2.6.0 onos 
+
+COPY ../ONOS_REST_Tests/L3Reactive /opt/onos/apps/org.l3reactive.L3Reactive
+#RUN cp /opt/onos/apps/org.l3reactive.L3Reactive/src/main/resources/app.xml /opt/onos/apps/org.l3reactive.L3Reactive/app.xml 
+#RUN onos-create-app org.L3reactive.app L3Reactive 1.0.0 -y
+
+WORKDIR /opt/onos/apps/org.l3reactive.L3Reactive
+
+# Build ONOS app
+RUN mvn clean install -e
+
+WORKDIR /opt/onos
+
+EXPOSE 6640 6653 8101 8181 9876
+
+# ENTRYPOINT ["./bin/onos-service"]
+ENTRYPOINT [""]
+
+#  CMD ["server"]
+CMD ["sh", "-c", "sleep infinity"]

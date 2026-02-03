@@ -1,0 +1,41 @@
+FROM oaisoftwarealliance/oai-spgwu-tiny:v1.5.1
+
+HEALTHCHECK --interval=10s --timeout=5s --retries=5 CMD pgrep oai_spgwu || exit 1
+
+ENV TZ=Europe/Paris \
+    SGW_INTERFACE_NAME_FOR_S1U_S12_S4_UP=spgwu-sw1 \
+    SGW_INTERFACE_NAME_FOR_SX=spgwu-sw1 \
+    PGW_INTERFACE_NAME_FOR_SGI=spgwu-sw1 \
+    NETWORK_UE_NAT_OPTION=yes \
+    NETWORK_UE_IP=12.1.1.0/24 \
+    ENABLE_5G_FEATURES=yes \
+    REGISTER_NRF=yes \
+    USE_FQDN_NRF=no \
+    UPF_FQDN_5G=oai-spgwu \
+    NRF_IPV4_ADDRESS=192.168.71.130 \
+    NRF_FQDN=oai-nrf \
+    NSSAI_SST_0=1 \
+    NSSAI_SD_0=0xffffff \
+    DNN_0=oai \
+    NSSAI_SST=1 \
+    NSSAI_SD=0x000001 \
+    DNN=oai
+
+#RUN setcap cap_net_admin,cap_sys_admin=eip
+
+# Base commands to let the container be configured for Mininet integration
+RUN apt update --fix-missing && apt upgrade -y && \
+    apt-get install libcap2-bin apt-utils net-tools iputils-ping -y && \
+    apt-get install bash bash-completion termshark ethtool -y && \
+    apt-get install  iproute2 busybox-static iperf -y && \
+    apt-get  install stress-ng curl tcpdump netcat-openbsd -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY /dockerfiles/volumes/spgw_u.yaml /openair-spgwu-tiny/etc/spgw_u.conf
+
+# Original ENTRYPOINT ["python3", "/openair-spgwu-tiny/bin/entrypoint.py"
+ENTRYPOINT [""]
+
+# Original CMD ["/openair-spgwu-tiny/bin/oai_spgwu", "-c", "/openair-spgwu-tiny/etc/spgw_u.conf", "-o"]
+CMD ["sh", "-c", "sleep infinity"]

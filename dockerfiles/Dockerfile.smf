@@ -1,0 +1,44 @@
+FROM oaisoftwarealliance/oai-smf:v2.0.1
+
+HEALTHCHECK --interval=10s --timeout=5s --retries=5 CMD pgrep oai_smf || exit 1
+
+# ENV TZ=Europe/Paris \
+#     SMF_INTERFACE_NAME_FOR_N4=smf-sw1 \
+#     SMF_INTERFACE_NAME_FOR_SBI=smf-sw1 \
+#     DEFAULT_DNS_IPV4_ADDRESS=8.8.8.8 \
+#     DEFAULT_DNS_SEC_IPV4_ADDRESS=4.4.4.4 \
+#     AMF_IPV4_ADDRESS=192.168.71.132 \
+#     AMF_FQDN=amf \
+#     UPF_IPV4_ADDRESS=192.168.71.134 \
+#     UPF_FQDN_0=spgwu \
+#     NRF_IPV4_ADDRESS=192.168.71.130 \
+#     NRF_FQDN=nrf \
+#     REGISTER_NRF=yes \
+#     DISCOVER_UPF=yes \
+#     USE_FQDN_DNS=no \
+#     USE_LOCAL_SUBSCRIPTION_INFO=yes \
+#     UE_MTU=1500 \
+#     DNN_NI0=oai \
+#     TYPE0=IPv4 \
+#     DNN_RANGE0="12.1.1.2 - 12.1.1.127" \
+#     NSSAI_SST0=1 \
+#     SESSION_AMBR_UL0=200Mbps \
+#     SESSION_AMBR_DL0=400Mbps \
+#     DEFAULT_CSCF_IPV4_ADDRESS=127.0.0.1 \
+#     ENABLE_USAGE_REPORTING=no
+
+RUN apt update --fix-missing && apt upgrade -y && \
+    apt-get install apt-utils net-tools iputils-ping -y && \
+    apt-get install bash bash-completion ethtool -y && \
+    apt-get  install iproute2 busybox-static iperf -y && \
+    apt-get  install stress-ng curl tcpdump netcat-openbsd -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY /dockerfiles/volumes/config.yaml /openair-smf/etc/config.yaml
+
+# Original ENTRYPOINT ["python3","/openair-smf/bin/entrypoint.py"]
+ENTRYPOINT [""]
+
+# Original CMD ["/openair-smf/bin/oai_smf", "-c", "/openair-smf/etc/smf.conf", "-o"]
+CMD ["sh", "-c", "sleep infinity"]

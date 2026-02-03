@@ -1,0 +1,4 @@
+[mysqld]
+init-file = /var/lib/mysql/oai_db.sql
+datadir = /var/lib/mysql/data/  
+innodb-data-home-dir = /docker-entrypoint-initdb.d/

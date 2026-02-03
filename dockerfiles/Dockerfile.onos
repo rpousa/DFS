@@ -1,0 +1,60 @@
+# Build stage
+FROM onosproject/onos:latest AS builder
+
+WORKDIR /opt
+RUN apt update --fix-missing && apt upgrade -y && \
+    apt install --reinstall ubuntu-keyring -y && \
+    apt-get install wget maven -y --fix-missing && \
+    wget -c https://repo1.maven.org/maven2/org/onosproject/onos-releases/2.6.0/onos-2.6.0.tar.gz && \
+    tar -xzf onos-2.6.0.tar.gz && \
+    mv onos-2.6.0 onos 
+
+COPY ../ONOS_REST_Tests/L3Reactive /opt/onos/apps/org.l3reactive.L3Reactive
+WORKDIR /opt/onos/apps/org.l3reactive.L3Reactive
+RUN mvn clean install -e
+
+# Runtime stage
+FROM onosproject/onos:latest
+
+ENV TZ=Europe/Paris \
+    ONOS_IP=192.168.71.168 \
+    ONOS_ROOT=/opt/onos \
+    ONOS_USER=onos \
+    ONOS_GROUP=onos \
+    ONOS_VERSION=2.6.0 \
+    ONOS_HOME=/opt/onos \
+    ONOS_APPS=/opt/onos/apps \
+    ONOS_LOG_DIR=/var/log/onos \
+    ONOS_PID_DIR=/var/run/onos \
+    ONOS_DATA_DIR=/var/lib/onos
+
+# Combine all apt operations in a single RUN to reduce layers
+RUN apt-get update --fix-missing && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    ubuntu-keyring \
+    net-tools \
+    iputils-ping \
+    bash \
+    bash-completion \
+    ethtool \
+    iproute2 \
+    busybox-static \
+    iperf \
+    stress-ng \
+    curl \
+    tcpdump \
+    netcat-openbsd \
+    ssh \
+    openssh-server \
+    tzdata && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm -rf /tmp/* /var/tmp/*
+
+# Copy only necessary files from builder
+COPY --from=builder /opt/onos /opt/onos
+WORKDIR /opt/onos
+
+EXPOSE 6640 6653 8101 8181 9876
+
+CMD ["sh", "-c", "sleep infinity"]

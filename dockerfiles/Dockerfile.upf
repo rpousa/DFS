@@ -1,0 +1,44 @@
+FROM oaisoftwarealliance/oai-upf:v2.0.1
+#FROM oai-upf:v2.1.0
+HEALTHCHECK --interval=10s --timeout=5s --retries=5 CMD pgrep oai_upf || exit 1
+
+# ENV TZ=Europe/Paris \
+#     SGW_INTERFACE_NAME_FOR_S1U_S12_S4_UP=upf-sw1 \
+#     SGW_INTERFACE_NAME_FOR_SX=upf-sw1 \
+#     PGW_INTERFACE_NAME_FOR_SGI=upf-sw1 \
+#     NETWORK_UE_NAT_OPTION=yes \
+#     NETWORK_UE_IP=12.1.1.0/24 \
+#     NETWORK_UE_IP_2=13.1.1.0/24 \
+#     NETWORK_UE_IP_3=14.1.1.0/24 \
+#     ENABLE_5G_FEATURES=yes \
+#     REGISTER_NRF=yes \
+#     USE_FQDN_NRF=no \
+#     UPF_FQDN_5G=oai-upf \
+#     NRF_IPV4_ADDRESS=192.168.71.130 \
+#     NRF_FQDN=oai-nrf \
+#     NSSAI_SST_3=2 \
+#     NSSAI_SD_3=0x000001 \
+#     DNN_3=oai.3 \
+#     NSSAI_SST_2=1 \
+#     NSSAI_SD_2=0x000002 \
+#     DNN_2=oai.2 \
+#     NSSAI_SST=1 \
+#     NSSAI_SD=0x000001 \
+#     DNN=oai
+
+# Base commands to let the container be configured for Mininet integration
+RUN apt update --fix-missing && apt upgrade -y && \
+    apt-get install apt-utils net-tools iputils-ping -y && \
+    apt-get install bash bash-completion ethtool termshark -y && \
+    apt-get  install iproute2 busybox-static iperf -y && \
+    apt-get  install stress-ng curl tcpdump netcat-openbsd -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+
+EXPOSE 8080 2152 8805
+COPY /dockerfiles/volumes/config.yaml /openair-upf/etc/config.yaml
+
+ENTRYPOINT [""]
+
+CMD ["sh", "-c", "sleep infinity"]

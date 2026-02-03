@@ -1,0 +1,46 @@
+FROM python:3.8-slim
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    DEBCONF_NONINTERACTIVE_SEEN=true \
+    PYTHONUNBUFFERED=1
+
+    RUN apt-get update --fix-missing && \
+    apt-get upgrade -y && \
+    #apt install --reinstall ubuntu-keyring -y && \
+    apt-get install apt-utils net-tools iputils-ping python3-dev -y && \
+    apt-get install bash bash-completion ethtool python3 pip telnetd -y && \
+    apt-get install iproute2 busybox-static iperf git software-properties-common -y && \
+    apt-get install stress-ng curl tcpdump netcat-openbsd procps ethtool -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+
+RUN pip install setuptools && \
+    pip uninstall eventlet -y && \ 
+    pip install eventlet==0.30.2 && \
+    pip install future asn1 pyshark pyasn1 pycrate
+
+ENV RYU_BRANCH=lagopus-general-tunnel-ext
+#ENV RYU_BRANCH=master
+#ENV RYU_TAG v4.30
+ENV HOME=/root
+WORKDIR /root
+#RUN git clone -b ${RYU_BRANCH} https://github.com/faucetsdn/ryu.git && \
+RUN git clone -b ${RYU_BRANCH} https://github.com/lagopus/ryu-lagopus-ext.git ryu && \
+    cd ryu && \
+    pip install . && \
+    pip install -r tools/optional-requires
+
+ENTRYPOINT [""]
+
+EXPOSE 6633:6633 6653:6653 8080:8080 8081:8081
+
+WORKDIR /root/ryu 
+#RUN apt-get install -y ryu
+
+#ENTRYPOINT ["ryu", "run" ,"/ryu/app/simple_switch.py"]
+#ENTRYPOINT ["python","ryu/app/simple_switch.py"]
+#ENTRYPOINT ["/bin/bash"]
+CMD ["sh","-c", "sleep infinity"]
+#CMD ["bash","sleep infinity"]
+#CMD [ "ryu-manager","--verbose","/root/ryu/ryu/app/hub.py"]

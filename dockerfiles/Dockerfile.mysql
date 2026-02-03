@@ -1,0 +1,41 @@
+FROM mysql:8.0-debian
+
+ENV TZ=Europe/Paris \
+    MYSQL_DATABASE=oai_db \
+    MYSQL_USER=test \
+    MYSQL_PASSWORD=test \
+    MYSQL_ROOT_PASSWORD=linux \
+    MYSQL_ROOT_PASSWORD=$mysql-community-server/root-pass \
+    MYSQL_RE_ROOT_PASSWORD=$mysql-community-server/re-root-pass 
+
+RUN apt update --fix-missing && apt upgrade -y && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    gpg apt-utils net-tools iputils-ping  \
+    bash bash-completion ethtool net-tools \
+    iproute2 busybox-static iperf procps  \
+    stress-ng curl tcpdump netcat-openbsd  && \
+    apt-get clean 
+
+HEALTHCHECK --interval=10s --timeout=5s --retries=30 CMD /bin/bash -c "/tmp/mysql-healthcheck.sh"
+EXPOSE 3306
+
+RUN useradd -m -s /bin/bash -G mysql test
+
+#RUN mkdir -p /var/lib/mysql/data/ 
+#RUN mkdir -p /var/lib/mysql-files 
+
+#COPY /dockerfiles/volumes/oai_db.sql /docker-entrypoint-initdb.d/oai_db.sql
+COPY /dockerfiles/volumes/mysql-healthcheck.sh /tmp/mysql-healthcheck.sh
+#COPY /dockerfiles/volumes/my_mysql.cnf /etc/mysql/my.cnf
+COPY /dockerfiles/volumes/oai_db.sql /docker-entrypoint-initdb.d/oai_db.sql
+#RUN chmod 644 /etc/mysql/my.cnf 
+#RUN chown -R test:mysql /var/lib/mysql 
+#RUN chown -R test:mysql /var/lib/mysql/data/  
+#RUN chown -R test:mysql /var/lib/mysql-files 
+#RUN chown -R test:mysql /docker-entrypoint-initdb.d
+
+#ENTRYPOINT ["./entrypoint.sh"]
+USER root
+ENTRYPOINT [ "" ]
+CMD ["sh", "-c", "sleep infinity"]
+#CMD ["mysqld"]

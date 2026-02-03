@@ -1,0 +1,53 @@
+FROM oaisoftwarealliance/oai-amf:v2.0.1
+
+HEALTHCHECK --interval=10s --timeout=5s --retries=5 CMD pgrep oai_amf || exit 1
+
+ENV TZ=Europe/Paris \
+    MCC=208 \
+    MNC=99 \
+    REGION_ID=128 \
+    AMF_SET_ID=1 \
+    SERVED_GUAMI_MCC_0=208 \
+    SERVED_GUAMI_MNC_0=95 \
+    SERVED_GUAMI_REGION_ID_0=01 \
+    SERVED_GUAMI_AMF_SET_ID_0=1 \
+    SERVED_GUAMI_MCC_1=460 \
+    SERVED_GUAMI_MNC_1=11 \
+    SERVED_GUAMI_REGION_ID_1=10 \
+    SERVED_GUAMI_AMF_SET_ID_1=1 \
+    PLMN_SUPPORT_MCC=208 \
+    PLMN_SUPPORT_MNC=95 \
+    PLMN_SUPPORT_TAC=0x0001 \
+    SST_0=1 \
+    AMF_INTERFACE_NAME_FOR_NGAP=amf-sw1 \
+    AMF_INTERFACE_NAME_FOR_N11=amf-sw1 \
+    SMF_INSTANCE_ID_0=1 \
+    SMF_FQDN_0=smf \
+    SMF_IPV4_ADDR_0=192.168.71.133 \
+    SELECTED_0=true \
+    MYSQL_SERVER=192.168.71.131 \
+    MYSQL_USER=root \
+    MYSQL_PASS=linux \
+    MYSQL_DB=oai_db \
+    NRF_IPV4_ADDRESS=192.168.71.130 \
+    NRF_FQDN=nrf \
+    NF_REGISTRATION=yes \
+    SMF_SELECTION=yes \
+    USE_FQDN_DNS=NO \
+    USE_HTTP2=no
+
+# Base commands to let the container be configured for Mininet integration
+RUN apt update --fix-missing && apt upgrade -y && \
+    apt install --reinstall ubuntu-keyring -y && \
+    apt-get install apt-utils net-tools iputils-ping -y && \
+    apt-get install bash bash-completion ethtool -y && \
+    apt-get  install iproute2 busybox-static iperf -y && \
+    apt-get  install stress-ng curl tcpdump netcat-openbsd -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY /dockerfiles/volumes/config.yaml /openair-amf/etc/config.yaml
+
+ENTRYPOINT [""]
+
+CMD ["sh", "-c", "sleep infinity"]

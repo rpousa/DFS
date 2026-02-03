@@ -1,0 +1,29 @@
+FROM oaisoftwarealliance/oai-udr:v2.0.1
+
+#HEALTHCHECK --interval=10s --timeout=5s --retries=5 CMD /openair-udr/bin/healthcheck.sh || exit 1
+ENV TZ=Europe/Paris \
+    UDR_NAME=OAI_UDR \
+    UDR_INTERFACE_NAME_FOR_NUDR=udr-sw1 \
+    MYSQL_IPV4_ADDRESS=192.168.71.131 \
+    MYSQL_USER=test \
+    MYSQL_PASS=test \
+    MYSQL_DB=oai_db \
+    WAIT_MYSQL=120 \
+    USE_FQDN_DNS=yes \
+    REGISTER_NRF=yes \
+    NRF_IPV4_ADDRESS=192.168.71.130 \
+    NRF_FQDN=nrf 
+# Base commands to let the container be configured for Mininet integration
+RUN apt update --fix-missing && apt upgrade -y && \
+    apt-get install apt-utils net-tools iputils-ping -y && \
+    apt-get install bash bash-completion ethtool -y && \
+    apt-get  install iproute2 busybox-static iperf -y && \
+    apt-get  install stress-ng curl tcpdump netcat-openbsd -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY /dockerfiles/volumes/config.yaml /openair-udr/etc/config.yaml
+
+ENTRYPOINT [""]
+
+CMD ["sh", "-c", "sleep infinity"]

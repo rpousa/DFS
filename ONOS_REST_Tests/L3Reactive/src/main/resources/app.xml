@@ -1,0 +1,7 @@
+<app name="org.l3reactive.L3Reactive" origin="TUD" version="1.0.0"
+     title="L3Reactive" category="Traffic Engineering" url="http://example.com"
+     featuresRepo="mvn:org.l3reactive/L3Reactive/1.0.0/xml/features"
+     features="L3Reactive">
+    <description>L3 Reactive Forwarding Application</description>
+    <artifact>mvn:org.l3reactive/L3Reactive/1.0.0</artifact>
+</app>

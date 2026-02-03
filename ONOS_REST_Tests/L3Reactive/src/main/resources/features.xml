@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<features xmlns="http://karaf.apache.org/xmlns/features/v1.2.0" name="L3Reactive-1.0.0">
+    <repository>mvn:org.onosproject/onos-features/2.6.0/xml/features</repository>
+    
+    <feature name="L3Reactive" version="1.0.0" description="L3 Reactive Forwarding Application">
+        <feature>onos-api</feature>
+        <bundle>mvn:org.l3reactive/L3Reactive/1.0.0</bundle>
+    </feature>
+</features>

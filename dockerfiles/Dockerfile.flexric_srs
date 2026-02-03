@@ -1,0 +1,71 @@
+FROM ubuntu:focal AS Flexric-base
+ARG NEEDED_GIT_PROXY
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Europe/Paris
+
+RUN apt update --fix-missing && apt upgrade -y && \
+    apt-get install apt-utils net-tools iputils-ping -y && \
+    apt-get install bash bash-completion ethtool -y && \
+    apt-get  install iproute2 busybox-static iperf -y && \
+    apt-get  install stress-ng curl tcpdump netcat-openbsd -y && \
+    apt-get install  libssl-dev libsctp-dev -y && \
+    apt-get  clean && \
+    rm -rf /var/lib/apt/lists/*
+
+#install developers pkg/repo
+#use gcc-12 to avoid problems of default gcc-11 in FlexRIC
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get upgrade --yes && \
+    DEBIAN_FRONTEND=noninteractive apt-get install --yes \
+       #gcc needed for build_oai
+       build-essential \
+       psmisc \
+       git \
+       gcc-10 \
+       g++-10 \
+       xxd \
+       libpcre2-dev \
+       python3-dev \
+       bison \
+       flex \
+       m4 \
+       # FLexric installation deps
+       #swig \
+       libsctp-dev \
+       python3 \
+       cmake-curses-gui \
+       python3-dev \
+       pkg-config \
+       libconfig-dev \
+       libconfig++-dev \
+       # python3-pip for conf template generation
+       python3-pip && \
+    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 100 --slave /usr/bin/g++ g++ /usr/bin/g++-10 && \
+    pip3 install --ignore-installed pyyaml
+
+# In some network environments, GIT proxy is required
+RUN /bin/bash -c "if [[ -v NEEDED_GIT_PROXY ]]; then git config --global http.proxy $NEEDED_GIT_PROXY; fi"
+
+RUN git clone https://gitlab.eurecom.fr/mosaic5g/flexric.git
+WORKDIR /flexric/
+RUN git checkout br-flexric
+RUN mkdir build
+WORKDIR /flexric/build
+RUN pip install swig
+RUN cmake -DCMAKE_C_COMPILER=gcc-10 -DKPM_VERSION=KPM_V3_00 -DXAPP_DB=NONE_XAPP ../
+RUN make
+RUN make install
+
+#COPY /dockerfiles/volumes/config.yaml /openair-amf/etc/config.yaml
+COPY ./dockerfiles/volumes/flexric_gnb.conf /usr/local/etc/flexric/flexric_gnb.conf
+COPY ./dockerfiles/volumes/flexric_cu.conf /usr/local/etc/flexric/flexric_cu.conf
+COPY ./dockerfiles/volumes/flexric_du.conf /usr/local/etc/flexric/flexric_du.conf
+COPY ./dockerfiles/volumes/flexric_cucp.conf /usr/local/etc/flexric/flexric_cucp.conf
+COPY ./dockerfiles/volumes/flexric_cuup.conf /usr/local/etc/flexric/flexric_cuup.conf
+COPY ./dockerfiles/volumes/ric_old.conf /usr/local/etc/flexric/ric.conf
+COPY ./dockerfiles/volumes/xapp_old.conf ../conf_files/xapp_all_sm.conf
+
+EXPOSE 36421/sctp 36422/sctp
+
+ENTRYPOINT [""]
+CMD ["sh", "-c", "sleep infinity"]

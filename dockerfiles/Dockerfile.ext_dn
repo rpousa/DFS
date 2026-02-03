@@ -1,0 +1,21 @@
+FROM oaisoftwarealliance/trf-gen-cn5g:focal
+    
+HEALTHCHECK --interval=10s --timeout=5s --retries=5 CMD ping -c 2 192.168.72.134 || exit 1
+
+# Base commands to let the container be configured for Mininet integration
+RUN apt update --fix-missing && apt upgrade -y && \
+    apt-get install apt-utils net-tools iputils-ping -y && \
+    apt-get install bash bash-completion ethtool sudo -y && \
+    apt-get  install iproute2 busybox-static iperf termshark -y && \
+    apt-get  install stress-ng curl tcpdump netcat-openbsd -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY /dockerfiles/volumes/trfgen_entrypoint.sh /tmp/trfgen_entrypoint.sh
+
+#ENTRYPOINT ["/bin/bash" "/tmp/trfgen_entrypoint.sh"]
+ENTRYPOINT [""]
+
+#CMD ["sleep" "infinity"]
+CMD ["sh", "-c", "sleep infinity "]
+

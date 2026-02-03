@@ -1,0 +1,22 @@
+FROM oai-cuup:latest
+
+#ENV USE_ADDITIONAL_OPTIONS "--sa -E --rfsim"
+
+HEALTHCHECK --interval=10s --timeout=5s --retries=5 CMD pgrep nr-cuup || exit 1
+# Base commands to let the container be configured for Mininet integration
+RUN apt update --fix-missing && apt upgrade -y && \
+    apt-get install apt-utils net-tools iputils-ping -y && \
+    apt-get install bash bash-completion ethtool -y && \
+    apt-get  install iproute2 busybox-static iperf -y && \
+    apt-get  install stress-ng curl tcpdump netcat-openbsd -y && \
+    apt-get install  libssl-dev libsctp-dev telnet -y && \
+    apt-get  clean && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY ./dockerfiles/volumes/gnb-cuup.sa.f1.conf /opt/oai-gnb/etc/gnb.conf
+
+EXPOSE 2152/udp 2153/udp 501/sctp
+RUN echo 'alias go="/tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-cuup -O /opt/oai-gnb/etc/gnb.conf"' >> ~/.bashrc
+# Original CMD ["/opt/oai-gnb/bin/nr-cuup" "-O" "/opt/oai-gnb/etc/gnb.conf"]
+ENTRYPOINT [""]
+CMD ["sh", "-c", "sleep infinity"]

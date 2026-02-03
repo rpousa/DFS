@@ -1,0 +1,47 @@
+FROM oaisoftwarealliance/oai-upf-vpp:v2.0.1
+
+HEALTHCHECK --interval=10s --timeout=5s --retries=5 CMD pgrep vpp || exit 1
+
+# EXT-DN IP Address  IF_3_IP_REMOTE
+ENV IF_1_IP=192.168.70.201 \
+    IF_1_TYPE=N4 \
+    IF_2_IP=192.168.72.201 \
+    IF_2_TYPE=N3 \
+    IF_2_NWI=access.oai.org \
+    IF_3_IP=192.168.73.201 \
+    IF_3_TYPE=N6 \
+    IF_3_IP_REMOTE=192.168.73.145 \ 
+    IF_3_NWI=internet.oai.org \
+    NAME=VPP-UPF \
+    MNC=95 \
+    MCC=208 \
+    REALM=3gppnetwork.org \
+    VPP_MAIN_CORE=0 \
+    VPP_CORE_WORKER=1 \
+    VPP_PLUGIN_PATH=/usr/lib/x86_64-linux-gnu/vpp_plugins/ \
+    SNSSAI_SD=130 \
+    SNSSAI_SST=130 \
+    DNN=oai.ipv4 \
+    REGISTER_NRF=yes \
+    NRF_IP_ADDR=192.168.70.137 \
+    NRF_PORT=8080 \
+    HTTP_VERSION=2 
+
+# Base commands to let the container be configured for Mininet integration
+RUN apt update --fix-missing && apt upgrade -y && \
+    apt-get install apt-utils net-tools iputils-ping -y && \
+    apt-get install bash bash-completion ethtool -y && \
+    apt-get  install iproute2 busybox-static iperf -y && \
+    apt-get  install stress-ng curl tcpdump netcat-openbsd -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY /dockerfiles/volumes/config.yaml /openair-upf/etc/config.yaml
+#COPY /dockerfiles/volumes/vpp_upf/vpp_upf_entrypoint.sh /openair-upf/bin/entrypoint.sh
+
+
+# ENTRYPOINT ["/openair-upf/bin/entrypoint.sh"]
+ENTRYPOINT [""]
+
+# CMD ["openair-upf/run.sh"]
+CMD ["sh", "-c", "sleep infinity"]

@@ -1,0 +1,21 @@
+FROM oaisoftwarealliance/oai-nrf:v2.1.0
+
+HEALTHCHECK --interval=10s --timeout=5s --retries=5 CMD pgrep oai_nrf || exit 1
+
+ENV NRF_INTERFACE_NAME_FOR_SBI=nrf-sw1 \
+    TZ=Europe/Paris
+
+# Base commands to let the container be configured for Mininet integration
+RUN apt update --fix-missing && apt upgrade -y && \
+    apt-get install apt-utils net-tools iputils-ping -y && \
+    apt-get install bash bash-completion ethtool -y && \
+    apt-get  install iproute2 busybox-static iperf -y && \
+    apt-get  install stress-ng curl tcpdump netcat-openbsd -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY /dockerfiles/volumes/config.yaml /openair-nrf/etc/config.yaml
+# Original ENTRYPOINT ["python3","/openair-nrf/bin/entrypoint.py"]
+
+# Original CMD ["/openair-nrf/bin/oai_nrf", "-c", "/openair-nrf/etc/config.yaml", "-o"]
+CMD ["sh", "-c", "sleep infinity"]

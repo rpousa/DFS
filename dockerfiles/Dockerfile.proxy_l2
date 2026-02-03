@@ -1,0 +1,70 @@
+FROM ubuntu:noble AS proxy-builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Europe
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get upgrade --yes && \
+    DEBIAN_FRONTEND=noninteractive apt-get install --yes \
+      build-essential \
+      libsctp1 \
+      libsctp-dev \
+      libz-dev \
+      cmake \
+      psmisc \
+      bison \
+      flex libsimde-dev \
+      autoconf automake libtool \
+      #asn1c \
+      git && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy the workspace with asn1 and alterations as is
+# WORKDIR /altered_oai-lte-5g-multi-ue-proxy
+# COPY ./altered_oai-lte-5g-multi-ue-proxy .
+# RUN ./build_helper_asn1 
+# #RUN make debug
+# RUN make all
+# #RUN make debug_includes 
+
+# Copy the workspace as is
+WORKDIR /oai-lte-5g-multi-ue-proxy-EWOC
+COPY ./oai-lte-5g-multi-ue-proxy-EWOC .
+RUN make
+
+
+RUN ldd build/proxy
+
+FROM ubuntu:noble AS oai-lte-multi-ue-proxy
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Europe/Paris
+# We install some debug tools for the moment in addition of mandatory libraries
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get upgrade --yes && \
+    DEBIAN_FRONTEND=noninteractive apt-get install --yes \
+      net-tools \
+      tzdata \
+      psmisc \
+      libasan8 \
+      libsctp1 && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update  && \
+    apt-get install -y --no-install-recommends --fix-missing \
+    apt-utils net-tools iputils-ping  \
+    bash bash-completion ethtool \
+    iproute2 busybox-static iperf \
+    stress-ng curl tcpdump netcat-openbsd \
+    libssl-dev libsctp-dev && \
+    apt-get autoremove -y && \
+    apt-get autoclean -y && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /oai-lte-5g-multi-ue-proxy/bin
+COPY --from=proxy-builder /oai-lte-5g-multi-ue-proxy-EWOC/build/proxy .
+
+RUN ldd proxy
+EXPOSE 40600-50700/udp 3600-3700/udp 
+EXPOSE 40600-50700/sctp 3600-3700/sctp
+CMD ["sleep", "infinity"]
