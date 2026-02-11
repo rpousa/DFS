@@ -8,9 +8,9 @@ build_image() {
   local no_cache=$3
 
   if [ "$no_cache" == "--no-cache" ]; then
-    docker build -t "$image" --file "$dockerfile" --no-cache .
+    docker build -t "$image" --file "$dockerfile" --no-cache --network=host --build-arg APT_FORCE_IPV4=true .
   else
-    docker build -qt "$image" --file "$dockerfile" .
+    docker build -qt "$image" --file "$dockerfile" --network=host --build-arg APT_FORCE_IPV4=true .
   fi
 }
 # old images not needed spgwu ryu flexric flexric_oai flexric_srs
