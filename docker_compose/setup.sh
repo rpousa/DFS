@@ -43,13 +43,13 @@ fi
 print_info "Creating directory structure..."
 
 # Create config directories
-mkdir -p configs/{mysql,nrf,amf,smf,pcf,nssf,udm,udr,ausf,upf,upf_1,ext_dn,ext_dn_1,cucp,cuup,du_1,ue_1,flexric,l2_proxy}
+sudo mkdir -p configs/{mysql,nrf,amf,smf,pcf,nssf,udm,udr,ausf,upf,upf_1,ext_dn,ext_dn_1,cucp,cuup,du_1,ue_1,flexric,l2_proxy}
 
 # Create log directories
-mkdir -p logs/{mysql,nrf,amf,smf,pcf,nssf,udm,udr,ausf,upf,upf_1,ext_dn,ext_dn_1,cucp,cuup,du_1,ue_1,flexric,l2_proxy}
+sudo mkdir -p logs/{mysql,nrf,amf,smf,pcf,nssf,udm,udr,ausf,upf,upf_1,ext_dn,ext_dn_1,cucp,cuup,du_1,ue_1,flexric,l2_proxy}
 
 # Create xapps directory
-mkdir -p xapps
+sudo mkdir -p xapps
 
 print_info "Directory structure created successfully!"
 echo ""
@@ -65,7 +65,7 @@ Configuration Files Directory
 This directory should contain the configuration files for this component.
 
 Please refer to the OAI documentation for the specific configuration file format:
-https://gitlab.eurecom.fr/oai/openairinterface5g/-/wikis/home
+https://github.com/rpousa/OAI_EWOC.git
 
 Common configuration files:
 - config.yaml (for most core network functions)

@@ -184,7 +184,7 @@ Before running the compose file, you need to build the required Docker images. T
 - `l2_proxy:comnetsemu`
 
 Refer to the OAI documentation for building these images:
-https://gitlab.eurecom.fr/oai/openairinterface5g
+https://github.com/rpousa/OAI_EWOC.git
 
 ## Configuration Files
 
