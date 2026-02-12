@@ -1,0 +1,481 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # 5G Core Network Functions
+  # ==========================================
+  
+  mysql:
+    image: mysql:comnetsemu
+    container_name: mysql
+    hostname: mysql
+    cap_add:
+      - SYS_NICE
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.131
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./configs/mysql:/docker-entrypoint-initdb.d
+    environment:
+      - MYSQL_ROOT_PASSWORD=linux
+      - MYSQL_DATABASE=oai_db
+    command: >
+      sh -c "mysqld --user=mysql --initialize-insecure --init-file=/docker-entrypoint-initdb.d/oai_db.sql &&
+             mysqld --user=mysql"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nrf:
+    image: nrf:comnetsemu
+    container_name: nrf
+    hostname: nrf
+    cap_add:
+      - SYS_NICE
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.130
+    volumes:
+      - ./configs/nrf:/openair-nrf/etc
+      - ./logs/nrf:/openair-nrf/logs
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command: >
+      sh -c "sleep 5 &&
+             /openair-nrf/bin/oai_nrf -c /openair-nrf/etc/config.yaml -o"
+
+  smf:
+    image: smf:comnetsemu
+    container_name: smf
+    hostname: smf
+    cap_add:
+      - SYS_NICE
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.133
+    volumes:
+      - ./configs/smf:/openair-smf/etc
+      - ./logs/smf:/openair-smf/logs
+    depends_on:
+      - nrf
+    command: >
+      sh -c "sleep 5 &&
+             /openair-smf/bin/oai_smf -c /openair-smf/etc/config.yaml -o"
+
+  pcf:
+    image: pcf:comnetsemu
+    container_name: pcf
+    hostname: pcf
+    cap_add:
+      - SYS_NICE
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.139
+    volumes:
+      - ./configs/pcf:/openair-pcf/etc
+      - ./logs/pcf:/openair-pcf/logs
+    depends_on:
+      - nrf
+    command: >
+      sh -c "sleep 5 &&
+             /openair-pcf/bin/oai_pcf -c /openair-pcf/etc/config.yaml -o"
+
+  nssf:
+    image: nssf:comnetsemu
+    container_name: nssf
+    hostname: nssf
+    cap_add:
+      - SYS_NICE
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.135
+    volumes:
+      - ./configs/nssf:/openair-nssf/etc
+      - ./logs/nssf:/openair-nssf/logs
+    depends_on:
+      - nrf
+    command: >
+      sh -c "sleep 5 &&
+             /openair-nssf/bin/oai_nssf -c /openair-nssf/etc/config.yaml -o"
+
+  amf:
+    image: amf:comnetsemu
+    container_name: amf
+    hostname: amf
+    cap_add:
+      - SYS_NICE
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.132
+    volumes:
+      - ./configs/amf:/openair-amf/etc
+      - ./logs/amf:/openair-amf/logs
+    depends_on:
+      - nrf
+      - smf
+    command: >
+      sh -c "sleep 5 &&
+             /openair-amf/bin/oai_amf -c /openair-amf/etc/config.yaml -o"
+
+  udm:
+    image: udm:comnetsemu
+    container_name: udm
+    hostname: udm
+    cap_add:
+      - SYS_NICE
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.136
+    volumes:
+      - ./configs/udm:/openair-udm/etc
+      - ./logs/udm:/openair-udm/logs
+    depends_on:
+      - nrf
+    command: >
+      sh -c "sleep 5 &&
+             /openair-udm/bin/oai_udm -c /openair-udm/etc/config.yaml -o"
+
+  udr:
+    image: udr:comnetsemu
+    container_name: udr
+    hostname: udr
+    cap_add:
+      - SYS_NICE
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.137
+    volumes:
+      - ./configs/udr:/openair-udr/etc
+      - ./logs/udr:/openair-udr/logs
+    depends_on:
+      - nrf
+    command: >
+      sh -c "sleep 5 &&
+             /openair-udr/bin/oai_udr -c /openair-udr/etc/config.yaml -o"
+
+  ausf:
+    image: ausf:comnetsemu
+    container_name: ausf
+    hostname: ausf
+    cap_add:
+      - SYS_NICE
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.138
+    volumes:
+      - ./configs/ausf:/openair-ausf/etc
+      - ./logs/ausf:/openair-ausf/logs
+    depends_on:
+      - nrf
+    command: >
+      sh -c "sleep 5 &&
+             /openair-ausf/bin/oai_ausf -c /openair-ausf/etc/config.yaml -o"
+
+  # ==========================================
+  # User Plane Functions (UPF) and External DN
+  # ==========================================
+
+  upf:
+    image: upf_1:comnetsemu
+    container_name: upf
+    hostname: upf
+    cap_add:
+      - SYS_NICE
+    cap_drop:
+      - ALL
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.134
+      ext_net:
+        ipv4_address: 192.168.72.134
+    volumes:
+      - ./configs/upf:/openair-upf/etc
+      - ./logs/upf:/openair-upf/logs
+    depends_on:
+      - nrf
+      - smf
+    command: >
+      sh -c "sysctl -w net.ipv6.conf.all.accept_ra=2 &&
+             sleep 10 &&
+             /openair-upf/bin/oai_upf -c /openair-upf/etc/config.yaml -o"
+
+  ext_dn:
+    image: ext_dn:comnetsemu
+    container_name: ext_dn
+    hostname: ext_dn
+    cap_add:
+      - SYS_NICE
+      - NET_ADMIN
+    networks:
+      ext_net:
+        ipv4_address: 192.168.72.135
+    environment:
+      - EBPF_GW_SETUP=yes
+      - EBPF_GW_N6_IP_ADDR=192.168.72.135
+      - N6_IF_NAME=eth0
+      - SGI_IF_NAME=eth0
+      - GW_SGI_IP_ADDR=172.17.0.9
+      - N3_IF_NAME=eth1
+      - GW_N3_IP_ADDR=192.168.100.135
+      - UE_IP_ADDRESS_POOL_1=12.1.1.0/24
+      - UE_IP_ADDRESS_POOL_2=13.1.1.0/24
+      - UE_IP_ADDRESS_POOL_3=14.1.1.0/24
+      - SGI_DEMO_OAI_ADDR=172.17.0.1
+      - N6_UPF_IP_ADDR=192.168.72.134
+    volumes:
+      - ./configs/ext_dn:/tmp
+    depends_on:
+      - upf
+    command: >
+      sh -c "ifconfig eth0 mtu 1460 &&
+             sleep 5 &&
+             /tmp/trfgen_entrypoint.sh"
+
+  upf_1:
+    image: upf_1:comnetsemu
+    container_name: upf_1
+    hostname: upf_1
+    cap_add:
+      - SYS_NICE
+    cap_drop:
+      - ALL
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.160
+      ext_net:
+        ipv4_address: 192.168.72.160
+    volumes:
+      - ./configs/upf_1:/openair-upf/etc
+      - ./logs/upf_1:/openair-upf/logs
+    depends_on:
+      - nrf
+      - smf
+    command: >
+      sh -c "sysctl -w net.ipv6.conf.all.accept_ra=2 &&
+             sleep 10 &&
+             /openair-upf/bin/oai_upf -c /openair-upf/etc/config.yaml -o"
+
+  ext_dn_1:
+    image: ext_dn:comnetsemu
+    container_name: ext_dn_1
+    hostname: ext_dn_1
+    cap_add:
+      - SYS_NICE
+      - NET_ADMIN
+    networks:
+      ext_net:
+        ipv4_address: 192.168.72.161
+    environment:
+      - EBPF_GW_SETUP=yes
+      - EBPF_GW_N6_IP_ADDR=192.168.72.161
+      - N6_IF_NAME=eth0
+      - SGI_IF_NAME=eth0
+      - N6_UPF_IP_ADDR=192.168.72.160
+    volumes:
+      - ./configs/ext_dn_1:/tmp
+    depends_on:
+      - upf_1
+    command: >
+      sh -c "ifconfig eth0 mtu 1460 &&
+             sleep 5 &&
+             /tmp/trfgen_entrypoint.sh"
+
+  # ==========================================
+  # RAN Components (CU-CP, CU-UP, DU)
+  # ==========================================
+
+  cucp:
+    image: cucp:comnetsemu
+    container_name: cucp
+    hostname: cucp
+    cap_add:
+      - SYS_NICE
+      - NET_ADMIN
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.140
+    volumes:
+      - ./configs/cucp:/opt/oai-gnb/etc
+      - ./logs/cucp:/opt/oai-gnb/logs
+    depends_on:
+      - amf
+    command: >
+      sh -c "sleep 15 &&
+             /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem"
+
+  cuup:
+    image: cuup:comnetsemu
+    container_name: cuup
+    hostname: cuup
+    cap_add:
+      - SYS_NICE
+      - NET_ADMIN
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.143
+    volumes:
+      - ./configs/cuup:/opt/oai-gnb/etc
+      - ./logs/cuup:/opt/oai-gnb/logs
+    depends_on:
+      - cucp
+      - upf
+    command: >
+      sh -c "sleep 20 &&
+             /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-cuup -O /opt/oai-gnb/etc/gnb.conf"
+
+  du_1:
+    image: du:comnetsemu
+    container_name: du_1
+    hostname: du_1
+    cap_add:
+      - SYS_NICE
+      - NET_ADMIN
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.151
+      ran_net:
+        ipv4_address: 192.168.80.151
+    volumes:
+      - ./configs/du_1:/opt/oai-gnb/etc
+      - ./logs/du_1:/opt/oai-gnb/logs
+    depends_on:
+      - cucp
+      - cuup
+    command: >
+      sh -c "sleep 25 &&
+             /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem"
+
+  # ==========================================
+  # FlexRIC (Near-RT RIC)
+  # ==========================================
+
+  flexric:
+    image: flexric:comnetsemu
+    container_name: flexric
+    hostname: flexric
+    cap_add:
+      - SYS_NICE
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.150
+    volumes:
+      - ./configs/flexric:/usr/local/etc/flexric
+      - ./logs/flexric:/usr/local/logs
+      - ./xapps:/usr/local/xapps
+    depends_on:
+      - du_1
+    command: >
+      sh -c "sleep 30 &&
+             /usr/local/bin/ric_watchdog.sh"
+
+  # ==========================================
+  # L2 Proxy
+  # ==========================================
+
+  l2_proxy:
+    image: l2_proxy:comnetsemu
+    container_name: l2_proxy
+    hostname: l2_proxy
+    cap_add:
+      - SYS_NICE
+      - NET_ADMIN
+    networks:
+      ran_net:
+        ipv4_address: 192.168.80.163
+    environment:
+      - NFAPI_TRACE_LEVEL=info
+    volumes:
+      - ./configs/l2_proxy:/opt/proxy
+      - ./logs/l2_proxy:/opt/proxy/logs
+    depends_on:
+      - du_1
+    command: >
+      sh -c "sleep 35 &&
+             cd /opt/proxy &&
+             ./proxy 1 --nr --max-seconds 500000 192.168.80.151 192.168.80.163 192.168.80.170"
+
+  # ==========================================
+  # User Equipment (UE)
+  # ==========================================
+
+  ue_1:
+    image: ue:comnetsemu
+    container_name: ue_1
+    hostname: ue_1
+    cap_add:
+      - SYS_NICE
+      - NET_ADMIN
+    networks:
+      ran_net:
+        ipv4_address: 192.168.80.170
+    volumes:
+      - ./configs/ue_1:/opt/oai-nr-ue/etc
+      - ./logs/ue_1:/opt/oai-nr-ue/logs
+    depends_on:
+      - l2_proxy
+      - flexric
+    command: >
+      sh -c "sleep 45 &&
+             /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem"
+
+  # ==========================================
+  # ONOS Controller (Optional)
+  # ==========================================
+
+  # onos:
+  #   image: onosproject/onos:2.5.1
+  #   container_name: onos
+  #   hostname: onos
+  #   networks:
+  #     core_net:
+  #       ipv4_address: 192.168.71.168
+  #   ports:
+  #     - "8181:8181"
+  #     - "8101:8101"
+  #     - "6653:6653"
+  #   environment:
+  #     - ONOS_APPS=openflow,fwd
+
+# ==========================================
+# Networks Configuration
+# ==========================================
+
+networks:
+  core_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.71.0/26
+          gateway: 192.168.71.1
+    driver_opts:
+      com.docker.network.bridge.name: br-core
+
+  ext_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.72.0/26
+          gateway: 192.168.72.1
+    driver_opts:
+      com.docker.network.bridge.name: br-ext
+
+  ran_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.80.0/26
+          gateway: 192.168.80.1
+    driver_opts:
+      com.docker.network.bridge.name: br-ran
+
+# ==========================================
+# Volumes
+# ==========================================
+
+volumes:
+  mysql_data:
+    driver: local
