@@ -15,6 +15,9 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CORE_CONFIG="$SCRIPT_DIR/../dockerfiles/volumes/config.yaml"
+
 # Function to print colored messages
 print_info() {
     echo -e "${GREEN}[INFO]${NC} $1"
@@ -43,10 +46,10 @@ fi
 print_info "Creating directory structure..."
 
 # Create config directories
-sudo mkdir -p configs/{mysql,nrf,amf,smf,pcf,nssf,udm,udr,ausf,upf,upf_1,ext_dn,ext_dn_1,cucp,cuup,du_1,ue_1,flexric,l2_proxy}
+sudo mkdir -p configs/{mysql,nrf,amf,smf,pcf,nssf,udm,udr,ausf,upf,upf_1,ext_dn,ext_dn_1,cucp,cuup,du_1,ue_1,flexric,l2_proxy,cu,du,gnb}
 
 # Create log directories
-sudo mkdir -p logs/{mysql,nrf,amf,smf,pcf,nssf,udm,udr,ausf,upf,upf_1,ext_dn,ext_dn_1,cucp,cuup,du_1,ue_1,flexric,l2_proxy}
+sudo mkdir -p logs/{mysql,nrf,amf,smf,pcf,nssf,udm,udr,ausf,upf,upf_1,ext_dn,ext_dn_1,cucp,cuup,du_1,ue_1,flexric,l2_proxy,cu,du,gnb}
 
 # Create xapps directory
 sudo mkdir -p xapps
@@ -57,7 +60,55 @@ echo ""
 # Create placeholder README files in config directories
 print_info "Creating placeholder README files in config directories..."
 
+declare -A MAP=(
+  # core network functions
+  [amf]="config.yaml"
+  [smf]="config.yaml"
+  [nrf]="config.yaml"
+  [udf]="config.yaml"
+  [ausf]="config.yaml"
+  [udm]="config.yaml"
+  [udr]="config.yaml"
+  [pcf]="config.yaml" 
+  [nssf]="config.yaml" 
+  [upf]="config.yaml" 
+  [upf_1]="config.yaml" #
+  [mysql]="mysql-healthcheck.sh oai_db.sql"     
+  [ext_dn_1]="trfgen_entrypoint.sh" 
+  [ext_dn]="trfgen_entrypoint.sh" 
+  # SDN Control 
+  # [onos]="config.yaml" #    
+  # RAN components
+  [gnb]="gnb.sa.band78.106prb.rfsim.conf" 
+  [ue]="nrue.uicc.conf" 
+  [ue_1]="nrue.uicc.conf" 
+  [cu]="gnb-cu.sa.band78.106prb.conf" 
+  [du]="gnb-du.sa.band78.106prb.rfsim.conf" 
+  [du_1]="gnb-du.sa.band78.106prb.rfsim.conf" 
+  [cucp]="gnb-cucp.sa.f1.conf" 
+  [cuup]="gnb-cuup.sa.f1.conf" 
+  #[proxy_l2]="config.yaml" #    
+  [flexric]="flexric.conf flexric_cuup.conf flexric_cucp.conf flexric_du.conf flexric_gnb.conf flexric_cu.conf" #    
+)
+
 for dir in configs/*/; do
+  name="$(basename "$dir")" 
+
+  # Skip non-empty directories
+  if [ -n "$(find "$dir" -mindepth 1 -maxdepth 1 -print -quit)" ]; then
+    continue
+  fi
+    
+  files="${MAP[$name]:-}"
+
+  [ -z "$files" ] && continue
+  
+  for file in $files; do
+    src="$SCRIPT_DIR/../dockerfiles/volumes/$file"
+    dst="$dir/$file"
+    
+  if [ ! -f "$src" ]; then
+    print_warn "Missing template $src for $name"
     cat > "${dir}README.txt" << 'EOF'
 Configuration Files Directory
 =============================
@@ -75,6 +126,13 @@ Common configuration files:
 
 Make sure to update IP addresses to match the docker-compose.yml network configuration.
 EOF
+    
+  else
+  
+  cp "$src" "$dst"
+  print_info "Initialized $name"
+  fi
+  done
 done
 
 print_info "Placeholder files created!"
