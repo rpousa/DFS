@@ -14,6 +14,7 @@ services:
     networks:
       core_net:
         ipv4_address: 192.168.71.131
+        interface_name: mysql-sw1
     # volumes:
     #   - mysql_data:/var/lib/mysql
     #   - ./configs/mysql:/docker-entrypoint-initdb.d
@@ -38,6 +39,7 @@ services:
     networks:
       core_net:
         ipv4_address: 192.168.71.130
+        interface_name: nrf-sw1
     volumes:
       - ./configs/nrf:/openair-nrf/etc
       - ./logs/nrf:/openair-nrf/logs
@@ -57,6 +59,7 @@ services:
     networks:
       core_net:
         ipv4_address: 192.168.71.133
+        interface_name: smf-sw1
     volumes:
       - ./configs/smf:/openair-smf/etc
       - ./logs/smf:/openair-smf/logs
@@ -75,6 +78,7 @@ services:
     networks:
       core_net:
         ipv4_address: 192.168.71.139
+        interface_name: pcf-sw1
     volumes:
       - ./configs/pcf:/openair-pcf/etc
       - ./logs/pcf:/openair-pcf/logs
@@ -93,6 +97,7 @@ services:
     networks:
       core_net:
         ipv4_address: 192.168.71.135
+        interface_name: nssf-sw1
     volumes:
       - ./configs/nssf:/openair-nssf/etc
       - ./logs/nssf:/openair-nssf/logs
@@ -111,6 +116,7 @@ services:
     networks:
       core_net:
         ipv4_address: 192.168.71.132
+        interface_name: amf-sw1
     volumes:
       - ./configs/amf:/openair-amf/etc
       - ./logs/amf:/openair-amf/logs
@@ -130,6 +136,7 @@ services:
     networks:
       core_net:
         ipv4_address: 192.168.71.136
+        interface_name: udm-sw1
     volumes:
       - ./configs/udm:/openair-udm/etc
       - ./logs/udm:/openair-udm/logs
@@ -148,6 +155,7 @@ services:
     networks:
       core_net:
         ipv4_address: 192.168.71.137
+        interface_name: udr-sw1
     volumes:
       - ./configs/udr:/openair-udr/etc
       - ./logs/udr:/openair-udr/logs
@@ -166,6 +174,7 @@ services:
     networks:
       core_net:
         ipv4_address: 192.168.71.138
+        interface_name: ausf-sw1
     volumes:
       - ./configs/ausf:/openair-ausf/etc
       - ./logs/ausf:/openair-ausf/logs
@@ -190,8 +199,10 @@ services:
     networks:
       core_net:
         ipv4_address: 192.168.71.134
+        interface_name: upf-core
       ext_net:
         ipv4_address: 192.168.72.134
+        interface_name: upf-ext_dn
     volumes:
       - ./configs/upf:/openair-upf/etc
       - ./logs/upf:/openair-upf/logs
@@ -213,6 +224,7 @@ services:
     networks:
       ext_net:
         ipv4_address: 192.168.72.135
+        interface_name: ext_dn-upf
     environment:
       - EBPF_GW_SETUP=yes
       - EBPF_GW_N6_IP_ADDR=192.168.72.135
