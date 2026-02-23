@@ -10,11 +10,12 @@ services:
     container_name: mysql
     hostname: mysql
     cap_add:
+      - NET_ADMIN
       - SYS_NICE
     networks:
       core_net:
         ipv4_address: 192.168.71.131
-        interface_name: mysql-sw1
+    #    interface_name: mysql-sw1
     # volumes:
     #   - mysql_data:/var/lib/mysql
     #   - ./configs/mysql:/docker-entrypoint-initdb.d
@@ -22,7 +23,10 @@ services:
       - MYSQL_ROOT_PASSWORD=linux
       - MYSQL_DATABASE=oai_db
     command: >
-      sh -c "mysqld -u test --initialize-insecure --init-file=/docker-entrypoint-initdb.d/oai_db.sql &&
+      sh -c "ip link set eth0 down &&
+             ip link set eth0 name mysql-sw1 &&
+             ip link set mysql-sw1 up &&
+             mysqld -u test --initialize-insecure --init-file=/docker-entrypoint-initdb.d/oai_db.sql &&
              mysqld -u test"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
@@ -35,11 +39,12 @@ services:
     container_name: nrf
     hostname: nrf
     cap_add:
+      - NET_ADMIN
       - SYS_NICE
     networks:
       core_net:
         ipv4_address: 192.168.71.130
-        interface_name: nrf-sw1
+    #    interface_name: nrf-sw1
     volumes:
       - ./configs/nrf:/openair-nrf/etc
       - ./logs/nrf:/openair-nrf/logs
@@ -47,7 +52,10 @@ services:
       mysql:
         condition: service_healthy
     command: >
-      sh -c "sleep 5 &&
+      sh -c "ip link set eth0 down &&
+             ip link set eth0 name nrf-sw1 &&
+             ip link set nrf-sw1 up &&
+             sleep 5 &&
              /openair-nrf/bin/oai_nrf -c /openair-nrf/etc/config.yaml -o"
 
   smf:
@@ -55,18 +63,22 @@ services:
     container_name: smf
     hostname: smf
     cap_add:
+      - NET_ADMIN
       - SYS_NICE
     networks:
       core_net:
         ipv4_address: 192.168.71.133
-        interface_name: smf-sw1
+    #    interface_name: smf-sw1
     volumes:
       - ./configs/smf:/openair-smf/etc
       - ./logs/smf:/openair-smf/logs
     depends_on:
       - nrf
     command: >
-      sh -c "sleep 5 &&
+      sh -c "ip link set eth0 down &&
+             ip link set eth0 name smf-sw1 &&
+             ip link set smf-sw1 up &&
+             sleep 5 &&
              /openair-smf/bin/oai_smf -c /openair-smf/etc/config.yaml -o"
 
   pcf:
@@ -74,18 +86,22 @@ services:
     container_name: pcf
     hostname: pcf
     cap_add:
+      - NET_ADMIN
       - SYS_NICE
     networks:
       core_net:
         ipv4_address: 192.168.71.139
-        interface_name: pcf-sw1
+    #    interface_name: pcf-sw1
     volumes:
       - ./configs/pcf:/openair-pcf/etc
       - ./logs/pcf:/openair-pcf/logs
     depends_on:
       - nrf
     command: >
-      sh -c "sleep 5 &&
+      sh -c "ip link set eth0 down &&
+             ip link set eth0 name pcf-sw1 &&
+             ip link set pcf-sw1 up &&
+             sleep 5 &&
              /openair-pcf/bin/oai_pcf -c /openair-pcf/etc/config.yaml -o"
 
   nssf:
@@ -93,18 +109,22 @@ services:
     container_name: nssf
     hostname: nssf
     cap_add:
+      - NET_ADMIN
       - SYS_NICE
     networks:
       core_net:
         ipv4_address: 192.168.71.135
-        interface_name: nssf-sw1
+    #    interface_name: nssf-sw1
     volumes:
       - ./configs/nssf:/openair-nssf/etc
       - ./logs/nssf:/openair-nssf/logs
     depends_on:
       - nrf
     command: >
-      sh -c "sleep 5 &&
+      sh -c "ip link set eth0 down &&
+             ip link set eth0 name nssf-sw1 &&
+             ip link set nssf-sw1 up &&
+             sleep 5 &&
              /openair-nssf/bin/oai_nssf -c /openair-nssf/etc/config.yaml -o"
 
   amf:
@@ -112,11 +132,12 @@ services:
     container_name: amf
     hostname: amf
     cap_add:
+      - NET_ADMIN
       - SYS_NICE
     networks:
       core_net:
         ipv4_address: 192.168.71.132
-        interface_name: amf-sw1
+    #    interface_name: amf-sw1
     volumes:
       - ./configs/amf:/openair-amf/etc
       - ./logs/amf:/openair-amf/logs
@@ -124,7 +145,10 @@ services:
       - nrf
       - smf
     command: >
-      sh -c "sleep 5 &&
+      sh -c "ip link set eth0 down &&
+             ip link set eth0 name amf-sw1 &&
+             ip link set amf-sw1 up &&
+             sleep 5 &&
              /openair-amf/bin/oai_amf -c /openair-amf/etc/config.yaml -o"
 
   udm:
@@ -132,18 +156,22 @@ services:
     container_name: udm
     hostname: udm
     cap_add:
+      - NET_ADMIN
       - SYS_NICE
     networks:
       core_net:
         ipv4_address: 192.168.71.136
-        interface_name: udm-sw1
+    #    interface_name: udm-sw1
     volumes:
       - ./configs/udm:/openair-udm/etc
       - ./logs/udm:/openair-udm/logs
     depends_on:
       - nrf
     command: >
-      sh -c "sleep 5 &&
+      sh -c "ip link set eth0 down &&
+             ip link set eth0 name udm-sw1 &&
+             ip link set udm-sw1 up &&
+             sleep 5 &&
              /openair-udm/bin/oai_udm -c /openair-udm/etc/config.yaml -o"
 
   udr:
@@ -151,18 +179,22 @@ services:
     container_name: udr
     hostname: udr
     cap_add:
+      - NET_ADMIN
       - SYS_NICE
     networks:
       core_net:
         ipv4_address: 192.168.71.137
-        interface_name: udr-sw1
+    #    interface_name: udr-sw1
     volumes:
       - ./configs/udr:/openair-udr/etc
       - ./logs/udr:/openair-udr/logs
     depends_on:
       - nrf
     command: >
-      sh -c "sleep 5 &&
+      sh -c "ip link set eth0 down &&
+             ip link set eth0 name udr-sw1 &&
+             ip link set udr-sw1 up &&
+             sleep 5 &&
              /openair-udr/bin/oai_udr -c /openair-udr/etc/config.yaml -o"
 
   ausf:
@@ -170,18 +202,22 @@ services:
     container_name: ausf
     hostname: ausf
     cap_add:
+      - NET_ADMIN
       - SYS_NICE
     networks:
       core_net:
         ipv4_address: 192.168.71.138
-        interface_name: ausf-sw1
+    #    interface_name: ausf-sw1
     volumes:
       - ./configs/ausf:/openair-ausf/etc
       - ./logs/ausf:/openair-ausf/logs
     depends_on:
       - nrf
     command: >
-      sh -c "sleep 5 &&
+      sh -c "ip link set eth0 down &&
+             ip link set eth0 name ausf-sw1 &&
+             ip link set ausf-sw1 up &&
+             sleep 5 &&
              /openair-ausf/bin/oai_ausf -c /openair-ausf/etc/config.yaml -o"
 
   # ==========================================
@@ -193,16 +229,17 @@ services:
     container_name: upf
     hostname: upf
     cap_add:
+      - NET_ADMIN
       - SYS_NICE
     cap_drop:
       - ALL
     networks:
       core_net:
         ipv4_address: 192.168.71.134
-        interface_name: upf-core
+    #    interface_name: upf-core
       ext_net:
         ipv4_address: 192.168.72.134
-        interface_name: upf-ext_dn
+    #    interface_name: upf-ext_dn
     volumes:
       - ./configs/upf:/openair-upf/etc
       - ./logs/upf:/openair-upf/logs
@@ -210,7 +247,10 @@ services:
       - nrf
       - smf
     command: >
-      sh -c "sysctl -w net.ipv6.conf.all.accept_ra=2 &&
+      sh -c "ip link set eth0 down &&
+             ip link set eth0 name upf-sw1 &&
+             ip link set upf-sw1 up &&
+             sysctl -w net.ipv6.conf.all.accept_ra=2 &&
              sleep 10 &&
              /openair-upf/bin/oai_upf -c /openair-upf/etc/config.yaml -o"
 
@@ -224,7 +264,7 @@ services:
     networks:
       ext_net:
         ipv4_address: 192.168.72.135
-        interface_name: ext_dn-upf
+    #    interface_name: ext_dn-upf
     environment:
       - EBPF_GW_SETUP=yes
       - EBPF_GW_N6_IP_ADDR=192.168.72.135
@@ -244,6 +284,9 @@ services:
       - upf
     command: >
       sh -c "ifconfig eth0 mtu 1460 &&
+             ip link set eth0 down &&
+             ip link set eth0 name ext_dn-upf &&
+             ip link set ext_dn-upf up &&
              sleep 5 &&
              /tmp/trfgen_entrypoint.sh"
 
