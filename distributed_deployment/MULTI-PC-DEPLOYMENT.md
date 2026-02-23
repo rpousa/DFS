@@ -9,19 +9,22 @@ This guide shows how to deploy a 5G network across multiple physical PCs using t
 ```
 192.168.0.x Physical Network
 │
-├── PC1 (192.168.0.193) - Core Network Functions
-│   ├── MySQL, NRF, AMF, SMF, PCF, NSSF
-│   ├── UDM, UDR, AUSF
-│   └── UPF, External DN
+├── PC1 (192.168.0.193) - First RAN POP
+│   ├── CU_CP, CU_UP_1, DU_3
+|   ├── FlexRIC 
+│   └── UPF_1, External_DN_1
 │
-├── PC2 (192.168.0.200) - Gateway (Already configured)
+├── PC2 (192.168.0.200) - Gateway Core Network Functions (Already configured)
+|   ├── MySQL, NRF, AMF, SMF, PCF, NSSF
+│   ├── UDM, UDR, AUSF
+│   ├── UPF, External DN
 │   └── Internet gateway + DNS + routing
 │
 └── PC3 (192.168.0.243) - RAN Components
-    ├── CU-CP, CU-UP
-    ├── DU, L2 Proxy
-    ├── UE
-    └── FlexRIC
+    ├── CU-UP
+    ├── DU_1, DU_2, L2 Proxy
+    └── UE_x
+    
 ```
 
 ## Prerequisites
@@ -39,6 +42,8 @@ This guide shows how to deploy a 5G network across multiple physical PCs using t
 - No firewall blocking Docker ports
 - Sufficient bandwidth between PCs (1Gbps+ recommended)
 
+
+------------------------------------------------------------------------------------Reviewed till here
 ## Step-by-Step Deployment
 
 ### Step 1: Configure Network on All PCs

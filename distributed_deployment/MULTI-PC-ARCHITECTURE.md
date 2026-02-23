@@ -10,13 +10,13 @@ This deployment distributes the 5G network across multiple physical PCs using th
 Physical Network: 192.168.0.x/24
 
 ┌─────────────────────────────────────────────────────────────────┐
-│                    Physical LAN (192.168.0.x)                    │
-│                                                                   │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐             │
-│  │   PC 1      │  │   PC 2      │  │   PC 3      │             │
-│  │ .193 (Core) │  │ .200 (GW)   │  │ .243 (RAN)  │             │
-│  │             │  │             │  │             │             │
-│  └─────────────┘  └─────────────┘  └─────────────┘             │
+│                    Physical LAN (192.168.0.x)                   │
+│                                                                 │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │
+│  │   PC 1      │  │   PC 2      │  │   PC 3      │              │
+│  │ .193 (RAN)  │  │ .200 (GW)   │  │ .243 (RAN)  │              │
+│  │             │  │             │  │             │              │
+│  └─────────────┘  └─────────────┘  └─────────────┘              │
 └─────────────────────────────────────────────────────────────────┘
                               │
                          Internet via GW
@@ -24,18 +24,25 @@ Physical Network: 192.168.0.x/24
 
 ## Deployment Scenarios
 
-### Scenario 1: Core on PC1, RAN on PC2/PC3
-- **PC 192.168.0.193**: Core Network Functions (NRF, AMF, SMF, UPF, etc.)
-- **PC 192.168.0.200**: Gateway + potentially some functions
-- **PC 192.168.0.243**: RAN Components (CU-CP, CU-UP, DU, UE)
+### Scenario 1: All on Centraloffice PC (Development)
+- **PC 192.168.0.193**: All components for testing
 
-### Scenario 2: All on Gateway PC (Development)
-- **PC 192.168.0.200**: All components for testing
+### Scenario 2: Core on PC1, RAN & UE on PC2
+- **PC 192.168.0.193**: CU_UP, FlexRIC, External_DN_1, DU, UE 
+- **PC 192.168.0.200**: Gateway, Core Functions(-UPF), CU_CP, UPF_1
 
-### Scenario 3: Distributed RAN
-- **PC 192.168.0.193**: Core Network
-- **PC 192.168.0.200**: Gateway + CU-CP + CU-UP
-- **PC 192.168.0.243**: DU + UE + L2 Proxy
+### Scenario 3: Core on PC1, UPF and L3 RAN on PC2, L2/1 Ran on PC3
+- **PC 192.168.0.193**: CU-UP, FlexRIC, UPF_1, External_DN_1 
+- **PC 192.168.0.200**: Gateway, Core Functions(-UPF), CU_CP
+- **PC 192.168.0.243**: DU, L2 Proxy, UE
+
+
+### Scenario 4: Core on PC1, UPF & RAN on PC2, UE on PC3
+- **PC 192.168.0.193**: UPF_1, External_DN_1 
+- **PC 192.168.0.200**: Gateway, Core Functions(-UPF), CU_CP
+- **PC 192.168.0.243**: CU_UP, FlexRIC, DU, L2 Proxy, UE 
+
+------------------------------------------------------------------------------------Reviewed till here
 
 ## Network Architecture
 
