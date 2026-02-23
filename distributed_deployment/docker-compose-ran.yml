@@ -1,0 +1,263 @@
+version: '3.8'
+
+# Docker Compose for RAN Components
+# Deploy on PC: 192.168.0.243
+# This PC runs RAN components (CU-CP, CU-UP, DU, UE, FlexRIC, L2 Proxy)
+
+services:
+  # ==========================================
+  # RAN Components (CU-CP, CU-UP, DU)
+  # ==========================================
+
+  cucp:
+    image: cucp:comnetsemu
+    container_name: cucp
+    hostname: cucp
+    cap_add:
+      - SYS_NICE
+      - NET_ADMIN
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.140
+    ports:
+      - "192.168.0.243:38472:38472"     # F1AP
+      - "192.168.0.243:38472:38472/udp"
+    volumes:
+      - ./configs/cucp:/opt/oai-gnb/etc
+      - ./logs/cucp:/opt/oai-gnb/logs
+    environment:
+      # Point to Core PC physical IP
+      - AMF_ADDR=192.168.0.193
+      - AMF_PORT=38412
+    command: >
+      sh -c "sleep 15 &&
+             /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem"
+    extra_hosts:
+      - "core-pc:192.168.0.193"
+      - "ran-pc:192.168.0.243"
+      - "amf:192.168.0.193"
+      - "nrf:192.168.0.193"
+
+  cuup:
+    image: cuup:comnetsemu
+    container_name: cuup
+    hostname: cuup
+    cap_add:
+      - SYS_NICE
+      - NET_ADMIN
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.143
+    ports:
+      - "192.168.0.243:38462:38462"     # E1AP
+      - "192.168.0.243:38462:38462/udp"
+      - "192.168.0.243:2152:2152/udp"   # GTP-U to UPF
+    volumes:
+      - ./configs/cuup:/opt/oai-gnb/etc
+      - ./logs/cuup:/opt/oai-gnb/logs
+    depends_on:
+      - cucp
+    environment:
+      - UPF_ADDR=192.168.0.193
+      - CUCP_ADDR=192.168.71.140
+    command: >
+      sh -c "sleep 20 &&
+             /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-cuup -O /opt/oai-gnb/etc/gnb.conf"
+    extra_hosts:
+      - "core-pc:192.168.0.193"
+      - "ran-pc:192.168.0.243"
+      - "upf:192.168.0.193"
+      - "cucp:192.168.71.140"
+
+  du_1:
+    image: du:comnetsemu
+    container_name: du_1
+    hostname: du_1
+    cap_add:
+      - SYS_NICE
+      - NET_ADMIN
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.151
+      ran_net:
+        ipv4_address: 192.168.80.151
+    ports:
+      - "192.168.0.243:2152:2152/udp"   # GTP-U
+    volumes:
+      - ./configs/du_1:/opt/oai-gnb/etc
+      - ./logs/du_1:/opt/oai-gnb/logs
+    depends_on:
+      - cucp
+      - cuup
+    environment:
+      - CUCP_ADDR=192.168.71.140
+      - CUUP_ADDR=192.168.71.143
+    command: >
+      sh -c "sleep 25 &&
+             /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem"
+    extra_hosts:
+      - "ran-pc:192.168.0.243"
+      - "cucp:192.168.71.140"
+      - "cuup:192.168.71.143"
+
+  # ==========================================
+  # FlexRIC (Near-RT RIC)
+  # ==========================================
+
+  flexric:
+    image: flexric:comnetsemu
+    container_name: flexric
+    hostname: flexric
+    cap_add:
+      - SYS_NICE
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.150
+    ports:
+      - "192.168.0.243:36422:36422"     # E2AP
+      - "192.168.0.243:36422:36422/udp"
+    volumes:
+      - ./configs/flexric:/usr/local/etc/flexric
+      - ./logs/flexric:/usr/local/logs
+      - ./xapps:/usr/local/xapps
+    depends_on:
+      - du_1
+    command: >
+      sh -c "sleep 30 &&
+             /usr/local/bin/ric_watchdog.sh"
+    extra_hosts:
+      - "ran-pc:192.168.0.243"
+
+  # ==========================================
+  # L2 Proxy
+  # ==========================================
+
+  l2_proxy:
+    image: l2_proxy:comnetsemu
+    container_name: l2_proxy
+    hostname: l2_proxy
+    cap_add:
+      - SYS_NICE
+      - NET_ADMIN
+    networks:
+      ran_net:
+        ipv4_address: 192.168.80.163
+    ports:
+      - "192.168.0.243:7878:7878"
+      - "192.168.0.243:7878:7878/udp"
+    environment:
+      - NFAPI_TRACE_LEVEL=info
+    volumes:
+      - ./configs/l2_proxy:/opt/proxy
+      - ./logs/l2_proxy:/opt/proxy/logs
+    depends_on:
+      - du_1
+    command: >
+      sh -c "sleep 35 &&
+             cd /opt/proxy &&
+             ./proxy 1 --nr --max-seconds 500000 192.168.80.151 192.168.80.163 192.168.80.170"
+    extra_hosts:
+      - "ran-pc:192.168.0.243"
+
+  # ==========================================
+  # User Equipment (UE)
+  # ==========================================
+
+  ue_1:
+    image: ue:comnetsemu
+    container_name: ue_1
+    hostname: ue_1
+    cap_add:
+      - SYS_NICE
+      - NET_ADMIN
+    networks:
+      ran_net:
+        ipv4_address: 192.168.80.170
+    volumes:
+      - ./configs/ue_1:/opt/oai-nr-ue/etc
+      - ./logs/ue_1:/opt/oai-nr-ue/logs
+    depends_on:
+      - l2_proxy
+      - flexric
+    command: >
+      sh -c "sleep 45 &&
+             /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem"
+    extra_hosts:
+      - "ran-pc:192.168.0.243"
+      - "core-pc:192.168.0.193"
+
+  # ==========================================
+  # Optional: Additional DUs
+  # ==========================================
+
+  # du_2:
+  #   image: du:comnetsemu
+  #   container_name: du_2
+  #   hostname: du_2
+  #   cap_add:
+  #     - SYS_NICE
+  #     - NET_ADMIN
+  #   networks:
+  #     core_net:
+  #       ipv4_address: 192.168.71.152
+  #     ran_net:
+  #       ipv4_address: 192.168.80.152
+  #   volumes:
+  #     - ./configs/du_2:/opt/oai-gnb/etc
+  #     - ./logs/du_2:/opt/oai-gnb/logs
+  #   depends_on:
+  #     - cucp
+  #     - cuup
+  #   command: >
+  #     sh -c "sleep 30 &&
+  #            /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem"
+
+  # ue_2:
+  #   image: ue:comnetsemu
+  #   container_name: ue_2
+  #   hostname: ue_2
+  #   cap_add:
+  #     - SYS_NICE
+  #     - NET_ADMIN
+  #   networks:
+  #     ran_net:
+  #       ipv4_address: 192.168.80.171
+  #   volumes:
+  #     - ./configs/ue_2:/opt/oai-nr-ue/etc
+  #     - ./logs/ue_2:/opt/oai-nr-ue/logs
+  #   depends_on:
+  #     - l2_proxy
+  #   command: >
+  #     sh -c "sleep 50 &&
+  #            /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem"
+
+# ==========================================
+# Networks Configuration
+# ==========================================
+
+networks:
+  core_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.71.0/26
+          gateway: 192.168.71.1
+    driver_opts:
+      com.docker.network.bridge.name: br-core
+
+  ran_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.80.0/26
+          gateway: 192.168.80.1
+    driver_opts:
+      com.docker.network.bridge.name: br-ran
+
+# ==========================================
+# Volumes
+# ==========================================
+
+volumes:
+  flexric_data:
+    driver: local
