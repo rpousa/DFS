@@ -14,9 +14,9 @@ services:
     networks:
       core_net:
         ipv4_address: 192.168.71.131
-    volumes:
-      - mysql_data:/var/lib/mysql
-      - ./configs/mysql:/docker-entrypoint-initdb.d
+    # volumes:
+    #   - mysql_data:/var/lib/mysql
+    #   - ./configs/mysql:/docker-entrypoint-initdb.d
     environment:
       - MYSQL_ROOT_PASSWORD=linux
       - MYSQL_DATABASE=oai_db
