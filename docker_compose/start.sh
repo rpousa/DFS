@@ -159,7 +159,7 @@ echo ""
 
 # Stage 3: User Plane Functions
 print_stage "Stage 3/6: Starting UPF and External DN..."
-docker-compose up -d upf ext_dn upf_1 ext_dn_1
+docker-compose up -d upf ext_dn 
 
 wait_for_service "upf" 30
 wait_for_service "ext_dn" 30
