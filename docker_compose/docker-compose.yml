@@ -231,8 +231,6 @@ services:
     cap_add:
       - NET_ADMIN
       - SYS_NICE
-    cap_drop:
-      - ALL
     networks:
       core_net:
         ipv4_address: 192.168.71.134
@@ -248,8 +246,11 @@ services:
       - smf
     command: >
       sh -c "ip link set eth0 down &&
-             ip link set eth0 name upf-sw1 &&
-             ip link set upf-sw1 up &&
+             ip link set eth0 name upf-core &&
+             ip link set upf-core up &&
+             ip link set eth1 down &&
+             ip link set eth1 name upf-ext_dn &&
+             ip link set upf-ext_dn up &&
              sysctl -w net.ipv6.conf.all.accept_ra=2 &&
              sleep 10 &&
              /openair-upf/bin/oai_upf -c /openair-upf/etc/config.yaml -o"
