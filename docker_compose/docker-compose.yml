@@ -354,7 +354,7 @@ services:
   # ==========================================
 
   flexric:
-    image: flexric:comnetsemu
+    image: flexric_test:comnetsemu
     container_name: flexric
     hostname: flexric
     cap_add:
