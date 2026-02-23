@@ -449,8 +449,8 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: 192.168.71.0/26
-          gateway: 192.168.71.1
+        - subnet: 192.168.71.128/26
+          gateway: 192.168.71.129
     driver_opts:
       com.docker.network.bridge.name: br-core
 
@@ -458,8 +458,8 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: 192.168.72.0/26
-          gateway: 192.168.72.1
+        - subnet: 192.168.72.128/26
+          gateway: 192.168.72.129
     driver_opts:
       com.docker.network.bridge.name: br-ext
 
@@ -467,8 +467,8 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: 192.168.80.0/26
-          gateway: 192.168.80.1
+        - subnet: 192.168.80.128/26
+          gateway: 192.168.80.129
     driver_opts:
       com.docker.network.bridge.name: br-ran
 
