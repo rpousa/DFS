@@ -259,30 +259,30 @@ services:
   #            sleep 10 &&
   #            /openair-upf/bin/oai_upf -c /openair-upf/etc/config.yaml -o"
 
-  ext_dn_1:
-    image: ext_dn:comnetsemu
-    container_name: ext_dn_1
-    hostname: ext_dn_1
-    cap_add:
-      - SYS_NICE
-      - NET_ADMIN
-    networks:
-      ext_net:
-        ipv4_address: 192.168.72.161
-    environment:
-      - EBPF_GW_SETUP=yes
-      - EBPF_GW_N6_IP_ADDR=192.168.72.161
-      - N6_IF_NAME=eth0
-      - SGI_IF_NAME=eth0
-      - N6_UPF_IP_ADDR=192.168.72.160
-    volumes:
-      - ./configs/ext_dn_1:/tmp
-    depends_on:
-      - upf_1
-    command: >
-      sh -c "ifconfig eth0 mtu 1460 &&
-             sleep 5 &&
-             /tmp/trfgen_entrypoint.sh"
+  # ext_dn_1:
+  #   image: ext_dn:comnetsemu
+  #   container_name: ext_dn_1
+  #   hostname: ext_dn_1
+  #   cap_add:
+  #     - SYS_NICE
+  #     - NET_ADMIN
+  #   networks:
+  #     ext_net:
+  #       ipv4_address: 192.168.72.161
+  #   environment:
+  #     - EBPF_GW_SETUP=yes
+  #     - EBPF_GW_N6_IP_ADDR=192.168.72.161
+  #     - N6_IF_NAME=eth0
+  #     - SGI_IF_NAME=eth0
+  #     - N6_UPF_IP_ADDR=192.168.72.160
+  #   volumes:
+  #     - ./configs/ext_dn_1:/tmp
+  #   depends_on:
+  #     - upf_1
+  #   command: >
+  #     sh -c "ifconfig eth0 mtu 1460 &&
+  #            sleep 5 &&
+  #            /tmp/trfgen_entrypoint.sh"
 
   # ==========================================
   # RAN Components (CU-CP, CU-UP, DU)
