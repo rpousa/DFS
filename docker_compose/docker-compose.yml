@@ -377,7 +377,7 @@ services:
   # ==========================================
 
   l2_proxy:
-    image: l2_proxy:comnetsemu
+    image: proxy_l2:comnetsemu
     container_name: l2_proxy
     hostname: l2_proxy
     cap_add:
