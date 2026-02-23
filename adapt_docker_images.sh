@@ -14,11 +14,11 @@ build_image() {
   fi
 }
 # old images not needed spgwu ryu flexric flexric_oai flexric_srs
-IMAGES=(ext_dn mysql amf smf nrf gnb ue ausf udm udr upf cu du nssf cuup cucp pcf onos proxy_l2 comnetsemu_flexric) # flexric_test
+IMAGES=(ext_dn mysql amf smf nrf ausf udm udr upf nssf pcf gnb ue cu du cuup cucp  onos proxy_l2 comnetsemu_flexric) # flexric_test
 DOCKERFILE_DIR=./dockerfiles
 
 for image in "${IMAGES[@]}"; do
-  build_image "$image":comnetsemu "$DOCKERFILE_DIR/Dockerfile.$image" "$1"
+  build_image "$image":comnetsemu "$DOCKERFILE_DIR/Dockerfile.$image" "$1" 
   echo "$image"
 done
 
