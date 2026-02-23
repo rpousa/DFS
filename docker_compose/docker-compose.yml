@@ -21,8 +21,8 @@ services:
       - MYSQL_ROOT_PASSWORD=linux
       - MYSQL_DATABASE=oai_db
     command: >
-      sh -c "mysqld --user=mysql --initialize-insecure --init-file=/docker-entrypoint-initdb.d/oai_db.sql &&
-             mysqld --user=mysql"
+      sh -c "mysqld -u test --initialize-insecure --init-file=/docker-entrypoint-initdb.d/oai_db.sql &&
+             mysqld -u test"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
@@ -235,29 +235,29 @@ services:
              sleep 5 &&
              /tmp/trfgen_entrypoint.sh"
 
-  upf_1:
-    image: upf_1:comnetsemu
-    container_name: upf_1
-    hostname: upf_1
-    cap_add:
-      - SYS_NICE
-    cap_drop:
-      - ALL
-    networks:
-      core_net:
-        ipv4_address: 192.168.71.160
-      ext_net:
-        ipv4_address: 192.168.72.160
-    volumes:
-      - ./configs/upf_1:/openair-upf/etc
-      - ./logs/upf_1:/openair-upf/logs
-    depends_on:
-      - nrf
-      - smf
-    command: >
-      sh -c "sysctl -w net.ipv6.conf.all.accept_ra=2 &&
-             sleep 10 &&
-             /openair-upf/bin/oai_upf -c /openair-upf/etc/config.yaml -o"
+  # upf_1:
+  #   image: upf_1:comnetsemu
+  #   container_name: upf_1
+  #   hostname: upf_1
+  #   cap_add:
+  #     - SYS_NICE
+  #   cap_drop:
+  #     - ALL
+  #   networks:
+  #     core_net:
+  #       ipv4_address: 192.168.71.160
+  #     ext_net:
+  #       ipv4_address: 192.168.72.160
+  #   volumes:
+  #     - ./configs/upf_1:/openair-upf/etc
+  #     - ./logs/upf_1:/openair-upf/logs
+  #   depends_on:
+  #     - nrf
+  #     - smf
+  #   command: >
+  #     sh -c "sysctl -w net.ipv6.conf.all.accept_ra=2 &&
+  #            sleep 10 &&
+  #            /openair-upf/bin/oai_upf -c /openair-upf/etc/config.yaml -o"
 
   ext_dn_1:
     image: ext_dn:comnetsemu
