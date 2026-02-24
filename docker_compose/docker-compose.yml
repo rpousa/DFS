@@ -359,7 +359,7 @@ services:
       - ./configs/cucp:/opt/oai-gnb/etc
       - ./logs/cucp:/opt/oai-gnb/logs
     environment:
-      - USE_ADDITIONAL_OPTIONS: >
+      - USE_ADDITIONAL_OPTIONS: >-
                                --e2_agent.near_ric_ip_addr 192.168.71.150 --e2_agent.sm_dir /usr/local/lib/flexric/ 
                                --telnetsrv --telnetsrv.shrmod ci -E --gNBs.[0].enable_sdap 1
                                --gNBs.[0].gNB_ID  0xe00 --gNBs.[0].E1_INTERFACE.[0].type cp
@@ -389,8 +389,8 @@ services:
       - ./configs/cuup:/opt/oai-gnb/etc
       - ./logs/cuup:/opt/oai-gnb/logs
     environment:
-      - USE_ADDITIONAL_OPTIONS: >
-                               "--e2_agent.near_ric_ip_addr 192.168.71.150 --e2_agent.sm_dir /usr/local/lib/flexric/ 
+      - USE_ADDITIONAL_OPTIONS: >-
+                               --e2_agent.near_ric_ip_addr 192.168.71.150 --e2_agent.sm_dir /usr/local/lib/flexric/ 
                                --telnetsrv --telnetsrv.shrmod ci
                                -E --sa --log_config.global_log_options level,nocolor,time
                                --gNBs.[0].gNB_ID  0xe00 --gNBs.[0].gNB_CU_UP_ID  0xe00
@@ -399,7 +399,7 @@ services:
                                --gNBs.[0].E1_INTERFACE.[0].ipv4_cuup 192.168.71.143
                                --gNBs.[0].tr_s_preference f1 --gNBs.[0].local_s_portd 2153 
                                --gNBs.[0].local_s_address 192.168.71.143 --gNBs.[0].remote_s_address 0.0.0.0
-                               --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.71.132"
+                               --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.71.132
     depends_on:
       - cucp
       - upf
@@ -423,8 +423,8 @@ services:
       - ./configs/du_1:/opt/oai-gnb/etc
       - ./logs/du_1:/opt/oai-gnb/logs
     environment:
-      - USE_ADDITIONAL_OPTIONS: >
-                                "--e2_agent.near_ric_ip_addr 192.168.71.150 --e2_agent.sm_dir /usr/local/lib/flexric/ 
+      - USE_ADDITIONAL_OPTIONS: >-
+                                --e2_agent.near_ric_ip_addr 192.168.71.150 --e2_agent.sm_dir /usr/local/lib/flexric/ 
                                 --telnetsrv --telnetsrv.shrmod ci
                                 -E --sa --nfapi VNF --emulate-l1 --Active_gNBs gNB-OAI
                                 --gNBs.[0].gNB_ID 0xe00 --gNBs.[0].gNB_DU_ID 0xe00 --gNBs.[0].gNB_name gNB-OAI
@@ -442,7 +442,7 @@ services:
                                 --MACRLCs.[0].tr_s_preference nfapi
                                 --MACRLCs.[0].pusch_TargetSNRx10 150
                                 --MACRLCs.[0].pucch_TargetSNRx10 200
-                                --log_config.phy_log_level info"
+                                --log_config.phy_log_level info
     depends_on:
       - cucp
       - cuup
@@ -519,15 +519,15 @@ services:
       - ./ue_volumes/openair1:/opt/oai-nr-ue/openair1/
       - ./logs/ue_1:/opt/oai-nr-ue/logs
     environment:
-      - USE_ADDITIONAL_OPTIONS: >
-                                "-E --nfapi STANDALONE_PNF --node-number 2 --sa --emulate-l1
+      - USE_ADDITIONAL_OPTIONS: >-
+                                -E --nfapi STANDALONE_PNF --node-number 2 --sa --emulate-l1
                                 -r 106 --numerology 1 -C 3619200000 --ssb 516
                                 --uicc0.nssai_sst 1 --uicc0.nssai_sd 000002 --uicc0.imsi 208950000000130 --uicc0.dnn oai.2
                                 --MACRLCs.[0].remote_n_address 192.168.80.163
                                 --MACRLCs.[0].local_n_address 192.168.80.170
                                 --MACRLCs.[0].local_n_portc 3612 --MACRLCs.[0].remote_n_portc 3611
-                                 --MACRLCs.[0].local_n_portd 3612 --MACRLCs.[0].remote_n_portd 3611"
-      - NR_AWGN_RESULTS_DIR:  "/opt/oai-nr-ue/openair1/SIMULATION/NR_PHY/BLER_SIMULATIONS/AWGN/AWGN_RESULTS"
+                                 --MACRLCs.[0].local_n_portd 3612 --MACRLCs.[0].remote_n_portd 3611
+      - NR_AWGN_RESULTS_DIR=/opt/oai-nr-ue/openair1/SIMULATION/NR_PHY/BLER_SIMULATIONS/AWGN/AWGN_RESULTS
     depends_on:
       - l2_proxy
       - flexric
