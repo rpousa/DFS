@@ -245,7 +245,7 @@ services:
       - nrf
       - smf
     command: >
-      sh -c "sleeop 2 &&
+      sh -c "sleep 2 &&
              ip link set eth0 down &&
              ip link set eth0 name upf-core &&
              ip link set upf-core up &&
