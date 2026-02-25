@@ -171,6 +171,11 @@ echo ""
 # Stage 4: RAN Components
 print_stage "Stage 4/6: Starting RAN Components..."
 
+print_info "Starting FlexRIC..."
+docker-compose up -d flexric
+wait_for_service "flexric" 30
+sleep 10
+
 print_info "Starting CU-CP..."
 docker-compose up -d cucp
 wait_for_service "cucp" 30
@@ -189,11 +194,6 @@ echo ""
 
 # Stage 5: FlexRIC and L2 Proxy
 print_stage "Stage 5/6: Starting FlexRIC and L2 Proxy..."
-
-print_info "Starting FlexRIC..."
-docker-compose up -d flexric
-wait_for_service "flexric" 30
-sleep 10
 
 print_info "Starting L2 Proxy..."
 docker-compose up -d l2_proxy

@@ -484,7 +484,7 @@ services:
       - ./logs/flexric:/usr/local/logs
       - ./xapps:/usr/local/xapps
     depends_on:
-      - du_1
+      - amf
     command: >
       sh -c "sleep 30 &&
              /usr/local/bin/ric_watchdog.sh"
@@ -512,7 +512,6 @@ services:
       - du_1
     command: >
       sh -c "sleep 5 &&
-             cd /opt/proxy &&
              ./proxy 1 --nr --max-seconds 500000 192.168.80.151 192.168.80.163 192.168.80.170"
 
   # ==========================================
