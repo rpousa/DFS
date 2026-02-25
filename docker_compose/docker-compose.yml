@@ -552,10 +552,10 @@ services:
        --MACRLCs.[0].remote_n_portc 3611 
        --MACRLCs.[0].local_n_portd 3612 
        --MACRLCs.[0].remote_n_portd 3611
-      #-r 106 
-      #--numerology 1 
-      #-C 3619200000 
-      #--ssb 516
+       -r 106 
+       --numerology 1 
+       -C 3619200000 
+       --ssb 516
     devices:
       - /dev/net/tun:/dev/net/tun
     depends_on:
