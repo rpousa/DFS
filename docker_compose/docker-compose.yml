@@ -563,30 +563,7 @@ services:
       - flexric
     command: >
       sh -c "sleep 5 &&
-      /opt/oai-nr-ue/bin/nr-uesoftmodem
-      -O /opt/oai-nr-ue/etc/nr-ue.conf
-      --nfapi STANDALONE_PNF
-      --node-number 2
-      --sa
-      --emulate-l1
-      -r 106
-      --numerology 1
-      -C 3619200000
-      --ssb 516
-      --uicc0.imsi 208950000000130
-      --uicc0.nssai_sst 1
-      --uicc0.nssai_sd 000002
-      --uicc0.dnn oai.2
-      --MACRLCs.[0].remote_n_address 192.168.80.163
-      --MACRLCs.[0].local_n_address 192.168.80.170
-      --MACRLCs.[0].local_n_portc 3612
-      --MACRLCs.[0].remote_n_portc 3611
-      --MACRLCs.[0].local_n_portd 3612
-      --MACRLCs.[0].remote_n_portd 3611
-      --log_config.global_log_options level,time,thread_id,nocolor
-      "
-    #  2>&1 | tee /opt/oai-nr-ue/logs/ue.log
-    #       /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem 
+            /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem" 
 
   # ==========================================
   # ONOS Controller (Optional)
