@@ -203,6 +203,7 @@ services:
     hostname: ausf
     cap_add:
       - NET_ADMIN
+      - NET_RAW
       - SYS_NICE
     networks:
       core_net:
@@ -355,6 +356,11 @@ services:
     networks:
       core_net:
         ipv4_address: 192.168.71.140
+      f1c_net:
+        ipv4_address: 192.168.73.140
+      e1_net:
+        ipv4_address: 192.168.75.140
+
     volumes:
       - ./configs/cucp/gnb-cucp.sa.f1.conf:/opt/oai-gnb/etc/gnb.conf
       - ./logs/cucp:/opt/oai-gnb/logs
@@ -363,12 +369,14 @@ services:
                                --e2_agent.near_ric_ip_addr 192.168.71.150 --e2_agent.sm_dir /usr/local/lib/flexric/ 
                                --telnetsrv --telnetsrv.shrmod ci -E --gNBs.[0].enable_sdap 1
                                --gNBs.[0].gNB_ID  0xe00 --gNBs.[0].E1_INTERFACE.[0].type cp
-                               --gNBs.[0].E1_INTERFACE.[0].ipv4_cucp 192.168.71.140 
+                               --gNBs.[0].E1_INTERFACE.[0].ipv4_cucp 192.168.75.140 
                                --gNBs.[0].tr_s_preference f1 
                                --gNBs.[0].amf_ip_address.[0].ipv4 192.168.71.132
-                               --gNBs.[0].local_s_address 192.168.71.140 
+                               --gNBs.[0].local_s_address 192.168.73.140 
                                --gNBs.[0].remote_s_address 0.0.0.0
-                               --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.71.140 
+                               --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.71.140/26
+                               --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.71.140/26  
+ 
     depends_on:
       - amf
     command: >
@@ -385,6 +393,10 @@ services:
     networks:
       core_net:
         ipv4_address: 192.168.71.143
+      e1_net:
+        ipv4_address: 192.168.75.143
+      f1u_net:
+        ipv4_address: 192.168.74.143
     volumes:
       - ./configs/cuup/gnb-cuup.sa.f1.conf:/opt/oai-gnb/etc/gnb.conf
       - ./logs/cuup:/opt/oai-gnb/logs
@@ -395,12 +407,12 @@ services:
                                -E --sa --log_config.global_log_options level,nocolor,time
                                --gNBs.[0].gNB_ID  0xe00 --gNBs.[0].gNB_CU_UP_ID  0xe00
                                --gNBs.[0].E1_INTERFACE.[0].type up
-                               --gNBs.[0].E1_INTERFACE.[0].ipv4_cucp 192.168.71.140
-                               --gNBs.[0].E1_INTERFACE.[0].ipv4_cuup 192.168.71.143
+                               --gNBs.[0].E1_INTERFACE.[0].ipv4_cucp 192.168.75.140
+                               --gNBs.[0].E1_INTERFACE.[0].ipv4_cuup 192.168.75.143
                                --gNBs.[0].tr_s_preference f1 --gNBs.[0].local_s_portd 2153 
-                               --gNBs.[0].local_s_address 192.168.71.143 --gNBs.[0].remote_s_address 0.0.0.0
-                               --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.71.132
-                               --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.71.134
+                               --gNBs.[0].local_s_address 192.168.74.143 --gNBs.[0].remote_s_address 0.0.0.0
+                               --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.71.143/26
+                               --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.71.143/26
     depends_on:
       - cucp
       - upf
@@ -416,8 +428,10 @@ services:
       - SYS_NICE
       - NET_ADMIN
     networks:
-      core_net:
-        ipv4_address: 192.168.71.151
+      f1c_net:
+        ipv4_address: 192.168.73.151
+      f1u_net:
+        ipv4_address: 192.168.74.151
       ran_net:
         ipv4_address: 192.168.80.151
     volumes:
@@ -431,8 +445,9 @@ services:
                                 --gNBs.[0].gNB_ID 0xe00 --gNBs.[0].gNB_DU_ID 0xe00 --gNBs.[0].gNB_name gNB-OAI
                                 --gNBs.[0].nr_cellid 11111111
                                 --gNBs.[0].servingCellConfigCommon.[0].physCellId 1
-                                --MACRLCs.[0].local_n_address 192.168.71.151
+                                --MACRLCs.[0].local_n_address 192.168.73.151
                                 --MACRLCs.[0].remote_n_address 192.168.71.140
+                                --MACRLCs.[0].local_n_address_f1u 192.168.74.151
                                 --MACRLCs.[0].remote_n_portd 2153
                                 --MACRLCs.[0].local_s_address 192.168.80.151
                                 --MACRLCs.[0].remote_s_address 192.168.80.163
@@ -577,6 +592,33 @@ networks:
     driver_opts:
       com.docker.network.bridge.name: br-ext
 
+  f1c_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.73.128/26
+          gateway: 192.168.73.129
+    driver_opts:
+      com.docker.network.bridge.name: br-f1c
+  
+  f1u_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.74.128/26
+          gateway: 192.168.74.129
+    driver_opts:
+      com.docker.network.bridge.name: br-f1u
+
+  e1_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.75.128/26
+          gateway: 192.168.75.129
+    driver_opts:
+      com.docker.network.bridge.name: br-e1
+  
   ran_net:
     driver: bridge
     ipam:
