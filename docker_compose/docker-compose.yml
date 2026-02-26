@@ -542,10 +542,10 @@ services:
        --node-number 2 
        --sa 
        --emulate-l1   
-       --uicc0.pdu_sessions.id 1
-       --uicc0.pdu_sessions.nssai_sst 1 
-       --uicc0.pdu_sessions.nssai_sd 000002 
-       --uicc0.pdu_sessions.dnn oai.2
+       --uicc0.pdu_sessions.[0].id 1
+       --uicc0.pdu_sessions.[0].nssai_sst 1 
+       --uicc0.pdu_sessions.[0].nssai_sd 000002 
+       --uicc0.pdu_sessions.[0].dnn oai.2
        --uicc0.imsi 208950000000130 
        --MACRLCs.[0].tr_n_preference nfapi
        --MACRLCs.[0].remote_n_address 192.168.80.163 
@@ -557,8 +557,7 @@ services:
        -r 106 
        --numerology 1 
        -C 3619200000 
-       --ssb 516
-       
+       --ssb 516      
     devices:
       - /dev/net/tun:/dev/net/tun
     depends_on:
@@ -566,7 +565,7 @@ services:
       - flexric
     command: >
       sh -c "sleep 5 &&
-            /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem" 
+            /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem -v USE_ADDITIONAL_OPTIONS" 
 
   # ==========================================
   # ONOS Controller (Optional)
