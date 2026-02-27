@@ -15,10 +15,6 @@ services:
     networks:
       core_net:
         ipv4_address: 192.168.71.131
-    #    interface_name: mysql-sw1
-    # volumes:
-    #   - mysql_data:/var/lib/mysql
-    #   - ./configs/mysql:/docker-entrypoint-initdb.d
     environment:
       - MYSQL_ROOT_PASSWORD=linux
       - MYSQL_DATABASE=oai_db
@@ -44,7 +40,6 @@ services:
     networks:
       core_net:
         ipv4_address: 192.168.71.130
-    #    interface_name: nrf-sw1
     volumes:
       - ./configs/nrf:/openair-nrf/etc
       - ./logs/nrf:/openair-nrf/logs
@@ -68,7 +63,6 @@ services:
     networks:
       core_net:
         ipv4_address: 192.168.71.133
-    #    interface_name: smf-sw1
     volumes:
       - ./configs/smf:/openair-smf/etc
       - ./logs/smf:/openair-smf/logs
@@ -91,7 +85,6 @@ services:
     networks:
       core_net:
         ipv4_address: 192.168.71.139
-    #    interface_name: pcf-sw1
     volumes:
       - ./configs/pcf:/openair-pcf/etc
       - ./logs/pcf:/openair-pcf/logs
@@ -114,7 +107,6 @@ services:
     networks:
       core_net:
         ipv4_address: 192.168.71.135
-    #    interface_name: nssf-sw1
     volumes:
       - ./configs/nssf:/openair-nssf/etc
       - ./logs/nssf:/openair-nssf/logs
@@ -137,7 +129,6 @@ services:
     networks:
       core_net:
         ipv4_address: 192.168.71.132
-    #    interface_name: amf-sw1
     volumes:
       - ./configs/amf:/openair-amf/etc
       - ./logs/amf:/openair-amf/logs
@@ -161,7 +152,6 @@ services:
     networks:
       core_net:
         ipv4_address: 192.168.71.136
-    #    interface_name: udm-sw1
     volumes:
       - ./configs/udm:/openair-udm/etc
       - ./logs/udm:/openair-udm/logs
@@ -184,7 +174,6 @@ services:
     networks:
       core_net:
         ipv4_address: 192.168.71.137
-    #    interface_name: udr-sw1
     volumes:
       - ./configs/udr:/openair-udr/etc
       - ./logs/udr:/openair-udr/logs
@@ -208,7 +197,6 @@ services:
     networks:
       core_net:
         ipv4_address: 192.168.71.138
-    #    interface_name: ausf-sw1
     volumes:
       - ./configs/ausf:/openair-ausf/etc
       - ./logs/ausf:/openair-ausf/logs
@@ -235,10 +223,8 @@ services:
     networks:
       core_net:
         ipv4_address: 192.168.71.134
-    #    interface_name: upf-core
       ext_net:
         ipv4_address: 192.168.72.134
-    #    interface_name: upf-ext_dn
     volumes:
       - ./configs/upf:/openair-upf/etc
       - ./logs/upf:/openair-upf/logs
@@ -267,7 +253,6 @@ services:
     networks:
       ext_net:
         ipv4_address: 192.168.72.135
-    #    interface_name: ext_dn-upf
     environment:
       - EBPF_GW_SETUP=yes
       - EBPF_GW_N6_IP_ADDR=192.168.72.135
@@ -449,15 +434,7 @@ services:
                                 --MACRLCs.[0].remote_n_address 192.168.71.140
                                 --MACRLCs.[0].local_n_address_f1u 192.168.74.151
                                 --MACRLCs.[0].remote_n_portd 2153
-                                --MACRLCs.[0].local_s_address 192.168.80.151
-                                --MACRLCs.[0].remote_s_address 192.168.80.163
-                                --MACRLCs.[0].local_s_portc 50601
-                                --MACRLCs.[0].remote_s_portc 50600
-                                --MACRLCs.[0].local_s_portd 50611
-                                --MACRLCs.[0].remote_s_portd 50610
-                                --MACRLCs.[0].tr_s_preference nfapi
-                                --MACRLCs.[0].pusch_TargetSNRx10 150
-                                --MACRLCs.[0].pucch_TargetSNRx10 200
+                                --rfsimulator.serveraddr 192.168.80.170
                                 --log_config.phy_log_level info
     depends_on:
       - cucp
@@ -490,31 +467,6 @@ services:
              /usr/local/bin/ric_watchdog.sh"
 
   # ==========================================
-  # L2 Proxy
-  # ==========================================
-
-  l2_proxy:
-    image: proxy_l2:comnetsemu
-    container_name: l2_proxy
-    hostname: l2_proxy
-    cap_add:
-      - SYS_NICE
-      - NET_ADMIN
-    networks:
-      ran_net:
-        ipv4_address: 192.168.80.163
-    environment:
-      - NFAPI_TRACE_LEVEL=info
-    volumes:
-      - ./configs/l2_proxy:/opt/proxy
-      - ./logs/l2_proxy:/opt/proxy/logs
-    depends_on:
-      - du_1
-    command: >
-      sh -c "sleep 5 &&
-             ./proxy 1 --nr --max-seconds 500000 192.168.80.151 192.168.80.163 192.168.80.170"
-
-  # ==========================================
   # User Equipment (UE)
   # ==========================================
 
@@ -530,47 +482,24 @@ services:
       ran_net:
         ipv4_address: 192.168.80.170
     volumes:
-      - ./ue_volumes/nrue.uicc_l2.conf:/opt/oai-nr-ue/etc/nr-ue.conf
+      - ./ue_volumes/nrue.rfsim.conf:/opt/oai-nr-ue/etc/nr-ue.conf
       - ./ue_volumes/ue_entrypoint.sh:/opt/oai-nr-ue/bin/entrypoint.sh
-      - ./ue_volumes/openair1:/opt/oai-nr-ue/openair1/
+    #  - ./ue_volumes/openair1:/opt/oai-nr-ue/openair1/
       - ./logs/ue_1:/opt/oai-nr-ue/logs
     environment:
       OPENAIR_DIR: /opt/oai-nr-ue
       NR_AWGN_RESULTS_DIR : /opt/oai-nr-ue/openair1/SIMULATION/NR_PHY/BLER_SIMULATIONS/AWGN/AWGN_RESULTS
-      USE_ADDITIONAL_OPTIONS: >-
-       --nfapi STANDALONE_PNF 
-       --node-number 2 
-       --sa 
-       --emulate-l1
-       --ssb 516 
-       --numerology 1
-       -C 3619200000 
-       -r 106    
-      #  --uicc0.imsi 208950000000130 
-      #  --MACRLCs.[0].tr_n_preference nfapi
-      #  --MACRLCs.[0].remote_n_address 192.168.80.163 
-      #  --MACRLCs.[0].local_n_address 192.168.80.170 
-      #  --MACRLCs.[0].local_n_portc 3612 
-      #  --MACRLCs.[0].remote_n_portc 3611 
-      #  --MACRLCs.[0].local_n_portd 3612 
-      #  --MACRLCs.[0].remote_n_portd 3611
-      #  
-      #   
-      #  
-      #       
-      # --uicc0.pdu_sessions.[0].id 1
-      # --uicc0.pdu_sessions.[0].nssai_sst 1 
-      # --uicc0.pdu_sessions.[0].nssai_sd 000002 
-      # --uicc0.pdu_sessions.[0].dnn oai.2
-      
+      USE_ADDITIONAL_OPTIONS: -E --sa --rfsim -r 106 --numerology 1 -C 3619200000 --ssb 516 --rfsimulator.serveraddr server --rfsimulator.options chanmod
     devices:
       - /dev/net/tun:/dev/net/tun
     depends_on:
       - l2_proxy
       - flexric
     command: >
-      sh -c "sleep 5 &&
-            /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem " 
+       sh -c "
+              ./opt/oai-nr-ue/bin/nr-uesoftmodem --help"
+    #  sh -c "sleep 5 &&
+    #        /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem " 
 
   # ==========================================
   # ONOS Controller (Optional)

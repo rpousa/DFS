@@ -138,14 +138,13 @@ docker-compose up --no-start
 echo ""
 
 # Stage 1: MySQL
-print_stage "Stage 1/6: Starting MySQL database..."
+print_stage "Stage 1/5: Starting MySQL database..."
 docker-compose up -d mysql
 wait_for_service "mysql" 30
-sleep 5
 echo ""
 
 # Stage 2: Core Network Functions
-print_stage "Stage 2/6: Starting 5G Core Network Functions..."
+print_stage "Stage 2/5: Starting 5G Core Network Functions..."
 docker-compose up -d nrf smf pcf nssf amf udm udr ausf
 
 # Wait for critical services
@@ -154,22 +153,20 @@ wait_for_service "amf" 30
 wait_for_service "smf" 30
 
 print_info "Waiting for services to initialize..."
-sleep 10
 echo ""
 
 # Stage 3: User Plane Functions
-print_stage "Stage 3/6: Starting UPF and External DN..."
+print_stage "Stage 3/5: Starting UPF and External DN..."
 docker-compose up -d upf ext_dn 
 
 wait_for_service "upf" 30
 wait_for_service "ext_dn" 30
 
 print_info "Waiting for UPF initialization..."
-sleep 10
 echo ""
 
 # Stage 4: RAN Components
-print_stage "Stage 4/6: Starting RAN Components..."
+print_stage "Stage 4/5: Starting RAN Components..."
 
 print_info "Starting FlexRIC..."
 docker-compose up -d flexric
@@ -179,33 +176,23 @@ sleep 10
 print_info "Starting CU-CP..."
 docker-compose up -d cucp
 wait_for_service "cucp" 30
-sleep 10
+
 
 print_info "Starting CU-UP..."
 docker-compose up -d cuup
 wait_for_service "cuup" 30
-sleep 10
+sleep 2
 
 print_info "Starting DU..."
 docker-compose up -d du_1
 wait_for_service "du_1" 30
-sleep 10
 echo ""
 
-# Stage 5: FlexRIC and L2 Proxy
-print_stage "Stage 5/6: Starting FlexRIC and L2 Proxy..."
 
-print_info "Starting L2 Proxy..."
-docker-compose up -d l2_proxy
-wait_for_service "l2_proxy" 30
-sleep 10
-echo ""
-
-# Stage 6: User Equipment
-print_stage "Stage 6/6: Starting User Equipment..."
+# Stage 5: User Equipment
+print_stage "Stage 5/5: Starting User Equipment..."
 docker-compose up -d ue_1
 wait_for_service "ue_1" 30
-sleep 15
 echo ""
 
 # Final status check
