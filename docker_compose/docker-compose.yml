@@ -493,7 +493,6 @@ services:
     devices:
       - /dev/net/tun:/dev/net/tun
     depends_on:
-      - l2_proxy
       - flexric
     command: >
        sh -c "
