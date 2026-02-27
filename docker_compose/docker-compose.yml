@@ -496,7 +496,7 @@ services:
       - flexric
     command: >
        sh -c "
-              ./opt/oai-nr-ue/bin/nr-uesoftmodem --help"
+              /opt/oai-nr-ue/bin/nr-uesoftmodem --help"
     #  sh -c "sleep 5 &&
     #        /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem " 
 
