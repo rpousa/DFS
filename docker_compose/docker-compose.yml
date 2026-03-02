@@ -439,7 +439,7 @@ services:
                                 --MACRLCs.[0].local_n_address_f1u 192.168.74.151
                                 --MACRLCs.[0].remote_n_portd 2153
                                 --rfsimulator.[0].serveraddr 192.168.80.170
-                                --log_config.phy_log_level info
+                                --log_config.phy_log_level debug
     depends_on:
       - cucp
       - cuup
