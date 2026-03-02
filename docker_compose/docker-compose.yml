@@ -432,7 +432,7 @@ services:
                                 --telnetsrv --telnetsrv.shrmod ci
                                 -E --rfsim --Active_gNBs gNB-OAI
                                 --gNBs.[0].gNB_ID 0xe00 --gNBs.[0].gNB_DU_ID 0xe00 --gNBs.[0].gNB_name gNB-OAI
-                                --gNBs.[0].nr_cellid 11111111
+                                --gNBs.[0].nr_cellid 11111111 --gNBs.[0].min_rxtxtime 6
                                 --gNBs.[0].servingCellConfigCommon.[0].physCellId 1
                                 --MACRLCs.[0].local_n_address 192.168.73.151
                                 --MACRLCs.[0].remote_n_address 192.168.73.140
