@@ -430,7 +430,7 @@ services:
       USE_ADDITIONAL_OPTIONS: >-
                                 --e2_agent.near_ric_ip_addr 192.168.71.150 --e2_agent.sm_dir /usr/local/lib/flexric/ 
                                 --telnetsrv --telnetsrv.shrmod ci
-                                -E --sa --nfapi VNF --emulate-l1 --Active_gNBs gNB-OAI
+                                -E --rfsim --Active_gNBs gNB-OAI
                                 --gNBs.[0].gNB_ID 0xe00 --gNBs.[0].gNB_DU_ID 0xe00 --gNBs.[0].gNB_name gNB-OAI
                                 --gNBs.[0].nr_cellid 11111111
                                 --gNBs.[0].servingCellConfigCommon.[0].physCellId 1
