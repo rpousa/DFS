@@ -276,11 +276,9 @@ services:
       - upf
     command: >
       sh -c "ifconfig eth0 mtu 1460 &&
-             ip link set eth0 down &&
-             ip link set eth0 name ext_dn-upf &&
+             ip link add ext_dn-upf type dummy &&
+             ifconfig ext_dn-upf mtu 1460 && 
              ip link set ext_dn-upf up &&
-             ip link set eth0 up &&
-             ifconfig eth0 mtu 1460 &&
              sleep 5 &&
              /tmp/trfgen_entrypoint.sh"
 
