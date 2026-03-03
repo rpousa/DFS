@@ -220,6 +220,7 @@ services:
     cap_add:
       - NET_ADMIN
       - SYS_NICE
+    privileged: true
     networks:
       core_net:
         ipv4_address: 192.168.71.134
