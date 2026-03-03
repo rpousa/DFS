@@ -254,6 +254,10 @@ services:
     networks:
       ext_net:
         ipv4_address: 192.168.72.135
+      n3_net:
+        ipv4_address: 192.168.100.135
+      sgi_net:
+        ipv4_address: 172.17.0.9
     privileged: true
     devices:
       - /dev/net/tun:/dev/net/tun
@@ -265,9 +269,9 @@ services:
       - GW_SGI_IP_ADDR=172.17.0.9
       - N3_IF_NAME=eth1
       - GW_N3_IP_ADDR=192.168.100.135
-      - UE_IP_ADDRESS_POOL_1=12.1.1.0/24
-      - UE_IP_ADDRESS_POOL_2=13.1.1.0/24
-      - UE_IP_ADDRESS_POOL_3=14.1.1.0/24
+      - UE_IP_ADDRESS_POOL_1=12.1.1.0
+      - UE_IP_ADDRESS_POOL_2=13.1.1.0
+      - UE_IP_ADDRESS_POOL_3=14.1.1.0
       - SGI_DEMO_OAI_ADDR=172.17.0.1
       - N6_UPF_IP_ADDR=192.168.72.134
     volumes:
@@ -275,18 +279,20 @@ services:
     depends_on:
       - upf
     command: >
-      sh -c "ifconfig eth0 mtu 1460 &&
-             ip link add ext_dn-upf type dummy &&
-             ifconfig ext_dn-upf mtu 1460 && 
-             ip link set ext_dn-upf up &&
-             ip link add eth1 type dummy &&
-             ifconfig eth1 mtu 1460 && 
-             ip link set eth1 up &&
-             ip link add eth2 type dummy &&
-             ifconfig eth2 mtu 1460 && 
-             ip link set eth2 up &&
-             sleep 5 &&
-             /tmp/trfgen_entrypoint.sh"
+      sh -c "sleep 5 &&
+           /tmp/trfgen_entrypoint.sh"
+# sh -c "ifconfig eth0 mtu 1460 &&
+#        ip link add ext_dn-upf type dummy &&
+#        ifconfig ext_dn-upf mtu 1460 && 
+#        ip link set ext_dn-upf up &&
+#        ip link add eth1 type dummy &&
+#        ifconfig eth1 mtu 1460 && 
+#        ip link set eth1 up &&
+#        ip link add eth2 type dummy &&
+#        ifconfig eth2 mtu 1460 && 
+#        ip link set eth2 up &&
+#        sleep 5 &&
+#        /tmp/trfgen_entrypoint.sh"
 
   # upf_1:
   #   image: upf_1:comnetsemu
@@ -599,6 +605,24 @@ networks:
           gateway: 192.168.80.129
     driver_opts:
       com.docker.network.bridge.name: br-ran
+  
+  n3_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.100.128/26
+          gateway: 192.168.100.129
+    driver_opts:
+      com.docker.network.bridge.name: br-n3
+  
+  sgi_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.17.0.0/24
+          gateway: 172.17.0.1
+    driver_opts:
+      com.docker.network.bridge.name: br-sgi
 
 # ==========================================
 # Volumes
