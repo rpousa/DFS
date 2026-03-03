@@ -280,7 +280,8 @@ services:
       - upf
     command: >
       sh -c "sleep 5 &&
-           /tmp/trfgen_entrypoint.sh"
+           /tmp/trfgen_entrypoint.sh &&
+           sleep infinity"
            
 # sh -c "ifconfig eth0 mtu 1460 &&
 #        ip link add ext_dn-upf type dummy &&
