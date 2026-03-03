@@ -279,8 +279,8 @@ services:
              ip link set eth0 down &&
              ip link set eth0 name ext_dn-upf &&
              ip link set ext_dn-upf up &&
-             ifconfig eth0 mtu 1460 &&
              ip link set eth0 up &&
+             ifconfig eth0 mtu 1460 &&
              sleep 5 &&
              /tmp/trfgen_entrypoint.sh"
 
