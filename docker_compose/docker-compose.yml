@@ -279,6 +279,9 @@ services:
              ip link add ext_dn-upf type dummy &&
              ifconfig ext_dn-upf mtu 1460 && 
              ip link set ext_dn-upf up &&
+             ip link add eth1 type dummy &&
+             ifconfig eth1 mtu 1460 && 
+             ip link set eth1 up &&
              sleep 5 &&
              /tmp/trfgen_entrypoint.sh"
 
