@@ -254,6 +254,7 @@ services:
     networks:
       ext_net:
         ipv4_address: 192.168.72.135
+    privileged: true
     devices:
       - /dev/net/tun:/dev/net/tun
     environment:
