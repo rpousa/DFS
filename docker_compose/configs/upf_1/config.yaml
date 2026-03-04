@@ -132,11 +132,11 @@ snssais:
   - &embb_slice1
     sst: 1
     sd: 000001
-  - &embb_slice2
-    sst: 1
-    sd: 000002  # in hex
   - &urllc_slice
-    sst: 2 
+    sst: 2
+    sd: 000001  # in hex
+  - &miot_slice
+    sst: 3 
     sd: 000001  # in hex
 
 ############## NF-specific configuration
@@ -169,8 +169,8 @@ amf:
       tac: 0x0001
       nssai:
         - *embb_slice1
-        - *embb_slice2
         - *urllc_slice
+        - *miot_slice
   supported_integrity_algorithms:
     - "NIA0"
     - "NIA1"
@@ -212,12 +212,12 @@ smf:
       - sNssai: *embb_slice1
         dnnSmfInfoList:
           - dnn: "oai"
-      - sNssai: *embb_slice2
-        dnnSmfInfoList:
-          - dnn: "oai.2"
       - sNssai: *urllc_slice
         dnnSmfInfoList:
-          - dnn: "oai.3"
+          - dnn: "oai.2"
+      - sNssai: *miot_slice
+        dnnSmfInfoList:
+          - dnn: "oai.2"
 
   # the DNN you configure here should be configured in "dnns"
   local_subscription_infos:
@@ -227,18 +227,18 @@ smf:
         5qi: 9
         session_ambr_ul: "1Mbps"
         session_ambr_dl: "2Mbps"
-    - single_nssai: *embb_slice2
+    - single_nssai: *urllc_slice
       dnn: "oai.2"
       qos_profile:
-        5qi: 9
-        session_ambr_ul: "2Mbps"
-        session_ambr_dl: "3Mbps"
-    - single_nssai: *urllc_slice
-      dnn: "oai.3"
-      qos_profile:
         5qi: 86
-        session_ambr_ul: "3Mbps"
-        session_ambr_dl: "1Mbps"
+        session_ambr_ul: "10Mbps"
+        session_ambr_dl: "10Mbps"
+    - single_nssai: *miot_slice
+      dnn: "oai.2"
+      qos_profile:
+        5qi: 76
+        session_ambr_ul: "20Mbps"
+        session_ambr_dl: "10Mbps"
 
 upf:
   support_features:
@@ -256,12 +256,12 @@ upf:
       - sNssai: *embb_slice1
         dnnUpfInfoList:
           - dnn: "oai"
-      - sNssai: *embb_slice2
-        dnnUpfInfoList:
-          - dnn: "oai.2"
       - sNssai: *urllc_slice
         dnnUpfInfoList:
-          - dnn: "oai.3"
+          - dnn: "oai.2"
+      - sNssai: *miot_slice
+        dnnUpfInfoList:
+          - dnn: "oai.2"
 
 ## DNN configuration
 dnns:
