@@ -466,7 +466,7 @@ services:
                                 --MACRLCs.[0].local_n_address_f1u 192.168.74.151
                                 --MACRLCs.[0].remote_n_portd 2153
                                 --gNBs.[0].TIMERS.t300 1000
-                              #  --rfsimulator.[0].serveraddr server
+                                --rfsimulator.[0].serveraddr server
     depends_on:
       - cucp
       - cuup
