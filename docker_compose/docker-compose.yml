@@ -18,6 +18,8 @@ services:
     environment:
       - MYSQL_ROOT_PASSWORD=linux
       - MYSQL_DATABASE=oai_db
+    volumes:
+      - ./configs/mysql/oai_db.sql:/docker-entrypoint-initdb.d/oai_db.sql
     command: >
       sh -c "ip link set eth0 down &&
              ip link set eth0 name mysql-sw1 &&
