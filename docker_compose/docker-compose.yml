@@ -88,6 +88,7 @@ services:
     volumes:
       - ./configs/pcf:/openair-pcf/etc
       - ./logs/pcf:/openair-pcf/logs
+      - ./configs/pcf/policy_decisions.yaml:/openair-pcf/policies/policy_decisions/policy_decisions.yaml
     depends_on:
       - nrf
     command: >
