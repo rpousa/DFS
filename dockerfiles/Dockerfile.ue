@@ -14,6 +14,6 @@ RUN apt update --fix-missing && apt upgrade -y && \
 COPY /dockerfiles/volumes/nrue.uicc.conf /opt/oai-nr-ue/etc/nr-ue.conf
 RUN echo 'alias go="/tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem"' >> ~/.bashrc
 
-EXPOSE 3610-3620/udp  
+EXPOSE 3610-3620/udp 4043/tcp  
 ENTRYPOINT [""]
 CMD ["sh", "-c", "sleep infinity"]

@@ -525,7 +525,7 @@ services:
     environment:
       OPENAIR_DIR: /opt/oai-nr-ue
       NR_AWGN_RESULTS_DIR : /opt/oai-nr-ue/openair1/SIMULATION/NR_PHY/BLER_SIMULATIONS/AWGN/AWGN_RESULTS
-      USE_ADDITIONAL_OPTIONS: --num-ues 1 --log_config.global_log_level info -E --rfsim -r 106 --numerology 1 -C 3619200000 --ssb 516  --rfsimulator.[0].serveraddr server 
+      USE_ADDITIONAL_OPTIONS: --num-ues 10 --log_config.global_log_level info -E --rfsim -r 106 --numerology 1 -C 3619200000 --ssb 516  --rfsimulator.[0].serveraddr server 
     devices:
       - /dev/net/tun:/dev/net/tun
     depends_on:
