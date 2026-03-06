@@ -183,18 +183,16 @@ docker-compose up -d cuup
 wait_for_service "cuup" 30
 sleep 2
 
+print_info "Starting DU..."
+docker-compose up -d du_1
+wait_for_service "du_1" 30
+echo ""
 
 # Stage 5: User Equipment and DU
 print_stage "Stage 5/5: Starting User Equipment..."
 docker-compose up -d ue_1
 wait_for_service "ue_1" 30
 echo ""
-
-print_info "Starting DU..."
-docker-compose up -d du_1
-wait_for_service "du_1" 30
-echo ""
-
 
 # Final status check
 print_stage "Checking final status..."
