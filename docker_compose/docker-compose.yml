@@ -86,7 +86,7 @@ services:
       core_net:
         ipv4_address: 192.168.71.139
     volumes:
-      - ./configs/pcf:/openair-pcf/etc
+      - ./configs/pcf/config.yaml:/openair-pcf/etc/config.yaml
       - ./logs/pcf:/openair-pcf/logs
       - ./configs/pcf/policy_decisions.yaml:/openair-pcf/policies/policy_decisions/policy_decisions.yaml
     depends_on:
