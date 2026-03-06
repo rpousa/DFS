@@ -99,18 +99,12 @@ configuration:
                   mnc: 95
                 tac: 0x0001
               supportedSnssaiList:
-                - sst: 130
-                - sst: 131
-                  sd: 131
-              taiList:
-                - tai:
-                    plmnId:
-                      mcc: 208
-                      mnc: 95
-                    tac: 0x0001
-                  supportedSnssaiList:
-                    - sst: 132
-                      sd: 132
+               - sst: 1
+                 sd: 1
+               - sst: 2
+                 sd: 1
+               - sst: 3
+                 sd: 1
     - targetAmfSet: oai5gcn.mcc208.mnc95.regionid128.setid2.3gppnetwork.org
       nrfAmfSet: http://192.168.71.130:9090/nnrf-disc/v1/nf-instances
       nrfAmfSetNfMgtUri: http://192.168.71.130:9090/nnrf-nfm/v1/nf-instances
@@ -125,8 +119,8 @@ configuration:
               supportedSnssaiList:
                 - sst: 1
                   sd: 1
-                - sst: 1
-                  sd: 2
                 - sst: 2
+                  sd: 1
+                - sst: 3
                   sd: 1
 
