@@ -496,9 +496,9 @@ services:
       - ./logs/flexric:/usr/local/logs
       - ./xapps:/usr/local/xapps
       - ./flexric_volumes/ric_watchdog.sh:/usr/local/bin/ric_watchdog.sh
-      - ./flexric_volumes/topology.py:usr/local/flexric/xApp/python/topology.py
-      - ./flexric_volumes/xapp_functs.py:usr/local/flexric/xApp/python/xapp_functs.py
-      - ./flexric_volumes/xapp_test.py:usr/local/flexric/xApp/python/xapp.py
+      - ./flexric_volumes/topology.py:/usr/local/flexric/xApp/python/topology.py
+      - ./flexric_volumes/xapp_functs.py:/usr/local/flexric/xApp/python/xapp_functs.py
+      - ./flexric_volumes/xapp_test.py:/usr/local/flexric/xApp/python/xapp.py
     depends_on:
       - amf
     command: >
