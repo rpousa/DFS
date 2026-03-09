@@ -82,40 +82,58 @@ check_ue_connections() {
     local total_ues=10
     local connected_ues=0
     local ues_with_ip=0
-    local ue_ips=()
+    
+    # Use global arrays so they're accessible outside function
+    UE_IPS=()
+    UE_INTERFACES=()
 
     print_stage "Checking UE Connections..."
+    echo ""
 
     for i in {1..10}; do
         interface="oaitun_ue$i"
         if docker exec ue_1 ip addr show 2>/dev/null | grep -q "$interface"; then
-            ip_addr=$(docker exec ue_1 ip addr show "$interface" 2>/dev/null | grep -oP 'inet \K[\d.]+' || echo "no IP")
-            if [ "$ip_addr" != "no IP" ] && [ -n "$ip_addr" ]; then
-                print_info "✓ UE$i connected - Interface: $interface - IP: $ip_addr"
-                ue_ips+=("$ip_addr")
-                ((ues_with_ip++))
-                print_info "Connected UEs: $connected_ues"
-            fi
             ((connected_ues++))
+            ip_addr=$(docker exec ue_1 ip addr show "$interface" 2>/dev/null | grep -oP 'inet \K[\d.]+' || echo "")
+            
+            if [ -n "$ip_addr" ]; then
+                print_info "✓ UE$i connected - Interface: $interface - IP: $ip_addr"
+                UE_IPS+=("$ip_addr")
+                UE_INTERFACES+=("$interface")
+                ((ues_with_ip++))
+            else
+                print_warn "⚠ UE$i connected - Interface: $interface - No IP yet"
+            fi
         fi
-        print_info "Connected UEs: $connected_ues"
     done
 
     echo ""
+    print_info "================================================"
     print_info "UE Connection Summary:"
     print_info "  Total UEs configured: $total_ues"
-    print_info "  Connected UEs: $connected_ues"
-    print_info "  UEs with IP: $ues_with_ip"
+    print_info "  Connected UEs: $connected_ues/$total_ues"
+    print_info "  UEs with IP: $ues_with_ip/$connected_ues"
+    print_info "================================================"
 
     if [ $ues_with_ip -gt 0 ]; then
         echo ""
         print_info "Connected UE IPs:"
-        for ip in "${ue_ips[@]}"; do
-            print_info "    - $ip"
+        for i in "${!UE_IPS[@]}"; do
+            print_info "  ${UE_INTERFACES[$i]}: ${UE_IPS[$i]}"
         done
     fi
+    echo ""
 
-    return $connected_ues
+    # Export for use outside function
+    export CONNECTED_UES=$connected_ues
+    export UES_WITH_IP=$ues_with_ip
+    
+    # Return 0 if all 10 connected, 1 otherwise
+    if [ $connected_ues -eq 10 ]; then
+        return 0
+    else
+        return 1
+    fi
 }
 
 # Parse command line arguments
@@ -271,45 +289,99 @@ echo "  Access container:       docker exec -it <container-name> bash"
 echo "  Stop network:           docker-compose down"
 echo ""
 
-# Wait for user input before checking UE connections
-read -p "Press Enter to check UE connections..."
+# Wait for UE connections with initial delay
+print_info "Waiting 30 seconds for UEs to connect and register..."
+sleep 30
 echo ""
 
-# Check UE connections with progress reporting
-
-connected_ues=$(check_ue_connections)
-
-
-# If fewer than 10 UEs are connected, offer to wait
-if [ $connected_ues -lt 10 ]; then
-    print_warn "Only $connected_ues out of 10 UEs are connected."
-    while true; do
-        read -p "Wait for more UEs to connect? (y/N): " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            print_info "Waiting 10 seconds for more UEs..."
-            sleep 10
-            connected_ues=$(check_ue_connections)
-            if [ $connected_ues -eq 10 ]; then
-                print_info "All 10 UEs are now connected!"
-                break
-            fi
-        else
-            print_info "Proceeding with $connected_ues connected UEs..."
-            break
-        fi
-    done
+# Check UE connections - function returns 0 if all 10 connected, 1 otherwise
+if check_ue_connections; then
+    # All 10 UEs connected - auto-proceed
+    print_info "✓ All 10 UEs successfully connected!"
+    echo ""
 else
-    print_info "All 10 UEs are connected!"
+    # Fewer than 10 UEs connected - ask user what to do
+    print_warn "Only $CONNECTED_UES out of 10 UEs are connected."
+    echo ""
+    
+    while true; do
+        echo "Options:"
+        echo "  [w] Wait 10 seconds and check again"
+        echo "  [p] Proceed with $CONNECTED_UES UEs"
+        echo "  [q] Quit and check logs"
+        echo ""
+        read -p "Choose an option (w/p/q): " -n 1 -r
+        echo ""
+        echo ""
+        
+        case $REPLY in
+            [Ww])
+                print_info "Waiting 10 seconds for more UEs to connect..."
+                sleep 10
+                
+                # Check again
+                if check_ue_connections; then
+                    print_info "✓ All 10 UEs are now connected!"
+                    break
+                else
+                    print_warn "Still only $CONNECTED_UES UEs connected."
+                    echo ""
+                    continue
+                fi
+                ;;
+            [Pp])
+                print_info "Proceeding with $CONNECTED_UES connected UE(s)..."
+                break
+                ;;
+            [Qq])
+                print_info "Exiting. Check logs with:"
+                echo "  docker logs ue_1 | grep -i 'attach\|registration\|rrc'"
+                echo "  docker logs amf | grep -i 'registration'"
+                echo "  docker logs du_1 | grep -i 'ue\|rfsim'"
+                exit 0
+                ;;
+            *)
+                print_error "Invalid option. Please choose w, p, or q."
+                echo ""
+                ;;
+        esac
+    done
 fi
 
 # Final connectivity test
-if [ $ues_with_ip -gt 0 ]; then
-    print_info "You can test connectivity with:"
-    echo "  docker exec -it ue_1 ping -I oaitun_ue1 192.168.72.135"
+echo ""
+print_info "================================================"
+print_info "Final Status"
+print_info "================================================"
+
+if [ $UES_WITH_IP -gt 0 ]; then
+    print_info "✓ $UES_WITH_IP UE(s) with IP addresses are ready for testing"
+    echo ""
+    print_info "Test connectivity with:"
+    echo "  docker exec -it ue_1 ping -I oaitun_ue1 -c 3 192.168.72.135"
+    
+    if [ $CONNECTED_UES -gt 1 ]; then
+        echo "  docker exec -it ue_1 ping -I oaitun_ue2 -c 3 192.168.72.135"
+        echo "  # ... and so on for other interfaces"
+    fi
+    
+    # Automatic connectivity test for first UE
+    echo ""
+    print_info "Running automatic connectivity test..."
+    if docker exec ue_1 ping -I oaitun_ue1 -c 3 -W 2 192.168.72.135 &>/dev/null; then
+        print_info "✓ Connectivity test PASSED for oaitun_ue1"
+    else
+        print_warn "✗ Connectivity test FAILED for oaitun_ue1"
+        echo "  Check UPF routing and External DN configuration"
+    fi
 else
-    print_warn "No UEs have obtained IPs yet. Check logs for more details:"
-    echo "  docker logs ue_1"
+    print_warn "No UEs have obtained IP addresses yet."
+    echo ""
+    print_info "Troubleshooting steps:"
+    echo "  1. Check UE attachment: docker logs ue_1 | grep -i 'attach\|pdu'"
+    echo "  2. Check AMF registration: docker logs amf | grep -i 'registration'"
+    echo "  3. Check SMF session: docker logs smf | grep -i 'session'"
+    echo "  4. Verify IMSI/keys in database match UE config"
 fi
 
 echo ""
