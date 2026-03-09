@@ -68,6 +68,17 @@ check_running() {
     return 0
 }
 
+wait_for_radio(){
+
+if docker logs du_1 2>&1 | grep -q "Command line parameters for OAI UE"; then
+    print_info "DU is configured for OAI UE!"
+else
+    print_info "Radio rfsim not yet up"
+    sleep 10
+    wait_for_radio
+fi
+}
+
 # Parse command line arguments
 SKIP_CHECKS=false
 VERBOSE=false
@@ -186,7 +197,10 @@ sleep 2
 print_info "Starting DU..."
 docker-compose up -d du_1
 wait_for_service "du_1" 30
+sleep 10
 echo ""
+
+wait_for_radio 
 
 # Stage 5: User Equipment and DU
 print_stage "Stage 5/5: Starting User Equipment..."
@@ -221,7 +235,7 @@ echo ""
 
 # Check if UE is connected
 print_info "Checking UE connectivity..."
-sleep 5
+sleep 30
 
 if docker exec ue_1 ip addr show 2>/dev/null | grep -q "oaitun_ue1"; then
     print_info "UE interface (oaitun_ue1) detected!"
