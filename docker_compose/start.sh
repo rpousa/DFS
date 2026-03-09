@@ -277,30 +277,30 @@ echo ""
 
 # Check UE connections with progress reporting
 check_ue_connections
+connected_ues=$?
 
-# If no UEs are connected, offer to wait
-if [ $? -eq 0 ]; then
-    print_info "UEs are connecting. Checking again in 10 seconds..."
-    sleep 10
-    check_ue_connections
-fi
-
-# If still no UEs, offer to wait more or continue
-if [ $? -eq 0 ]; then
+# If fewer than 10 UEs are connected, offer to wait
+if [ $connected_ues -lt 10 ]; then
+    print_warn "Only $connected_ues out of 10 UEs are connected."
     while true; do
-        read -p "No UEs connected yet. Wait more? (y/N): " -n 1 -r
+        read -p "Wait for more UEs to connect? (y/N): " -n 1 -r
         echo
         if [[ $REPLY =~ ^[Yy]$ ]]; then
-            print_info "Waiting 10 more seconds..."
+            print_info "Waiting 10 seconds for more UEs..."
             sleep 10
             check_ue_connections
-            if [ $? -gt 0 ]; then
+            connected_ues=$?
+            if [ $connected_ues -eq 10 ]; then
+                print_info "All 10 UEs are now connected!"
                 break
             fi
         else
+            print_info "Proceeding with $connected_ues connected UEs..."
             break
         fi
     done
+else
+    print_info "All 10 UEs are connected!"
 fi
 
 # Final connectivity test
@@ -311,5 +311,6 @@ else
     print_warn "No UEs have obtained IPs yet. Check logs for more details:"
     echo "  docker logs ue_1"
 fi
+
 echo ""
 print_info "Setup complete! Monitor logs to verify all components are working correctly."
