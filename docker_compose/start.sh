@@ -78,37 +78,44 @@ wait_for_radio(){
     fi
 }
 
-wait_for_ues(){
-    ue_count=0
-    ue_with_ip=0
+check_ue_connections() {
+    local total_ues=10
+    local connected_ues=0
+    local ues_with_ip=0
+    local ue_ips=()
 
-    echo ""
+    print_stage "Checking UE Connections..."
+
     for i in {1..10}; do
         interface="oaitun_ue$i"
         if docker exec ue_1 ip addr show 2>/dev/null | grep -q "$interface"; then
             ip_addr=$(docker exec ue_1 ip addr show "$interface" 2>/dev/null | grep -oP 'inet \K[\d.]+' || echo "no IP")
             if [ "$ip_addr" != "no IP" ] && [ -n "$ip_addr" ]; then
-                print_info "✓ $interface detected - IP: $ip_addr"
-                ((ue_with_ip++))
+                print_info "✓ UE$i connected - Interface: $interface - IP: $ip_addr"
+                ue_ips+=("$ip_addr")
+                ((ues_with_ip++))
             else
-                print_warn "✓ $interface detected but no IP assigned"
+                print_warn "✓ UE$i connected but no IP assigned"
             fi
-            ((ue_count++))
+            ((connected_ues++))
         fi
     done
-    if [ $ue_count -eq 0 ]; then
-        wait_for_ues
-    else
-        print_info "$ue_count UE interfaces detected, $ue_with_ip with IP assigned"
-        read -p "Do you want to wait for more restart? (y/N): " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            print_info "Waiting for more UEs to connect..."
-            wait_for_ues
-        else
-            print_info "Continuing with current UEs..."
-        fi
+
+    echo ""
+    print_info "UE Connection Summary:"
+    print_info "  Total UEs configured: $total_ues"
+    print_info "  Connected UEs: $connected_ues"
+    print_info "  UEs with IP: $ues_with_ip"
+
+    if [ $ues_with_ip -gt 0 ]; then
+        echo ""
+        print_info "Connected UE IPs:"
+        for ip in "${ue_ips[@]}"; do
+            print_info "    - $ip"
+        done
     fi
+
+    return $connected_ues
 }
 
 # Parse command line arguments
@@ -170,7 +177,6 @@ if [ "$SKIP_CHECKS" = false ]; then
             print_info "Continuing with existing containers..."
         fi
     fi
-    
     print_info "Pre-flight checks passed!"
     echo ""
 fi
@@ -265,20 +271,45 @@ echo "  Access container:       docker exec -it <container-name> bash"
 echo "  Stop network:           docker-compose down"
 echo ""
 
-# Check if UE is connected
-print_info "Checking UE connectivity..."
-sleep 30
+# Wait for user input before checking UE connections
+read -p "Press Enter to check UE connections..."
+echo ""
 
-wait_for_ues
+# Check UE connections with progress reporting
+check_ue_connections
 
-if docker exec ue_1 ip addr show 2>/dev/null | grep -q "oaitun_ue1"; then
-    print_info "UE interface (oaitun_ue1) detected!"
+# If no UEs are connected, offer to wait
+if [ $? -eq 0 ]; then
+    print_info "UEs are connecting. Checking again in 10 seconds..."
+    sleep 10
+    check_ue_connections
+fi
+
+# If still no UEs, offer to wait more or continue
+if [ $? -eq 0 ]; then
+    while true; do
+        read -p "No UEs connected yet. Wait more? (y/N): " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            print_info "Waiting 10 more seconds..."
+            sleep 10
+            check_ue_connections
+            if [ $? -gt 0 ]; then
+                break
+            fi
+        else
+            break
+        fi
+    done
+fi
+
+# Final connectivity test
+if [ $ues_with_ip -gt 0 ]; then
     print_info "You can test connectivity with:"
     echo "  docker exec -it ue_1 ping -I oaitun_ue1 192.168.72.135"
 else
-    print_warn "UE interface not yet available. Check logs for more details:"
+    print_warn "No UEs have obtained IPs yet. Check logs for more details:"
     echo "  docker logs ue_1"
 fi
-
 echo ""
 print_info "Setup complete! Monitor logs to verify all components are working correctly."
