@@ -94,9 +94,11 @@ check_ue_connections() {
                 print_info "✓ UE$i connected - Interface: $interface - IP: $ip_addr"
                 ue_ips+=("$ip_addr")
                 ((ues_with_ip++))
+                print_info "Connected UEs: $connected_ues"
             fi
             ((connected_ues++))
         fi
+        print_info "Connected UEs: $connected_ues"
     done
 
     echo ""
@@ -274,8 +276,9 @@ read -p "Press Enter to check UE connections..."
 echo ""
 
 # Check UE connections with progress reporting
-check_ue_connections
-connected_ues=$?
+
+connected_ues=$(check_ue_connections)
+
 
 # If fewer than 10 UEs are connected, offer to wait
 if [ $connected_ues -lt 10 ]; then
@@ -286,8 +289,7 @@ if [ $connected_ues -lt 10 ]; then
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             print_info "Waiting 10 seconds for more UEs..."
             sleep 10
-            check_ue_connections
-            connected_ues=$?
+            connected_ues=$(check_ue_connections)
             if [ $connected_ues -eq 10 ]; then
                 print_info "All 10 UEs are now connected!"
                 break
