@@ -69,14 +69,46 @@ check_running() {
 }
 
 wait_for_radio(){
+    if docker logs du_1 2>&1 | grep -q "Command line parameters for OAI UE"; then
+        print_info "DU is configured for OAI UE!"
+    else
+        print_info "Radio rfsim not yet up"
+        sleep 10
+        wait_for_radio
+    fi
+}
 
-if docker logs du_1 2>&1 | grep -q "Command line parameters for OAI UE"; then
-    print_info "DU is configured for OAI UE!"
-else
-    print_info "Radio rfsim not yet up"
-    sleep 10
-    wait_for_radio
-fi
+wait_for_ues(){
+    ue_count=0
+    ue_with_ip=0
+
+    echo ""
+    for i in {1..10}; do
+        interface="oaitun_ue$i"
+        if docker exec ue_1 ip addr show 2>/dev/null | grep -q "$interface"; then
+            ip_addr=$(docker exec ue_1 ip addr show "$interface" 2>/dev/null | grep -oP 'inet \K[\d.]+' || echo "no IP")
+            if [ "$ip_addr" != "no IP" ] && [ -n "$ip_addr" ]; then
+                print_info "✓ $interface detected - IP: $ip_addr"
+                ((ue_with_ip++))
+            else
+                print_warn "✓ $interface detected but no IP assigned"
+            fi
+            ((ue_count++))
+        fi
+    done
+    if [ $ue_count -eq 0 ]; then
+        wait_for_ues
+    else
+        print_info "$ue_count UE interfaces detected, $ue_with_ip with IP assigned"
+        read -p "Do you want to wait for more restart? (y/N): " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            print_info "Waiting for more UEs to connect..."
+            wait_for_ues
+        else
+            print_info "Continuing with current UEs..."
+        fi
+    fi
 }
 
 # Parse command line arguments
@@ -237,23 +269,7 @@ echo ""
 print_info "Checking UE connectivity..."
 sleep 30
 
-ue_count=0
-ue_with_ip=0
 
-echo ""
-for i in {1..10}; do
-    interface="oaitun_ue$i"
-    if docker exec ue_1 ip addr show 2>/dev/null | grep -q "$interface"; then
-        ip_addr=$(docker exec ue_1 ip addr show "$interface" 2>/dev/null | grep -oP 'inet \K[\d.]+' || echo "no IP")
-        if [ "$ip_addr" != "no IP" ] && [ -n "$ip_addr" ]; then
-            print_info "✓ $interface detected - IP: $ip_addr"
-            ((ue_with_ip++))
-        else
-            print_warn "✓ $interface detected but no IP assigned"
-        fi
-        ((ue_count++))
-    fi
-done
 
 
 if docker exec ue_1 ip addr show 2>/dev/null | grep -q "oaitun_ue1"; then
