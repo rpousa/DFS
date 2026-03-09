@@ -269,8 +269,7 @@ echo ""
 print_info "Checking UE connectivity..."
 sleep 30
 
-
-
+wait_for_ues
 
 if docker exec ue_1 ip addr show 2>/dev/null | grep -q "oaitun_ue1"; then
     print_info "UE interface (oaitun_ue1) detected!"
