@@ -237,6 +237,25 @@ echo ""
 print_info "Checking UE connectivity..."
 sleep 30
 
+ue_count=0
+ue_with_ip=0
+
+echo ""
+for i in {1..10}; do
+    interface="oaitun_ue$i"
+    if docker exec ue_1 ip addr show 2>/dev/null | grep -q "$interface"; then
+        ip_addr=$(docker exec ue_1 ip addr show "$interface" 2>/dev/null | grep -oP 'inet \K[\d.]+' || echo "no IP")
+        if [ "$ip_addr" != "no IP" ] && [ -n "$ip_addr" ]; then
+            print_info "✓ $interface detected - IP: $ip_addr"
+            ((ue_with_ip++))
+        else
+            print_warn "✓ $interface detected but no IP assigned"
+        fi
+        ((ue_count++))
+    fi
+done
+
+
 if docker exec ue_1 ip addr show 2>/dev/null | grep -q "oaitun_ue1"; then
     print_info "UE interface (oaitun_ue1) detected!"
     print_info "You can test connectivity with:"
