@@ -94,8 +94,6 @@ check_ue_connections() {
                 print_info "✓ UE$i connected - Interface: $interface - IP: $ip_addr"
                 ue_ips+=("$ip_addr")
                 ((ues_with_ip++))
-            else
-                print_warn "✓ UE$i connected but no IP assigned"
             fi
             ((connected_ues++))
         fi
