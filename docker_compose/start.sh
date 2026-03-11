@@ -242,17 +242,17 @@ sleep 10
 
 print_info "Starting CU-CP..."
 docker-compose up -d cucp
-wait_for_service "cucp" 30
+wait_for_service "cucp" 10
 
 
 print_info "Starting CU-UP..."
 docker-compose up -d cuup
-wait_for_service "cuup" 30
+wait_for_service "cuup" 10
 sleep 2
 
 print_info "Starting DU..."
 docker-compose up -d du_1
-wait_for_service "du_1" 30
+wait_for_service "du_1" 10
 sleep 10
 echo ""
 

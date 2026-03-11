@@ -1,0 +1,296 @@
+version: '3.8'
+
+# Docker Compose for Machine 2 (Edge RAN + Edge UPF)
+# Deploy on PC: 192.168.0.243
+# Components: CU-UP (edge) + UPF (edge) + DU + UEs + FlexRIC
+
+services:
+  # ==========================================
+  # Edge User Plane Function (UPF_1)
+  # ==========================================
+
+  upf_1:
+    image: upf_1:comnetsemu
+    container_name: upf_1
+    hostname: upf_1
+    cap_add:
+      - NET_ADMIN
+      - SYS_NICE
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.160
+      ext_net:
+        ipv4_address: 192.168.72.160
+    ports:
+      - "8815:8805/udp"
+      - "2154:2152/udp"
+    volumes:
+      - ./configs/upf_1:/openair-upf/etc
+      - ./logs/upf_1:/openair-upf/logs
+    command: >
+      sh -c "sleep 2 &&
+             ip link set eth0 down &&
+             ip link set eth0 name upf-core &&
+             ip link set upf-core up &&
+             ip link set eth1 down &&
+             ip link set eth1 name upf-ext_dn &&
+             ip link set upf-ext_dn up &&
+             sysctl -w net.ipv6.conf.all.accept_ra=2 &&
+             sleep 10 &&
+             /openair-upf/bin/oai_upf -c /openair-upf/etc/config.yaml -o"
+
+  ext_dn_1:
+    image: ext_dn:comnetsemu
+    container_name: ext_dn_1
+    hostname: ext_dn_1
+    cap_add:
+      - SYS_NICE
+      - NET_ADMIN
+    networks:
+      ext_net:
+        ipv4_address: 192.168.72.161
+    environment:
+      - EBPF_GW_SETUP=yes
+      - EBPF_GW_N6_IP_ADDR=192.168.72.161
+      - N6_IF_NAME=eth0
+      - SGI_IF_NAME=eth0
+      - GW_SGI_IP_ADDR=172.17.0.9
+      - N3_IF_NAME=eth1
+      - GW_N3_IP_ADDR=192.168.100.161
+      - UE_IP_ADDRESS_POOL_1=12.2.1.0/24
+      - UE_IP_ADDRESS_POOL_2=13.2.1.0/24
+      - UE_IP_ADDRESS_POOL_3=14.2.1.0/24
+      - SGI_DEMO_OAI_ADDR=172.17.0.1
+      - N6_UPF_IP_ADDR=192.168.72.160
+    volumes:
+      - ./configs/ext_dn_1:/tmp
+    depends_on:
+      - upf_1
+    command: >
+      sh -c "ip link set eth0 down &&
+             ip link set eth0 name ext_dn-upf &&
+             ip link set ext_dn-upf up &&
+             ifconfig ext_dn-upf mtu 1460 &&
+             sleep 5 &&
+             /tmp/trfgen_entrypoint.sh"
+
+  # ==========================================
+  # Edge CU-UP
+  # ==========================================
+
+  cuup_1:
+    image: cuup:comnetsemu
+    container_name: cuup_1
+    hostname: cuup_1
+    cap_add:
+      - SYS_NICE
+      - NET_ADMIN
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.144
+      e1_net:
+        ipv4_address: 192.168.75.144
+      f1u_net:
+        ipv4_address: 192.168.74.144
+    ports:
+      - "2155:2153/udp"
+    volumes:
+      - ./configs/cuup_1/gnb-cuup.sa.f1.conf:/opt/oai-gnb/etc/gnb.conf
+      - ./logs/cuup_1:/opt/oai-gnb/logs
+    environment:
+      USE_ADDITIONAL_OPTIONS: >-
+                               --e2_agent.near_ric_ip_addr 192.168.71.150 --e2_agent.sm_dir /usr/local/lib/flexric/ 
+                               --telnetsrv --telnetsrv.shrmod ci
+                               -E --sa --log_config.global_log_options level,nocolor,time
+                               --gNBs.[0].gNB_ID  0xe01 --gNBs.[0].gNB_CU_UP_ID  0xe01
+                               --gNBs.[0].E1_INTERFACE.[0].type up
+                               --gNBs.[0].E1_INTERFACE.[0].ipv4_cucp 192.168.75.140
+                               --gNBs.[0].E1_INTERFACE.[0].ipv4_cuup 192.168.75.144
+                               --gNBs.[0].tr_s_preference f1 --gNBs.[0].local_s_portd 2153 
+                               --gNBs.[0].local_s_address 192.168.74.144 --gNBs.[0].remote_s_address 0.0.0.0
+                               --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.71.144/26
+                               --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.71.144/26
+    depends_on:
+      - upf_1
+    command: >
+      sh -c "sleep 20 &&
+             /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-cuup -O /opt/oai-gnb/etc/gnb.conf"
+
+  # ==========================================
+  # Distributed Unit (DU) with RFSimulator
+  # ==========================================
+
+  du_1:
+    image: du:comnetsemu
+    container_name: du_1
+    hostname: du_1
+    cap_add:
+      - SYS_NICE
+      - NET_ADMIN
+    networks:
+      f1c_net:
+        ipv4_address: 192.168.73.151
+      f1u_net:
+        ipv4_address: 192.168.74.151
+      ran_net:
+        ipv4_address: 192.168.80.151
+    volumes:
+      - ./configs/du_1/gnb-du.sa.band78.106prb.rfsim.conf:/opt/oai-gnb/etc/gnb.conf
+      - ./logs/du_1:/opt/oai-gnb/logs
+    environment:
+      # RFSIMULATOR MODE - DU as server
+      USE_ADDITIONAL_OPTIONS: >-
+                                --rfsim
+                                --e2_agent.near_ric_ip_addr 192.168.71.150 --e2_agent.sm_dir /usr/local/lib/flexric/ 
+                                --telnetsrv --telnetsrv.shrmod ci
+                                -E --sa
+                                --Active_gNBs gNB-OAI
+                                --gNBs.[0].gNB_ID 0xe00 --gNBs.[0].gNB_DU_ID 0xe00 --gNBs.[0].gNB_name gNB-OAI
+                                --gNBs.[0].nr_cellid 11111111
+                                --gNBs.[0].servingCellConfigCommon.[0].physCellId 1
+                                --gNBs.[0].servingCellConfigCommon.[0].initialUplinkBWP.rach_ConfigCommon.rach_ConfigGeneric.ra_ResponseWindow 20
+                                --MACRLCs.[0].local_n_address 192.168.73.151
+                                --MACRLCs.[0].remote_n_address 192.168.71.140
+                                --MACRLCs.[0].local_n_address_f1u 192.168.74.151
+                                --MACRLCs.[0].remote_n_portd 2153
+                                --MACRLCs.[0].tr_s_preference f1
+                                --MACRLCs.[0].pusch_TargetSNRx10 150
+                                --MACRLCs.[0].pucch_TargetSNRx10 200
+                                --rfsimulator.serveraddr server
+                                --rfsimulator.serverport 4043
+                                --log_config.phy_log_level info
+                                --log_config.mac_log_level info
+    depends_on:
+      - cuup_1
+    command: >
+      sh -c "sleep 25 &&
+             /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem"
+
+  # ==========================================
+  # FlexRIC (Near-RT RIC)
+  # ==========================================
+
+  flexric:
+    image: flexric_test:comnetsemu
+    container_name: flexric
+    hostname: flexric
+    cap_add:
+      - SYS_NICE
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.150
+    volumes:
+      - ./configs/flexric:/usr/local/etc/flexric
+      - ./logs/flexric:/usr/local/logs
+      - ./xapps:/usr/local/xapps
+    depends_on:
+      - du_1
+    command: >
+      sh -c "sleep 30 &&
+             /usr/local/bin/ric_watchdog.sh"
+
+  # ==========================================
+  # User Equipment (10 UEs) - RFSimulator Mode
+  # ==========================================
+
+  ue_1:
+    image: ue:comnetsemu
+    container_name: ue_1
+    hostname: ue_1
+    cap_add:
+      - SYS_NICE
+      - NET_ADMIN
+      - NET_RAW
+    networks:
+      ran_net:
+        ipv4_address: 192.168.80.170
+    volumes:
+      - ./ue_volumes/nrue_multi.conf:/opt/oai-nr-ue/etc/nr-ue.conf
+      - ./logs/ue_1:/opt/oai-nr-ue/logs
+    environment:
+      OPENAIR_DIR: /opt/oai-nr-ue
+      # Multi-UE RFSimulator - UEs connect to DU as clients
+      USE_ADDITIONAL_OPTIONS: >-
+       --num-ues 10
+       --sa
+       --rfsim
+       -r 106
+       --numerology 1
+       -C 3619200000
+       --ssb 516
+       --log_config.global_log_level info
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    depends_on:
+      - du_1
+      - flexric
+    command: >
+      sh -c "sleep 35 &&
+             /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem"
+
+# ==========================================
+# Networks Configuration
+# ==========================================
+
+networks:
+  core_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.71.128/26
+          gateway: 192.168.71.129
+    driver_opts:
+      com.docker.network.bridge.name: br-core
+
+  ext_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.72.128/26
+          gateway: 192.168.72.129
+    driver_opts:
+      com.docker.network.bridge.name: br-ext
+
+  f1c_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.73.128/26
+          gateway: 192.168.73.129
+    driver_opts:
+      com.docker.network.bridge.name: br-f1c
+  
+  f1u_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.74.128/26
+          gateway: 192.168.74.129
+    driver_opts:
+      com.docker.network.bridge.name: br-f1u
+
+  e1_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.75.128/26
+          gateway: 192.168.75.129
+    driver_opts:
+      com.docker.network.bridge.name: br-e1
+  
+  ran_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.80.128/26
+          gateway: 192.168.80.129
+    driver_opts:
+      com.docker.network.bridge.name: br-ran
+
+# ==========================================
+# Volumes
+# ==========================================
+
+volumes:
+  flexric_data:
+    driver: local
