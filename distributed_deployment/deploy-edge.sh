@@ -156,7 +156,7 @@ if [ ! -f "docker-compose-edge.yml" ]; then
 fi
 
 # Check if configs exist
-if [ ! -d "configs" ]; then
+if [ ! -d "../docker_compose/configs" ]; then
     print_error "configs directory not found"
     exit 1
 fi
