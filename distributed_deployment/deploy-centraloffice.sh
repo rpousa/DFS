@@ -75,9 +75,16 @@ if ! docker ps &> /dev/null; then
     print_error "Docker is not running"
     exit 1
 fi
+CURRENT_IP=""
+ip_addresses=$(hostname -I)
+for ip in $ip_addresses; do
+    if [ "$ip" == "$MACHINE1_IP" ]; then
+        CURRENT_IP="$ip"
+        break
+    fi
+done
 
 # Check current IP
-CURRENT_IP=$(hostname -I | awk '{print $1}')
 if [ "$CURRENT_IP" != "$MACHINE1_IP" ]; then
     print_warn "Current IP is $CURRENT_IP, expected $MACHINE1_IP"
     read -p "Continue anyway? (y/N): " -n 1 -r

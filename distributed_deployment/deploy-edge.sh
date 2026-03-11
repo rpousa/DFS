@@ -132,8 +132,16 @@ if ! docker ps &> /dev/null; then
     exit 1
 fi
 
+CURRENT_IP=""
 # Check current IP
-CURRENT_IP=$(hostname -I | awk '{print $1}')
+ip_addresses=$(hostname -I)
+for ip in $ip_addresses; do
+    if [ "$ip" == "$MACHINE2_IP" ]; then
+        CURRENT_IP="$ip"
+        break
+    fi
+done
+
 if [ "$CURRENT_IP" != "$MACHINE2_IP" ]; then
     print_warn "Current IP is $CURRENT_IP, expected $MACHINE2_IP"
     read -p "Continue anyway? (y/N): " -n 1 -r
