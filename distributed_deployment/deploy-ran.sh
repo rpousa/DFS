@@ -32,6 +32,18 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+if docker-compose ps -q 2>/dev/null | grep -q .; then
+    print_warn "Some containers are already running"
+    read -p "Do you want to stop them and restart? (y/N): " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        print_info "Stopping existing containers..."
+        docker-compose -f docker-compose-ran.yml down
+    else
+        print_info "Continuing with existing containers..."
+    fi
+fi
+
 # Check if running on correct PC
 CURRENT_IP=$(hostname -I | awk '{print $1}')
 if [ "$CURRENT_IP" != "$RAN_IP" ]; then

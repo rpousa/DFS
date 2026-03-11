@@ -75,6 +75,19 @@ if ! docker ps &> /dev/null; then
     print_error "Docker is not running"
     exit 1
 fi
+
+if docker-compose ps -q 2>/dev/null | grep -q .; then
+    print_warn "Some containers are already running"
+    read -p "Do you want to stop them and restart? (y/N): " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        print_info "Stopping existing containers..."
+        docker-compose -f docker-compose-centraloffice.yml down
+    else
+        print_info "Continuing with existing containers..."
+    fi
+fi
+
 CURRENT_IP=""
 ip_addresses=$(hostname -I)
 for ip in $ip_addresses; do
