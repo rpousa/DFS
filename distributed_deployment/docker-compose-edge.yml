@@ -104,6 +104,8 @@ services:
         ipv4_address: 192.168.74.144
     ports:
       - "2155:2153/udp"                        # GTP-U F1-U (different port)
+    devices:
+      - /dev/net/tun:/dev/net/tun
     volumes:
       - ./configs/cuup_1/gnb-cuup.sa.f1.conf:/opt/oai-gnb/etc/gnb.conf
       - ./logs/cuup_1:/opt/oai-gnb/logs
@@ -148,6 +150,8 @@ services:
         ipv4_address: 192.168.74.151
       ran_net:
         ipv4_address: 192.168.80.151
+    devices:
+      - /dev/net/tun:/dev/net/tun
     volumes:
       - ./configs/du_1/gnb-du.sa.band78.106prb.rfsim.conf:/opt/oai-gnb/etc/gnb.conf
       - ./logs/du_1:/opt/oai-gnb/logs
