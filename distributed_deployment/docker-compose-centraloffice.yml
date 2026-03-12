@@ -3,6 +3,9 @@ version: '3.8'
 # Docker Compose for Machine 1 (Core Network + Central RAN)
 # Deploy on PC: 192.168.0.193
 # Components: Core Network + CU-CP + CU-UP (primary)
+# 
+# IMPORTANT: All ports are bound to 192.168.0.193 for cross-machine access
+# This allows Machine 2 (192.168.0.243) to connect to these services
 
 services:
   # ==========================================
@@ -20,7 +23,7 @@ services:
       core_net:
         ipv4_address: 192.168.71.131
     ports:
-      - "3306:3306"
+      - "192.168.0.193:3306:3306"     # MySQL (for external access if needed)
     environment:
       - MYSQL_ROOT_PASSWORD=linux
       - MYSQL_DATABASE=oai_db
@@ -47,8 +50,8 @@ services:
       core_net:
         ipv4_address: 192.168.71.130
     ports:
-      - "8080:80"
-      - "9090:9090"
+      - "192.168.0.193:8080:80"       # HTTP API (for Machine 2)
+      - "192.168.0.193:9090:9090"     # HTTP/2 (for Machine 2)
     volumes:
       - ./configs/nrf:/openair-nrf/etc
       - ./logs/nrf:/openair-nrf/logs
@@ -73,8 +76,8 @@ services:
       core_net:
         ipv4_address: 192.168.71.133
     ports:
-      - "9091:80"
-      - "8805:8805/udp"
+      - "192.168.0.193:9091:80"           # HTTP API (for Machine 2)
+      - "192.168.0.193:8805:8805/udp"     # PFCP (CRITICAL for Machine 2 UPF)
     volumes:
       - ./configs/smf:/openair-smf/etc
       - ./logs/smf:/openair-smf/logs
@@ -98,7 +101,7 @@ services:
       core_net:
         ipv4_address: 192.168.71.139
     ports:
-      - "9092:80"
+      - "192.168.0.193:9092:80"       # HTTP API
     volumes:
       - ./configs/pcf:/openair-pcf/etc
       - ./logs/pcf:/openair-pcf/logs
@@ -122,7 +125,7 @@ services:
       core_net:
         ipv4_address: 192.168.71.135
     ports:
-      - "9093:80"
+      - "192.168.0.193:9093:80"       # HTTP API
     volumes:
       - ./configs/nssf:/openair-nssf/etc
       - ./logs/nssf:/openair-nssf/logs
@@ -146,9 +149,9 @@ services:
       core_net:
         ipv4_address: 192.168.71.132
     ports:
-      - "38412:38412"
-      - "38412:38412/udp"
-      - "9094:80"
+      - "192.168.0.193:38412:38412"       # NGAP/SCTP (CRITICAL for Machine 2 CU-CP)
+      - "192.168.0.193:38412:38412/udp"   # NGAP/UDP
+      - "192.168.0.193:9094:80"           # HTTP API
     volumes:
       - ./configs/amf:/openair-amf/etc
       - ./logs/amf:/openair-amf/logs
@@ -173,7 +176,7 @@ services:
       core_net:
         ipv4_address: 192.168.71.136
     ports:
-      - "9095:80"
+      - "192.168.0.193:9095:80"       # HTTP API
     volumes:
       - ./configs/udm:/openair-udm/etc
       - ./logs/udm:/openair-udm/logs
@@ -197,7 +200,7 @@ services:
       core_net:
         ipv4_address: 192.168.71.137
     ports:
-      - "9096:80"
+      - "192.168.0.193:9096:80"       # HTTP API
     volumes:
       - ./configs/udr:/openair-udr/etc
       - ./logs/udr:/openair-udr/logs
@@ -222,7 +225,7 @@ services:
       core_net:
         ipv4_address: 192.168.71.138
     ports:
-      - "9097:80"
+      - "192.168.0.193:9097:80"       # HTTP API
     volumes:
       - ./configs/ausf:/openair-ausf/etc
       - ./logs/ausf:/openair-ausf/logs
@@ -252,8 +255,8 @@ services:
       ext_net:
         ipv4_address: 192.168.72.134
     ports:
-      - "8805:8805/udp"
-      - "2152:2152/udp"
+      - "192.168.0.193:8806:8805/udp"     # PFCP (different port to avoid conflict with SMF)
+      - "192.168.0.193:2152:2152/udp"     # GTP-U N3 (CRITICAL for Machine 2 CU-UP)
     volumes:
       - ./configs/upf:/openair-upf/etc
       - ./logs/upf:/openair-upf/logs
@@ -268,7 +271,7 @@ services:
              ip link set eth1 down &&
              ip link set eth1 name upf-ext_dn &&
              ip link set upf-ext_dn up &&
-             sysctl -w net.ipv6.conf.all.accept_ra=2 &&
+             sysctl -w net.ipv4.ip_forward=1 &&
              sleep 2 &&
              /openair-upf/bin/oai_upf -c /openair-upf/etc/config.yaml -o"
 
@@ -326,8 +329,8 @@ services:
       f1c_net:
         ipv4_address: 192.168.73.140
     ports:
-      - "38472:38472"
-      - "38472:38472/udp"
+      - "192.168.0.193:38472:38472"       # F1-C/SCTP (CRITICAL for Machine 2 DU)
+      - "192.168.0.193:38472:38472/udp"   # F1-C/UDP
     volumes:
       - ./configs/cucp/gnb-cucp.sa.f1.conf:/opt/oai-gnb/etc/gnb.conf
       - ./logs/cucp:/opt/oai-gnb/logs
@@ -380,7 +383,7 @@ services:
       f1u_net:
         ipv4_address: 192.168.74.143
     ports:
-      - "2153:2153/udp"
+      - "192.168.0.193:2153:2153/udp"     # GTP-U F1-U (CRITICAL for Machine 2 DU)
     volumes:
       - ./configs/cuup/gnb-cuup.sa.f1.conf:/opt/oai-gnb/etc/gnb.conf
       - ./logs/cuup:/opt/oai-gnb/logs
