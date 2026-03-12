@@ -338,13 +338,11 @@ services:
       USE_ADDITIONAL_OPTIONS: >-
                                --e2_agent.near_ric_ip_addr 192.168.71.150 --e2_agent.sm_dir /usr/local/lib/flexric/ 
                                --telnetsrv --telnetsrv.shrmod ci
-                               -E --sa --log_config.global_log_options level,nocolor,time
+                               -E --log_config.global_log_options level,nocolor,time
                                --gNBs.[0].gNB_ID  0xe00 
                                --gNBs.[0].gNB_name gNB-OAI
-                               --gNBs.[0].gNB_CU_ID  0xe00
                                --gNBs.[0].nr_cellid 11111111 
                                --gNBs.[0].tr_s_preference f1
-                               --gNBs.[0].local_s_if_name lo
                                --gNBs.[0].local_s_address 192.168.73.140
                                --gNBs.[0].remote_s_address 192.168.73.151
                                --gNBs.[0].local_s_portc 501
@@ -353,9 +351,7 @@ services:
                                --gNBs.[0].remote_s_portd 600
                                --gNBs.[0].E1_INTERFACE.[0].type cp
                                --gNBs.[0].E1_INTERFACE.[0].ipv4_cucp 192.168.75.140
-                               --gNBs.[0].NETWORK_INTERFACES.GNB_INTERFACE_NAME_FOR_NG_AMF eth0
                                --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.71.140/26
-                               --gNBs.[0].NETWORK_INTERFACES.GNB_INTERFACE_NAME_FOR_NGU eth0
                                --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.71.140/26
                                --gNBs.[0].amf_ip_address.[0].ipv4 192.168.71.132
     depends_on:
