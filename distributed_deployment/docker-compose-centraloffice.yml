@@ -261,7 +261,7 @@ services:
       ext_net:
         ipv4_address: 192.168.72.134
     ports:
-      - "192.168.0.193:8080:8080/tcp"
+      - "192.168.0.193:8086:8080/tcp"
       - "192.168.0.193:8806:8805/tcp"     
       - "192.168.0.193:8806:8805/udp"     # PFCP (different port to avoid conflict with SMF)
       - "192.168.0.193:2152:2152/udp"     # GTP-U N3 (CRITICAL for Machine 2 CU-UP)
