@@ -79,7 +79,7 @@ services:
         ipv4_address: 192.168.71.133
     ports:
       - "192.168.0.193:9091:80/tcp"           # HTTP API (for Machine 2)
-      - "192.168.0.193:9091:8080/tcp"           
+      - "192.168.0.193:9101:8080/tcp"           
       - "192.168.0.193:8805:8805/udp"     # PFCP (CRITICAL for Machine 2 UPF)
     volumes:
       - ./configs/smf:/openair-smf/etc
@@ -105,7 +105,7 @@ services:
         ipv4_address: 192.168.71.139
     ports:
       - "192.168.0.193:9092:80/tcp"       # HTTP API
-      - "192.168.0.193:9092:9090/tcp"
+      - "192.168.0.193:9102:9090/tcp"
     volumes:
       - ./configs/pcf:/openair-pcf/etc
       - ./logs/pcf:/openair-pcf/logs
@@ -130,7 +130,7 @@ services:
         ipv4_address: 192.168.71.135
     ports:
       - "192.168.0.193:9093:80/tcp"       # HTTP API
-      - "192.168.0.193:9093:8080/tcp"       # HTTP API
+      - "192.168.0.193:9103:8080/tcp"       # HTTP API
     volumes:
       - ./configs/nssf:/openair-nssf/etc
       - ./logs/nssf:/openair-nssf/logs
@@ -182,7 +182,7 @@ services:
         ipv4_address: 192.168.71.136
     ports:
       - "192.168.0.193:9095:80/tcp"       # HTTP API
-      - "192.168.0.193:9095:8080/tcp"       # HTTP API
+      - "192.168.0.193:9105:8080/tcp"       # HTTP API
 
     volumes:
       - ./configs/udm:/openair-udm/etc
