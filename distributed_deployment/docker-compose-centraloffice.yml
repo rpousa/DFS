@@ -154,7 +154,7 @@ services:
       core_net:
         ipv4_address: 192.168.71.132
     ports:
-      - "192.168.0.193:9090:9090/tcp"       # NGAP/SCTP (CRITICAL for Machine 2 CU-CP)
+      - "192.168.0.193:9104:9090/tcp"       # NGAP/SCTP (CRITICAL for Machine 2 CU-CP)
       - "192.168.0.193:38412:38412/sctp"   
       - "192.168.0.193:9094:80/tcp"           # HTTP API
     volumes:
