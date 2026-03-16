@@ -45,7 +45,7 @@ nfs:
   amf:
     host: 192.168.0.193              # AMF on Machine 1 (Docker IP)
     sbi:
-      port: 8080
+      port: 9104
       api_version: v1
       interface_name: amf-sw1
     n2:
@@ -55,7 +55,7 @@ nfs:
   smf:
     host: 192.168.0.193                # SMF on Machine 1 (Docker IP)
     sbi:
-      port: 8080
+      port: 9101
       api_version: v1
       interface_name: smf-sw1
     n4:
@@ -109,21 +109,21 @@ nfs:
   udm:
     host: 192.168.0.193                # UDM on Machine 1 (Docker IP)
     sbi:
-      port: 8080
+      port: 9105
       api_version: v1
       interface_name: udm-sw1
 
   udr:
     host: 192.168.0.193               # UDR on Machine 1 (Docker IP)
     sbi:
-      port: 8080
+      port: 9096
       api_version: v1
       interface_name: udr-sw1
 
   ausf:
     host: 192.168.0.193               # AUSF on Machine 1 (Docker IP)
     sbi:
-      port: 8080
+      port: 9097
       api_version: v1
       interface_name: ausf-sw1
 
@@ -137,14 +137,14 @@ nfs:
   pcf:
     host: 192.168.0.193               # PCF on Machine 1 (Docker IP)
     sbi:
-      port: 8080
+      port: 9092
       api_version: v1
       interface_name: pcf-sw1
 
   nssf:
     host: 192.168.0.193                # NSSF on Machine 1 (Docker IP)
     sbi:
-      port: 8080
+      port: 9103
       api_version: v1
       interface_name: nssf-sw1
 

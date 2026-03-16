@@ -43,9 +43,9 @@ http_version: 2
 ### Each NF takes its local SBI interfaces and remote interfaces from here, unless it gets them using NRF discovery mechanisms
 nfs:
   amf:
-    host: 192.168.71.132              # AMF on Machine 1 (Docker IP)
+    host: 192.168.0.193              # AMF on Machine 1 (Docker IP)
     sbi:
-      port: 8080
+      port: 9104
       api_version: v1
       interface_name: amf-sw1
     n2:
@@ -53,9 +53,9 @@ nfs:
       port: 38412                     # Exposed on 192.168.0.193:38412 for Machine 2 CU-CP
 
   smf:
-    host: 192.168.71.133              # SMF on Machine 1 (Docker IP)
+    host: 192.168.0.193                # SMF on Machine 1 (Docker IP)
     sbi:
-      port: 8080
+      port: 9101
       api_version: v1
       interface_name: smf-sw1
     n4:
@@ -63,7 +63,7 @@ nfs:
       port: 8805                      # Exposed on 192.168.0.193:8805 for Machine 2 UPF
 
   upf:
-    host: 192.168.71.134              # Primary UPF on Machine 1 (Docker IP)
+    host: 192.168.0.193               # Primary UPF on Machine 1 (Docker IP)
     sbi:
       port: 8080
       api_version: v1
@@ -100,57 +100,57 @@ nfs:
   #     port: 2152
 
   spgwu:
-    host: 192.168.71.134
+    host: 192.168.0.193  
     sbi:
       port: 8080
       api_version: v1
       interface_name: spgwu-sw1
 
   udm:
-    host: 192.168.71.136              # UDM on Machine 1 (Docker IP)
+    host: localhost                # UDM on Machine 1 (Docker IP)
     sbi:
       port: 8080
       api_version: v1
-      interface_name: udm-sw1
+      interface_name: lo
 
   udr:
-    host: 192.168.71.137              # UDR on Machine 1 (Docker IP)
+    host: 192.168.0.193               # UDR on Machine 1 (Docker IP)
     sbi:
-      port: 8080
+      port: 9096
       api_version: v1
       interface_name: udr-sw1
 
   ausf:
-    host: 192.168.71.138              # AUSF on Machine 1 (Docker IP)
+    host: 192.168.0.193               # AUSF on Machine 1 (Docker IP)
     sbi:
-      port: 8080
+      port: 9097
       api_version: v1
       interface_name: ausf-sw1
 
   nrf:
-    host: 192.168.71.130              # NRF on Machine 1 (Docker IP)
+    host: 192.168.0.193                # NRF on Machine 1 (Docker IP)
     sbi:
       port: 9090                      # Exposed on 192.168.0.193:9090 for Machine 2
       api_version: v1
       interface_name: nrf-sw1
 
   pcf:
-    host: 192.168.71.139              # PCF on Machine 1 (Docker IP)
+    host: 192.168.0.193               # PCF on Machine 1 (Docker IP)
     sbi:
-      port: 8080
+      port: 9092
       api_version: v1
       interface_name: pcf-sw1
 
   nssf:
-    host: 192.168.71.135              # NSSF on Machine 1 (Docker IP)
+    host: 192.168.0.193                # NSSF on Machine 1 (Docker IP)
     sbi:
-      port: 8080
+      port: 9103
       api_version: v1
       interface_name: nssf-sw1
 
 #### Common for UDR and AMF
 database:
-  host: 192.168.71.131                # MySQL on Machine 1 (Docker IP)
+  host: 192.168.0.193                  # MySQL on Machine 1 (Docker IP)
   user: test
   type: mysql
   password: test
@@ -339,7 +339,7 @@ nssf:
 #    - NRF runs on Machine 1
 #    - All NFs register with NRF at startup
 #    - Machine 2 NFs can discover Machine 1 services via NRF
-#    - NRF accessible at: http://192.168.71.130:9090 (internal)
+#    - NRF accessible at: http://localhost:9090 (internal)
 #                         http://192.168.0.193:9090 (external)
 #
 # 4. UPF DEPLOYMENT:

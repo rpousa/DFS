@@ -78,7 +78,6 @@ services:
       core_net:
         ipv4_address: 192.168.71.133
     ports:
-      - "192.168.0.193:9091:80/tcp"           # HTTP API (for Machine 2)
       - "192.168.0.193:9101:8080/tcp"           
       - "192.168.0.193:8805:8805"     # PFCP (CRITICAL for Machine 2 UPF)
     volumes:
@@ -104,8 +103,7 @@ services:
       core_net:
         ipv4_address: 192.168.71.139
     ports:
-      - "192.168.0.193:9092:80/tcp"       # HTTP API
-      - "192.168.0.193:9102:9090/tcp"
+      - "192.168.0.193:9092:8080/tcp"       # HTTP API
     volumes:
       - ./configs/pcf:/openair-pcf/etc
       - ./logs/pcf:/openair-pcf/logs
@@ -129,7 +127,6 @@ services:
       core_net:
         ipv4_address: 192.168.71.135
     ports:
-      - "192.168.0.193:9093:80/tcp"       # HTTP API
       - "192.168.0.193:9103:8080/tcp"       # HTTP API
     volumes:
       - ./configs/nssf:/openair-nssf/etc
@@ -156,7 +153,6 @@ services:
     ports:
       - "192.168.0.193:9104:8080/tcp"       # NGAP/SCTP (CRITICAL for Machine 2 CU-CP)
       - "192.168.0.193:38412:38412/sctp"   
-      - "192.168.0.193:9094:80/tcp"           # HTTP API
     volumes:
       - ./configs/amf:/openair-amf/etc
       - ./logs/amf:/openair-amf/logs
@@ -181,9 +177,7 @@ services:
       core_net:
         ipv4_address: 192.168.71.136
     ports:
-      - "192.168.0.193:9095:80/tcp"       # HTTP API
       - "192.168.0.193:9105:8080/tcp"       # HTTP API
-
     volumes:
       - ./configs/udm:/openair-udm/etc
       - ./logs/udm:/openair-udm/logs
@@ -206,7 +200,7 @@ services:
       core_net:
         ipv4_address: 192.168.71.137
     ports:
-      - "192.168.0.193:9096:80/tcp"       # HTTP API
+      - "192.168.0.193:9096:8080/tcp"       # HTTP API
     volumes:
       - ./configs/udr:/openair-udr/etc
       - ./logs/udr:/openair-udr/logs
@@ -231,7 +225,7 @@ services:
       core_net:
         ipv4_address: 192.168.71.138
     ports:
-      - "192.168.0.193:9097:80/tcp"       # HTTP API
+      - "192.168.0.193:9097:8080/tcp"       # HTTP API
     volumes:
       - ./configs/ausf:/openair-ausf/etc
       - ./logs/ausf:/openair-ausf/logs
@@ -266,7 +260,6 @@ services:
       - "192.168.0.193:8806:8805/udp"     # PFCP (different port to avoid conflict with SMF)
       - "192.168.0.193:2152:2152/udp"     # GTP-U N3 (CRITICAL for Machine 2 CU-UP)
       - "192.168.0.193:2152:2152/tcp"     # GTP-U N3 (CRITICAL for Machine 2 CU-UP)
-
     volumes:
       - ./configs/upf:/openair-upf/etc
       - ./logs/upf:/openair-upf/logs
