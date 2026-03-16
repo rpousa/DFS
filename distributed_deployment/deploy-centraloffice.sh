@@ -192,7 +192,7 @@ echo ""
 print_info "Checking critical services..."
 
 # Check AMF NGAP port
-if sudo netstat -tulpn 2>/dev/null | grep -q ":38412"; then
+if sudo netstat -p 2>/dev/null | grep -q ":38412"; then
     print_info "✓ AMF NGAP port 38412 is listening (for Machine 2 CU-CP)"
 else
     print_warn "✗ AMF NGAP port 38412 is NOT listening"

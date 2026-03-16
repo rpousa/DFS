@@ -80,7 +80,7 @@ services:
     ports:
       - "192.168.0.193:9091:80/tcp"           # HTTP API (for Machine 2)
       - "192.168.0.193:9101:8080/tcp"           
-      - "192.168.0.193:8805:8805/udp"     # PFCP (CRITICAL for Machine 2 UPF)
+      - "192.168.0.193:8805:8805"     # PFCP (CRITICAL for Machine 2 UPF)
     volumes:
       - ./configs/smf:/openair-smf/etc
       - ./logs/smf:/openair-smf/logs
@@ -155,7 +155,7 @@ services:
         ipv4_address: 192.168.71.132
     ports:
       - "192.168.0.193:9104:8080/tcp"       # NGAP/SCTP (CRITICAL for Machine 2 CU-CP)
-      - "192.168.0.193:38412:38412/sctp"   
+      - "192.168.0.193:38412:38412"   
       - "192.168.0.193:9094:80/tcp"           # HTTP API
     volumes:
       - ./configs/amf:/openair-amf/etc
