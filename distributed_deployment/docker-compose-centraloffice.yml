@@ -53,7 +53,7 @@ services:
         ipv4_address: 192.168.71.130
     ports:
       - "192.168.0.193:8080:80/tcp"       # HTTP API (for Machine 2)
-      - "192.168.0.193:9090:192.168.0.193:9090/tcp"     # HTTP/2 (for Machine 2)
+      - "192.168.0.193:9090:9090/tcp"     # HTTP/2 (for Machine 2)
     volumes:
       - ./configs/nrf:/openair-nrf/etc
       - ./logs/nrf:/openair-nrf/logs
@@ -155,7 +155,7 @@ services:
         ipv4_address: 192.168.71.132
     ports:
       - "192.168.0.193:9104:8080/tcp"       # NGAP/SCTP (CRITICAL for Machine 2 CU-CP)
-      - "192.168.0.193:38412:38412"   
+      - "192.168.0.193:38412:38412/sctp"   
       - "192.168.0.193:9094:80/tcp"           # HTTP API
     volumes:
       - ./configs/amf:/openair-amf/etc
