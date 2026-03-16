@@ -199,7 +199,7 @@ else
 fi
 
 # Check NRF HTTP port
-if docker exec nrf wget -q -O- http://localhost/nnrf-nfm/v1/nf-instances &>/dev/null; then
+if curl -s --http2-prior-knowledge http://192.168.0.193:9090/nnrf-nfm/v1/nf-instances | head -20; then
     print_info "✓ NRF is responding on HTTP"
 else
     print_warn "✗ NRF is NOT responding"
