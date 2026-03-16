@@ -222,7 +222,7 @@ echo "     docker logs -f amf"
 echo "     docker logs -f cucp"
 echo ""
 echo "  3. Deploy Machine 2 (Edge RAN) on $MACHINE2_IP:"
-echo "     ./deploy-machine2.sh"
+echo "     ./deploy-edge.sh"
 echo ""
 
 print_info "To stop: docker-compose -f docker-compose-centraloffice.yml down"

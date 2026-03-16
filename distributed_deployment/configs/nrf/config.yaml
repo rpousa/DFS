@@ -132,7 +132,7 @@ nfs:
     sbi:
       port: 9090                      # Exposed on 192.168.0.193:9090 for Machine 2
       api_version: v1
-      interface_name: lo
+      interface_name: nrf-sw1
 
   pcf:
     host: 192.168.0.193               # PCF on Machine 1 (Docker IP)

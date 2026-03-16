@@ -139,7 +139,7 @@ nfs:
     sbi:
       port: 8080
       api_version: v1
-      interface_name: lo
+      interface_name: pcf-sw1
 
   nssf:
     host: 192.168.0.193                # NSSF on Machine 1 (Docker IP)
