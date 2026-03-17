@@ -47,9 +47,9 @@ nfs:
     sbi:
       port: 8080
       api_version: v1
-      interface_name: amf-sw1
+      interface_name: eth0
     n2:
-      interface_name: amf-sw1
+      interface_name: eth0
       port: 38412                     # Exposed on 192.168.0.193:38412 for Machine 2 CU-CP
 
   smf:
@@ -57,9 +57,9 @@ nfs:
     sbi:
       port: 8080
       api_version: v1
-      interface_name: smf-sw1
+      interface_name: eth0
     n4:
-      interface_name: smf-sw1
+      interface_name: eth0
       port: 8805                      # Exposed on 192.168.0.193:8805 for Machine 2 UPF
 
   upf:
@@ -67,17 +67,17 @@ nfs:
     sbi:
       port: 8080
       api_version: v1
-      interface_name: upf-core
+      interface_name: eth0
     n3:
-      interface_name: upf-core
+      interface_name: eth0
       port: 2152                      # Exposed on 192.168.0.193:2152 for Machine 2 CU-UP
     n4:
-      interface_name: upf-core
+      interface_name: eth0
       port: 8805
     n6:
-      interface_name: upf-ext_dn
+      interface_name: eth1
     n9:
-      interface_name: upf-core
+      interface_name: eth0
       port: 2152
 
   # Edge UPF on Machine 2 (if needed for local breakout)
@@ -104,49 +104,49 @@ nfs:
     sbi:
       port: 8080
       api_version: v1
-      interface_name: spgwu-sw1
+      interface_name: eth0
 
   udm:
     host: 192.168.71.136              # UDM on Machine 1 (Docker IP)
     sbi:
       port: 8080
       api_version: v1
-      interface_name: udm-sw1
+      interface_name: eth0
 
   udr:
     host: 192.168.71.137              # UDR on Machine 1 (Docker IP)
     sbi:
       port: 8080
       api_version: v1
-      interface_name: udr-sw1
+      interface_name: eth0
 
   ausf:
     host: 192.168.71.138              # AUSF on Machine 1 (Docker IP)
     sbi:
       port: 8080
       api_version: v1
-      interface_name: ausf-sw1
+      interface_name: eth0
 
   nrf:
     host: 192.168.71.130              # NRF on Machine 1 (Docker IP)
     sbi:
       port: 9090                      # Exposed on 192.168.0.193:9090 for Machine 2
       api_version: v1
-      interface_name: nrf-sw1
+      interface_name: eth0
 
   pcf:
     host: 192.168.71.139              # PCF on Machine 1 (Docker IP)
     sbi:
       port: 8080
       api_version: v1
-      interface_name: pcf-sw1
+      interface_name: eth0
 
   nssf:
     host: 192.168.71.135              # NSSF on Machine 1 (Docker IP)
     sbi:
       port: 8080
       api_version: v1
-      interface_name: nssf-sw1
+      interface_name: eth0
 
 #### Common for UDR and AMF
 database:
