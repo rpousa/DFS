@@ -183,11 +183,11 @@ print_info "✓ Can reach Machine 1 ($MACHINE1_IP)"
 
 # Test AMF connectivity (critical for CU-CP connection)
 print_info "Testing AMF connectivity on Machine 1..."
-if timeout 2 bash -c "echo > /dev/tcp/$MACHINE1_IP/38412" 2>/dev/null; then
-    print_info "✓ Can reach AMF on $MACHINE1_IP:38412"
+if timeout 2 ncat --sctp -z $MACHINE1_IP 38412 2>/dev/null; then
+    print_info "✓ Can reach AMF on $MACHINE1_IP:38412 (SCTP)"
 else
-    print_error "✗ Cannot reach AMF on $MACHINE1_IP:38412"
-    print_error "Make sure Machine 1 is deployed and firewall allows connections"
+    print_error "✗ Cannot reach AMF on $MACHINE1_IP:38412 (SCTP)"
+    print_error "Make sure Machine 1 is deployed and firewall allows SCTP connections"
     exit 1
 fi
 

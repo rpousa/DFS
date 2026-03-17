@@ -342,7 +342,7 @@ services:
       f1c_net:
         ipv4_address: 192.168.73.140
     ports:
-      - "192.168.0.193:38472:38472"       # F1-C/SCTP (CRITICAL for Machine 2 DU)
+      - "192.168.0.193:38472:38472/sctp"       # F1-C/SCTP (CRITICAL for Machine 2 DU)
       - "192.168.0.193:38472:38472/udp"        # F1-C/UDP
     volumes:
       - ./configs/cucp/gnb-cucp.sa.f1.conf:/opt/oai-gnb/etc/gnb.conf
