@@ -50,7 +50,7 @@ nfs:
       interface_name: amf-sw1
     n2:
       interface_name: amf-sw1
-      port: 38413                     # Exposed on 192.168.0.193:38412 for Machine 2 CU-CP
+      port: 38412                     # Exposed on 192.168.0.193:38412 for Machine 2 CU-CP
 
   smf:
     host: 192.168.71.133              # SMF on Machine 1 (Docker IP)
