@@ -155,7 +155,7 @@ services:
         ipv4_address: 192.168.71.132
     ports:
       - "192.168.0.193:9104:8080/tcp"       # NGAP/SCTP (CRITICAL for Machine 2 CU-CP)
-      - "192.168.0.193:38412:38412/sctp"   
+      - "192.168.0.193:38412:38413/sctp"   
       - "192.168.0.193:9094:80/tcp"           # HTTP API
     volumes:
       - ./configs/amf:/openair-amf/etc
@@ -342,7 +342,7 @@ services:
         ipv4_address: 192.168.73.140
     ports:
       - "192.168.0.193:38472:38472"       # F1-C/SCTP (CRITICAL for Machine 2 DU)
-    #  - "192.168.0.193:38472:38472/udp"        # F1-C/UDP
+      - "192.168.0.193:38472:38472/udp"        # F1-C/UDP
     volumes:
       - ./configs/cucp/gnb-cucp.sa.f1.conf:/opt/oai-gnb/etc/gnb.conf
       - ./logs/cucp:/opt/oai-gnb/logs
