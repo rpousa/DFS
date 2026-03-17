@@ -30,10 +30,7 @@ services:
       - MYSQL_ROOT_PASSWORD=linux
       - MYSQL_DATABASE=oai_db
     command: >
-      sh -c "ip link set eth0 down &&
-             ip link set eth0 name mysql-sw1 &&
-             ip link set mysql-sw1 up &&
-             mysqld -u test --initialize-insecure --init-file=/docker-entrypoint-initdb.d/oai_db.sql &&
+      sh -c "mysqld -u test --initialize-insecure --init-file=/docker-entrypoint-initdb.d/oai_db.sql &&
              mysqld -u test"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
@@ -61,10 +58,7 @@ services:
       mysql:
         condition: service_healthy
     command: >
-      sh -c "ip link set eth0 down &&
-             ip link set eth0 name nrf-sw1 &&
-             ip link set nrf-sw1 up &&
-             sleep 5 &&
+      sh -c "sleep 5 &&
              /openair-nrf/bin/oai_nrf -c /openair-nrf/etc/config.yaml -o"
 
   smf:
@@ -87,10 +81,7 @@ services:
     depends_on:
       - nrf
     command: >
-      sh -c "ip link set eth0 down &&
-             ip link set eth0 name smf-sw1 &&
-             ip link set smf-sw1 up &&
-             sleep 5 &&
+      sh -c "sleep 5 &&
              /openair-smf/bin/oai_smf -c /openair-smf/etc/config.yaml -o"
 
   pcf:
@@ -112,10 +103,7 @@ services:
     depends_on:
       - nrf
     command: >
-      sh -c "ip link set eth0 down &&
-             ip link set eth0 name pcf-sw1 &&
-             ip link set pcf-sw1 up &&
-             sleep 5 &&
+      sh -c "sleep 5 &&
              /openair-pcf/bin/oai_pcf -c /openair-pcf/etc/config.yaml -o"
 
   nssf:
@@ -137,10 +125,7 @@ services:
     depends_on:
       - nrf
     command: >
-      sh -c "ip link set eth0 down &&
-             ip link set eth0 name nssf-sw1 &&
-             ip link set nssf-sw1 up &&
-             sleep 5 &&
+      sh -c "sleep 5 &&
              /openair-nssf/bin/oai_nssf -c /openair-nssf/etc/config.yaml -o"
 
   amf:
@@ -165,10 +150,7 @@ services:
       - nrf
       - smf
     command: >
-      sh -c "ip link set eth0 down &&
-             ip link set eth0 name amf-sw1 &&
-             ip link set amf-sw1 up &&
-             sleep 5 &&
+      sh -c "sleep 5 &&
              /openair-amf/bin/oai_amf -c /openair-amf/etc/config.yaml -o"
 
   udm:
@@ -191,10 +173,7 @@ services:
     depends_on:
       - nrf
     command: >
-      sh -c "ip link set eth0 down &&
-             ip link set eth0 name udm-sw1 &&
-             ip link set udm-sw1 up &&
-             sleep 5 &&
+      sh -c "sleep 5 &&
              /openair-udm/bin/oai_udm -c /openair-udm/etc/config.yaml -o"
   udr:
     image: udr:comnetsemu
@@ -214,10 +193,7 @@ services:
     depends_on:
       - nrf
     command: >
-      sh -c "ip link set eth0 down &&
-             ip link set eth0 name udr-sw1 &&
-             ip link set udr-sw1 up &&
-             sleep 5 &&
+      sh -c "sleep 5 &&
              /openair-udr/bin/oai_udr -c /openair-udr/etc/config.yaml -o"
 
   ausf:
@@ -239,10 +215,7 @@ services:
     depends_on:
       - nrf
     command: >
-      sh -c "ip link set eth0 down &&
-             ip link set eth0 name ausf-sw1 &&
-             ip link set ausf-sw1 up &&
-             sleep 5 &&
+      sh -c "sleep 5 &&
              /openair-ausf/bin/oai_ausf -c /openair-ausf/etc/config.yaml -o"
 
   # ==========================================
@@ -277,14 +250,7 @@ services:
       - nrf
       - smf
     command: >
-      sh -c "sleep 2 &&
-             ip link set eth0 down &&
-             ip link set eth0 name upf-core &&
-             ip link set upf-core up &&
-             ip link set eth1 down &&
-             ip link set eth1 name upf-ext_dn &&
-             ip link set upf-ext_dn up &&
-             sysctl -w net.ipv4.ip_forward=1 &&
+      sh -c "sysctl -w net.ipv4.ip_forward=1 &&
              sleep 2 &&
              /openair-upf/bin/oai_upf -c /openair-upf/etc/config.yaml -o"
 
@@ -318,10 +284,7 @@ services:
     depends_on:
       - upf
     command: >
-      sh -c "ip link set eth0 down &&
-             ip link set eth0 name ext_dn-upf &&
-             ip link set ext_dn-upf up &&
-             ifconfig ext_dn-upf mtu 1460 &&
+      sh -c "ifconfig eth0 mtu 1460 &&
              sleep 5 &&
              /tmp/trfgen_entrypoint.sh"
 
