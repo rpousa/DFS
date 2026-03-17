@@ -257,28 +257,50 @@ services:
 # Only ran_net is local to Machine 2
 
 networks:
-  # External networks - created by Machine 1
-  # Docker will route traffic through Machine 1's exposed ports
   core_net:
-    external: true
-    name: distributed_deployment_core_net
-  
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.71.128/26
+          gateway: 192.168.71.129
+    driver_opts:
+      com.docker.network.bridge.name: br-core
+
   ext_net:
-    external: true
-    name: distributed_deployment_ext_net
-  
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.72.128/26
+          gateway: 192.168.72.129
+    driver_opts:
+      com.docker.network.bridge.name: br-ext
+
   f1c_net:
-    external: true
-    name: distributed_deployment_f1c_net
-  
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.73.128/26
+          gateway: 192.168.73.129
+    driver_opts:
+      com.docker.network.bridge.name: br-f1c
+
   f1u_net:
-    external: true
-    name: distributed_deployment_f1u_net
-  
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.74.128/26
+          gateway: 192.168.74.129
+    driver_opts:
+      com.docker.network.bridge.name: br-f1u
+
   e1_net:
-    external: true
-    name: distributed_deployment_e1_net
-  
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.75.128/26
+          gateway: 192.168.75.129
+    driver_opts:
+      com.docker.network.bridge.name: br-e1
   # Local network - only on Machine 2
   ran_net:
     driver: bridge

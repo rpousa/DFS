@@ -181,13 +181,15 @@ if ! ping -c 3 -W 2 $MACHINE1_IP &> /dev/null; then
 fi
 print_info "✓ Can reach Machine 1 ($MACHINE1_IP)"
 
-# Test AMF connectivity (critical for CU-CP connection)
-print_info "Testing AMF connectivity on Machine 1..."
-if timeout 2 ncat --sctp -z $MACHINE1_IP 38412 2>/dev/null; then
-    print_info "✓ Can reach AMF on $MACHINE1_IP:38412 (SCTP)"
+# Test core network reachability (NRF on TCP as proxy for AMF health)
+print_info "Testing core network reachability on Machine 1..."
+if timeout 2 bash -c "echo > /dev/tcp/$MACHINE1_IP/9090" 2>/dev/null; then
+    print_info "✓ Can reach NRF on $MACHINE1_IP:9090 — Core network is up"
+    print_warn "⚠ SCTP port 38412 cannot be tested via pre-flight (SCTP NAT limitation)"
+    print_info "  AMF connectivity will be verified when CU-CP establishes NGAP association"
 else
-    print_error "✗ Cannot reach AMF on $MACHINE1_IP:38412 (SCTP)"
-    print_error "Make sure Machine 1 is deployed and firewall allows SCTP connections"
+    print_error "✗ Cannot reach NRF on $MACHINE1_IP:9090"
+    print_error "Make sure Machine 1 is deployed and firewall allows connections"
     exit 1
 fi
 
