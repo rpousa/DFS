@@ -76,13 +76,13 @@ if ! docker ps &> /dev/null; then
     exit 1
 fi
 
-if docker-compose ps -q 2>/dev/null | grep -q .; then
+if docker compose ps -q 2>/dev/null | grep -q .; then
     print_warn "Some containers are already running"
     read -p "Do you want to stop them and restart? (y/N): " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         print_info "Stopping existing containers..."
-        docker-compose -f docker-compose-centraloffice.yml down
+        docker compose -f docker-compose-centraloffice.yml down
     else
         print_info "Continuing with existing containers..."
     fi
@@ -130,18 +130,18 @@ echo ""
 
 # Start network creation
 print_stage "Creating Docker networks..."
-docker-compose -f docker-compose-centraloffice.yml up --no-start
+docker compose -f docker-compose-centraloffice.yml up --no-start
 echo ""
 
 # Stage 1: MySQL
 print_stage "Stage 1/5: Starting MySQL database..."
-docker-compose -f docker-compose-centraloffice.yml up -d mysql
+docker compose -f docker-compose-centraloffice.yml up -d mysql
 wait_for_service "mysql" 30
 echo ""
 
 # Stage 2: Core Network Functions
 print_stage "Stage 2/5: Starting 5G Core Network Functions..."
-docker-compose -f docker-compose-centraloffice.yml up -d nrf smf pcf nssf amf udm udr ausf
+docker compose -f docker-compose-centraloffice.yml up -d nrf smf pcf nssf amf udm udr ausf
 
 # Wait for critical services
 wait_for_service "nrf" 30
@@ -154,7 +154,7 @@ echo ""
 
 # Stage 3: User Plane Functions
 print_stage "Stage 3/5: Starting Primary UPF and External DN..."
-docker-compose -f docker-compose-centraloffice.yml up -d upf ext_dn 
+docker compose -f docker-compose-centraloffice.yml up -d upf ext_dn 
 
 wait_for_service "upf" 30
 wait_for_service "ext_dn" 30
@@ -165,14 +165,14 @@ echo ""
 
 # Stage 4: CU-CP
 print_stage "Stage 4/5: Starting CU-CP (Central Unit Control Plane)..."
-docker-compose -f docker-compose-centraloffice.yml up -d cucp
+docker compose -f docker-compose-centraloffice.yml up -d cucp
 wait_for_service "cucp" 30
 sleep 10
 echo ""
 
 # Stage 5: CU-UP
 print_stage "Stage 5/5: Starting CU-UP (Central Unit User Plane)..."
-docker-compose -f docker-compose-centraloffice.yml up -d cuup
+docker compose -f docker-compose-centraloffice.yml up -d cuup
 wait_for_service "cuup" 30
 sleep 5
 echo ""
@@ -180,7 +180,7 @@ echo ""
 # Final status check
 print_stage "Checking final status..."
 echo ""
-docker-compose -f docker-compose-centraloffice.yml ps
+docker compose -f docker-compose-centraloffice.yml ps
 echo ""
 
 print_info "================================================"
@@ -215,7 +215,7 @@ fi
 echo ""
 print_info "Next Steps:"
 echo "  1. Verify all services are healthy:"
-echo "     docker-compose -f docker-compose-machine1.yml logs -f"
+echo "     docker compose -f docker-compose-machine1.yml logs -f"
 echo ""
 echo "  2. Check specific service logs:"
 echo "     docker logs -f amf"
@@ -225,12 +225,12 @@ echo "  3. Deploy Machine 2 (Edge RAN) on $MACHINE2_IP:"
 echo "     ./deploy-edge.sh"
 echo ""
 
-print_info "To stop: docker-compose -f docker-compose-centraloffice.yml down"
+print_info "To stop: docker compose -f docker-compose-centraloffice.yml down"
 echo ""
 
 # Offer to show logs
 read -p "Show live logs? (y/N): " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    docker-compose -f docker-compose-centraloffice.yml logs -f
+    docker compose -f docker-compose-centraloffice.yml logs -f
 fi
