@@ -231,6 +231,10 @@ services:
     image: ue:comnetsemu
     container_name: ue_1
     hostname: ue_1
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
     cap_add:
       - SYS_NICE
       - NET_ADMIN
@@ -239,7 +243,8 @@ services:
       ran_net:
         ipv4_address: 192.168.80.170
     volumes:
-      - ./ue_volumes/nrue_multi.conf:/opt/oai-nr-ue/etc/nr-ue.conf
+      - ./ue_volumes/nrue.rfsim.conf:/opt/oai-nr-ue/etc/nr-ue.conf
+      - ./ue_volumes/ue_entrypoint.sh:/opt/oai-nr-ue/bin/entrypoint.sh
       - ./logs/ue_1:/opt/oai-nr-ue/logs
     environment:
       OPENAIR_DIR: /opt/oai-nr-ue
