@@ -1,0 +1,5 @@
+#Central office
+sudo chmod +x deploy-centraloffice.sh stop.sh configs/ext_dn/trfgen_entrypoint.sh configs/mysql/mysql-healthcheck.sh
+
+#Edge 
+sudo chmod +x deploy-edge.sh stop.sh configs/ext_dn_1/trfgen_entrypoint.sh ue_volumes/ue_entrypoint.sh
