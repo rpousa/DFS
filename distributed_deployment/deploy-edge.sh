@@ -185,7 +185,6 @@ print_info "✓ Can reach Machine 1 ($MACHINE1_IP)"
 print_info "Testing core network reachability on Machine 1..."
 if timeout 2 bash -c "echo > /dev/tcp/$MACHINE1_IP/9090" 2>/dev/null; then
     print_info "✓ Can reach NRF on $MACHINE1_IP:9090 — Core network is up"
-    print_warn "⚠ SCTP port 38412 cannot be tested via pre-flight (SCTP NAT limitation)"
     print_info "  AMF connectivity will be verified when CU-CP establishes NGAP association"
 else
     print_error "✗ Cannot reach NRF on $MACHINE1_IP:9090"

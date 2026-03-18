@@ -13,7 +13,7 @@ services:
   # ==========================================
 
   upf_1:
-    image: upf_1:comnetsemu
+    image: upf:comnetsemu
     container_name: upf_1
     hostname: upf_1
     cap_add:
