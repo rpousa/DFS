@@ -105,8 +105,8 @@ services:
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
-      - ./configs/cuup_1/gnb-cuup.sa.f1.conf:/opt/oai-gnb/etc/gnb.conf
-      - ./logs/cuup_1:/opt/oai-gnb/logs
+      - ./configs/cuup/gnb-cuup.sa.f1.conf:/opt/oai-gnb/etc/gnb.conf
+      - ./logs/cuup:/opt/oai-gnb/logs
     environment:
       USE_ADDITIONAL_OPTIONS: >-
                                --e2_agent.near_ric_ip_addr 192.168.71.150
