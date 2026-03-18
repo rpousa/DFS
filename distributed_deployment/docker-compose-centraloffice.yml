@@ -297,12 +297,12 @@ services:
              /tmp/trfgen_entrypoint.sh &&
              sleep infinity"
     healthcheck:
-            test: /bin/bash -c "ping -c 2 192.168.72.134"
-            start_period: 10s
-            start_interval: 500ms
-            interval: 10s
-            timeout: 5s
-            retries: 5
+      test: /bin/bash -c "ping -c 2 192.168.72.134"
+      start_period: 10s
+      start_interval: 500ms
+      interval: 10s
+      timeout: 5s
+      retries: 5
   # ==========================================
   # Central RAN - CU-CP
   # ==========================================
