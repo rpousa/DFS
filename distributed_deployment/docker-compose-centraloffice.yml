@@ -268,7 +268,7 @@ services:
       - EBPF_GW_SETUP=yes
       - EBPF_GW_N6_IP_ADDR=192.168.72.135
       - N6_IF_NAME=eth0
-      - SGI_IF_NAME=eth0
+      - SGI_IF_NAME=eth2
       - GW_SGI_IP_ADDR=172.17.0.9
       - N3_IF_NAME=eth1
       - GW_N3_IP_ADDR=192.168.100.135
@@ -277,6 +277,11 @@ services:
       - UE_IP_ADDRESS_POOL_3=14.1.1.0/24
       - SGI_DEMO_OAI_ADDR=172.17.0.1
       - N6_UPF_IP_ADDR=192.168.72.134
+    entrypoint: /bin/bash -c \
+              "iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE;"\
+              "ip route add 12.1.1.0/24 via 192.168.72.134 dev eth0;"\
+              "ip route add 13.1.1.0/24 via 192.168.72.134 dev eth0;"\
+              "ip route add 14.1.1.0/24 via 192.168.72.134 dev eth0; sleep infinity"
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
