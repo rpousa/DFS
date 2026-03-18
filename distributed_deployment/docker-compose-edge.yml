@@ -13,7 +13,7 @@ services:
   # ==========================================
 
   upf_1:
-    image: upf:comnetsemu
+    image: upf_1:comnetsemu
     container_name: upf_1
     hostname: upf_1
     cap_add:
@@ -74,7 +74,7 @@ services:
     depends_on:
       - upf_1
     command: >
-      sh -c "ifconfig ext_dn-upf mtu 1460 &&
+      sh -c "ifconfig eth0 mtu 1460 &&
              sysctl -w net.ipv4.ip_forward=1 &&
              sleep 5 &&
              /tmp/trfgen_entrypoint.sh"
