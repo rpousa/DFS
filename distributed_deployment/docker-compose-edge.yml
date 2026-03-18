@@ -30,6 +30,8 @@ services:
     volumes:
       - ./configs/upf_1:/openair-upf/etc       # Edge UPF config with modified IP pools
       - ./logs/upf_1:/openair-upf/logs
+    devices:
+      - /dev/net/tun:/dev/net/tun
     environment:
       # NRF on Machine 1 - Docker will route via exposed port
       - NRF_IPV4_ADDRESS=192.168.71.130
@@ -37,12 +39,6 @@ services:
       - REGISTER_NF=yes
     command: >
       sh -c "sleep 2 &&
-             ip link set eth0 down &&
-             ip link set eth0 name upf-core &&
-             ip link set upf-core up &&
-             ip link set eth1 down &&
-             ip link set eth1 name upf-ext_dn &&
-             ip link set upf-ext_dn up &&
              sysctl -w net.ipv4.ip_forward=1 &&
              sysctl -w net.ipv6.conf.all.accept_ra=2 &&
              sleep 10 &&
@@ -71,15 +67,14 @@ services:
       - UE_IP_ADDRESS_POOL_3=14.2.1.0/24
       - SGI_DEMO_OAI_ADDR=172.17.0.1
       - N6_UPF_IP_ADDR=192.168.72.160          # Edge UPF
+    devices:
+      - /dev/net/tun:/dev/net/tun
     volumes:
       - ./configs/ext_dn_1:/tmp
     depends_on:
       - upf_1
     command: >
-      sh -c "ip link set eth0 down &&
-             ip link set eth0 name ext_dn-upf &&
-             ip link set ext_dn-upf up &&
-             ifconfig ext_dn-upf mtu 1460 &&
+      sh -c "ifconfig ext_dn-upf mtu 1460 &&
              sysctl -w net.ipv4.ip_forward=1 &&
              sleep 5 &&
              /tmp/trfgen_entrypoint.sh"
