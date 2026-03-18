@@ -25,8 +25,11 @@ services:
       ext_net:
         ipv4_address: 192.168.72.160
     ports:
-      - "8815:8805/udp"                        # PFCP (different from Machine 1 SMF port)
-      - "2154:2152/udp"                        # GTP-U (different from Machine 1 UPF port)
+      - "192.168.0.243:8086:8080/tcp"
+      - "192.168.0.243:8806:8805/tcp"     
+      - "192.168.0.243:8806:8805/udp"     # PFCP (different port to avoid conflict with SMF)
+      - "192.168.0.243:2152:2152/udp"     # GTP-U N3 (CRITICAL for Machine 2 CU-UP)
+      - "192.168.0.243:2152:2152/tcp"     # GTP-U N3 (CRITICAL for Machine 2 CU-UP)
     volumes:
       - ./configs/upf_1:/openair-upf/etc       # Edge UPF config with modified IP pools
       - ./logs/upf_1:/openair-upf/logs
