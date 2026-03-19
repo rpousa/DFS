@@ -184,6 +184,7 @@ services:
                                 --MACRLCs.[0].remote_n_address 192.168.0.193
                                 --MACRLCs.[0].local_n_address_f1u 192.168.74.151
                                 --MACRLCs.[0].remote_n_portd 2153
+                                --MACRLCs.[0].remote_n_portc 38472
                                 --MACRLCs.[0].tr_s_preference local_L1
                                 --MACRLCs.[0].tr_n_preference f1
                                 --rfsimulator.serveraddr server
