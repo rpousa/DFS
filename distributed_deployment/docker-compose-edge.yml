@@ -26,10 +26,8 @@ services:
         ipv4_address: 192.168.72.160
     ports:
       - "192.168.0.243:8086:8080/tcp"
-      - "192.168.0.243:8806:8805/tcp"     
       - "192.168.0.243:8806:8805/udp"     # PFCP (different port to avoid conflict with SMF)
       - "192.168.0.243:2152:2152/udp"     # GTP-U N3 (CRITICAL for Machine 2 CU-UP)
-      - "192.168.0.243:2152:2152/tcp"     # GTP-U N3 (CRITICAL for Machine 2 CU-UP)
     volumes:
       - ./configs/upf_1:/openair-upf/etc       # Edge UPF config with modified IP pools
       - ./logs/upf_1:/openair-upf/logs
@@ -115,7 +113,7 @@ services:
       f1u_net:
         ipv4_address: 192.168.74.144
     ports:
-      - "2155:2153/udp"                        # GTP-U F1-U (different port)
+      - "2154:2153/udp"                        # GTP-U F1-U (different port)
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
@@ -130,7 +128,7 @@ services:
                                --gNBs.[0].gNB_ID  0xe01
                                --gNBs.[0].gNB_CU_UP_ID  0xe01
                                --gNBs.[0].E1_INTERFACE.[0].type up
-                               --gNBs.[0].E1_INTERFACE.[0].ipv4_cucp 192.168.75.140
+                               --gNBs.[0].E1_INTERFACE.[0].ipv4_cucp 192.168.0.193
                                --gNBs.[0].E1_INTERFACE.[0].ipv4_cuup 192.168.75.144
                                --gNBs.[0].tr_s_preference f1
                                --gNBs.[0].local_s_portd 2153 
@@ -162,6 +160,9 @@ services:
         ipv4_address: 192.168.74.151
       ran_net:
         ipv4_address: 192.168.80.151
+    ports:
+      - "192.168.0.243:500:500/sctp"      # F1-C local SCTP port
+      - "192.168.0.243:2155:2152/udp"     # F1-U local GTP-U port
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
@@ -171,25 +172,20 @@ services:
       # RFSIMULATOR MODE - DU as server
       # F1-C and F1-U connect to CU-CP/CU-UP on Machine 1
       USE_ADDITIONAL_OPTIONS: >-
-                                --rfsim
-                                --e2_agent.near_ric_ip_addr 192.168.71.150
-                                --e2_agent.sm_dir /usr/local/lib/flexric/ 
+                                
+                                --e2_agent.near_ric_ip_addr 192.168.71.150 --e2_agent.sm_dir /usr/local/lib/flexric/ 
                                 --telnetsrv --telnetsrv.shrmod ci
-                                -E --sa
-                                --Active_gNBs gNB-OAI
-                                --gNBs.[0].gNB_ID 0xe00
-                                --gNBs.[0].gNB_DU_ID 0xe00
-                                --gNBs.[0].gNB_name gNB-OAI
-                                --gNBs.[0].nr_cellid 11111111
+                                -E --rfsim --sa --Active_gNBs gNB-OAI
+                                --gNBs.[0].gNB_ID 0xe00 --gNBs.[0].gNB_DU_ID 0xe00  --gNBs.[0].gNB_name gNB-OAI
+                                --gNBs.[0].nr_cellid 11111111 --gNBs.[0].min_rxtxtime 6
                                 --gNBs.[0].servingCellConfigCommon.[0].physCellId 1
                                 --gNBs.[0].servingCellConfigCommon.[0].initialUplinkBWP.rach_ConfigCommon.rach_ConfigGeneric.ra_ResponseWindow 20
                                 --MACRLCs.[0].local_n_address 192.168.73.151
-                                --MACRLCs.[0].remote_n_address 192.168.73.140
+                                --MACRLCs.[0].remote_n_address 192.168.0.193
                                 --MACRLCs.[0].local_n_address_f1u 192.168.74.151
                                 --MACRLCs.[0].remote_n_portd 2153
-                                --MACRLCs.[0].tr_s_preference f1
-                                --MACRLCs.[0].pusch_TargetSNRx10 150
-                                --MACRLCs.[0].pucch_TargetSNRx10 200
+                                --MACRLCs.[0].tr_s_preference local_L1
+                                --MACRLCs.[0].tr_n_preference f1
                                 --rfsimulator.serveraddr server
                                 --rfsimulator.serverport 4043
                                 --log_config.phy_log_level info

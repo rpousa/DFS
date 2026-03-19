@@ -74,7 +74,7 @@ services:
     ports:
       - "192.168.0.193:9091:80/tcp"           # HTTP API (for Machine 2)
       - "192.168.0.193:9101:8080/tcp"           
-      - "192.168.0.193:8805:8805"     # PFCP (CRITICAL for Machine 2 UPF)
+      - "192.168.0.193:8805:8805/udp"     # PFCP (CRITICAL for Machine 2 UPF)
     volumes:
       - ./configs/smf:/openair-smf/etc
       - ./logs/smf:/openair-smf/logs
@@ -237,10 +237,8 @@ services:
         ipv4_address: 192.168.72.134
     ports:
       - "192.168.0.193:8086:8080/tcp"
-      - "192.168.0.193:8806:8805/tcp"     
       - "192.168.0.193:8806:8805/udp"     # PFCP (different port to avoid conflict with SMF)
       - "192.168.0.193:2152:2152/udp"     # GTP-U N3 (CRITICAL for Machine 2 CU-UP)
-      - "192.168.0.193:2152:2152/tcp"     # GTP-U N3 (CRITICAL for Machine 2 CU-UP)
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
@@ -322,7 +320,7 @@ services:
         ipv4_address: 192.168.73.140
     ports:
       - "192.168.0.193:38472:38472/sctp"       # F1-C/SCTP (CRITICAL for Machine 2 DU)
-      - "192.168.0.193:38472:38472/udp"        # F1-C/UDP
+      - "192.168.0.193:38462:38462/sctp"       # E1AP (NEW - needed for Edge CU-UP)
     volumes:
       - ./configs/cucp/gnb-cucp.sa.f1.conf:/opt/oai-gnb/etc/gnb.conf
       - ./logs/cucp:/opt/oai-gnb/logs
