@@ -1,4 +1,4 @@
-version: '3.8'
+#version: '3.8'
 
 # Docker Compose for Machine 2 (Edge RAN + Edge UPF)
 # Deploy on PC: 192.168.0.243
@@ -172,7 +172,6 @@ services:
       # RFSIMULATOR MODE - DU as server
       # F1-C and F1-U connect to CU-CP/CU-UP on Machine 1
       USE_ADDITIONAL_OPTIONS: >-
-                                
                                 --e2_agent.near_ric_ip_addr 192.168.71.150 --e2_agent.sm_dir /usr/local/lib/flexric/ 
                                 --telnetsrv --telnetsrv.shrmod ci
                                 -E --rfsim --sa --Active_gNBs gNB-OAI

@@ -132,13 +132,13 @@ if ! docker ps &> /dev/null; then
     exit 1
 fi
 
-if docker-compose ps -q 2>/dev/null | grep -q .; then
+if docker compose ps -q 2>/dev/null | grep -q .; then
     print_warn "Some containers are already running"
     read -p "Do you want to stop them and restart? (y/N): " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         print_info "Stopping existing containers..."
-        docker-compose -f docker-compose-edge.yml down
+        docker compose -f docker-compose-edge.yml down
     else
         print_info "Continuing with existing containers..."
     fi
@@ -197,12 +197,12 @@ echo ""
 
 # Start network creation
 print_stage "Creating Docker networks..."
-docker-compose -f docker-compose-edge.yml up --no-start
+docker compose -f docker-compose-edge.yml up --no-start
 echo ""
 
 # Stage 1: Edge UPF
 print_stage "Stage 1/6: Starting Edge UPF and External DN..."
-docker-compose -f docker-compose-edge.yml up -d upf_1 ext_dn_1
+docker compose -f docker-compose-edge.yml up -d upf_1 ext_dn_1
 wait_for_service "upf_1" 30
 wait_for_service "ext_dn_1" 30
 sleep 10
@@ -210,14 +210,14 @@ echo ""
 
 # Stage 2: Edge CU-UP
 print_stage "Stage 2/6: Starting Edge CU-UP..."
-docker-compose -f docker-compose-edge.yml up -d cuup_1
+docker compose -f docker-compose-edge.yml up -d cuup_1
 wait_for_service "cuup_1" 30
 sleep 10
 echo ""
 
 # Stage 3: DU with RFSimulator
 print_stage "Stage 3/6: Starting DU with RFSimulator..."
-docker-compose -f docker-compose-edge.yml up -d du_1
+docker compose -f docker-compose-edge.yml up -d du_1
 wait_for_service "du_1" 30
 sleep 10
 
@@ -231,14 +231,14 @@ echo ""
 
 # Stage 4: FlexRIC
 print_stage "Stage 4/6: Starting FlexRIC (Near-RT RIC)..."
-docker-compose -f docker-compose-edge.yml up -d flexric
+docker compose -f docker-compose-edge.yml up -d flexric
 wait_for_service "flexric" 30
 sleep 10
 echo ""
 
 # Stage 5: User Equipment (10 UEs)
 print_stage "Stage 5/6: Starting 10 User Equipment instances..."
-docker-compose -f docker-compose-edge.yml up -d ue_1
+docker compose -f docker-compose-edge.yml up -d ue_1
 wait_for_service "ue_1" 30
 echo ""
 
@@ -302,7 +302,7 @@ fi
 echo ""
 print_stage "Checking final status..."
 echo ""
-docker-compose -f docker-compose-edge.yml ps
+docker compose -f docker-compose-edge.yml ps
 echo ""
 
 print_info "================================================"
@@ -343,11 +343,11 @@ fi
 
 echo ""
 print_info "Useful Commands:"
-echo "  View all logs:        docker-compose -f docker-compose-edge.yml logs -f"
+echo "  View all logs:        docker compose -f docker-compose-edge.yml logs -f"
 echo "  View DU logs:         docker logs -f du_1"
 echo "  View UE logs:         docker logs -f ue_1"
 echo "  Check UE interfaces:  docker exec ue_1 ip addr show | grep oaitun"
-echo "  Stop deployment:      docker-compose -f docker-compose-edge.yml down"
+echo "  Stop deployment:      docker compose -f docker-compose-edge.yml down"
 echo ""
 
 print_info "Setup complete! Monitor logs to verify all components are working correctly."
@@ -357,5 +357,5 @@ echo ""
 read -p "Show live logs? (y/N): " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    docker-compose -f docker-compose-edge.yml logs -f
+    docker compose -f docker-compose-edge.yml logs -f
 fi
