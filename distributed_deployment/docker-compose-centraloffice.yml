@@ -30,8 +30,9 @@ services:
       - MYSQL_ROOT_PASSWORD=linux
       - MYSQL_DATABASE=oai_db
     command: >
-      sh -c "mysqld -u test --initialize-insecure --init-file=/docker-entrypoint-initdb.d/oai_db.sql &&
-             mysqld -u test"
+      sh -c "rm -rf /var/lib/mysql/* &&
+             mysqld -u test --initialize-insecure --init-file=/docker-entrypoint-initdb.d/oai_db.sql &&
+             mysqld -u test
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
