@@ -182,8 +182,12 @@ setup_sctp_routing() {
     fi
 
     # Add correct DNAT rule: external:38472 → f1c_net_IP:501
-    print_info "  Adding correct F1-C DNAT: ${MACHINE1_IP}:38472 → ${CUCP_F1C_IP}:501"
-    sudo nft add rule ip nat DOCKER iifname != "br-f1c" meta l4proto sctp ip daddr ${MACHINE1_IP} sctp dport 38472 counter dnat to ${CUCP_F1C_IP}:501
+    if ! sudo nft -a list chain ip nat DOCKER 2>/dev/null | grep -q "sctp dport 38472.*dnat to ${CUCP_F1C_IP}:501"; then
+        print_info "  Adding correct F1-C DNAT: ${MACHINE1_IP}:38472 → ${CUCP_F1C_IP}:501"
+        sudo nft add rule ip nat DOCKER iifname != "br-f1c" meta l4proto sctp ip daddr ${MACHINE1_IP} sctp dport 38472 counter dnat to ${CUCP_F1C_IP}:501
+    else
+        print_info "  ✓ Correct F1-C DNAT rule already exists"
+    fi
 
     # Remove Docker's incorrect FORWARD accept rule (for core_net)
     local WRONG_F1C_FWD=$(sudo nft -a list chain ip filter DOCKER 2>/dev/null | grep "sctp.*daddr ${CUCP_CORE_IP}.*sctp dport 38472" | grep -oP 'handle \K\d+')
@@ -264,7 +268,7 @@ setup_sctp_routing() {
     else
         print_info "  ✓ Raw table does not block external IP — DNAT will work"
     fi
-
+    
     # -------------------------------------------------------
     # 5. Ensure SCTP kernel module is loaded
     # -------------------------------------------------------

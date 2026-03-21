@@ -420,11 +420,13 @@ services:
                                --gNBs.[0].gNB_ID  0xe00 --gNBs.[0].gNB_CU_UP_ID  0xe00
                                --gNBs.[0].E1_INTERFACE.[0].type up
                                --gNBs.[0].E1_INTERFACE.[0].ipv4_cucp 192.168.75.140
+                               --gNBs.[0].E1_INTERFACE.[0].port_cucp 38472
                                --gNBs.[0].E1_INTERFACE.[0].ipv4_cuup 192.168.75.143
                                --gNBs.[0].tr_s_preference f1 --gNBs.[0].local_s_portd 2153 
                                --gNBs.[0].local_s_address 192.168.74.143 --gNBs.[0].remote_s_address 0.0.0.0
                                --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.71.143/26
                                --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.71.143/26
+                               
     depends_on:
       - cucp
       - upf

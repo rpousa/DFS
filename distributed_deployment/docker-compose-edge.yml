@@ -160,6 +160,8 @@ services:
         ipv4_address: 192.168.74.151
       ran_net:
         ipv4_address: 192.168.80.151
+      core_net:                          
+        ipv4_address: 192.168.71.151  
     ports:
       - "192.168.0.243:500:500/sctp"      # F1-C local SCTP port
       - "192.168.0.243:2155:2152/udp"     # F1-U local GTP-U port
