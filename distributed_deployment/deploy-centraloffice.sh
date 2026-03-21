@@ -167,8 +167,8 @@ setup_sctp_routing() {
     fi
 
     # -------------------------------------------------------
-    # 2. CU-CP F1-C: 192.168.0.193:38472 → CU-CP on f1c_net:501
-    #    CU-CP binds F1-C SCTP to f1c_net IP (192.168.73.140) port 501
+    # 2. CU-CP F1-C: 192.168.0.193:38472 → CU-CP on f1c_net:38472
+    #    CU-CP binds F1-C SCTP to f1c_net IP (192.168.73.140) port 38472
     #    Docker's DNAT incorrectly points to core_net IP port 38472
     # -------------------------------------------------------
     print_info "Configuring CU-CP F1-C SCTP routing..."
@@ -181,10 +181,10 @@ setup_sctp_routing() {
         sudo nft delete rule ip nat DOCKER handle $WRONG_F1C_RULE
     fi
 
-    # Add correct DNAT rule: external:38472 → f1c_net_IP:501
-    if ! sudo nft -a list chain ip nat DOCKER 2>/dev/null | grep -q "sctp dport 38472.*dnat to ${CUCP_F1C_IP}:501"; then
-        print_info "  Adding correct F1-C DNAT: ${MACHINE1_IP}:38472 → ${CUCP_F1C_IP}:501"
-        sudo nft add rule ip nat DOCKER iifname != "br-f1c" meta l4proto sctp ip daddr ${MACHINE1_IP} sctp dport 38472 counter dnat to ${CUCP_F1C_IP}:501
+    # Add correct DNAT rule: external:38472 → f1c_net_IP:38472
+    if ! sudo nft -a list chain ip nat DOCKER 2>/dev/null | grep -q "sctp dport 38472.*dnat to ${CUCP_F1C_IP}:38472"; then
+        print_info "  Adding correct F1-C DNAT: ${MACHINE1_IP}:38472 → ${CUCP_F1C_IP}:38472"
+        sudo nft add rule ip nat DOCKER iifname != "br-f1c" meta l4proto sctp ip daddr ${MACHINE1_IP} sctp dport 38472 counter dnat to ${CUCP_F1C_IP}:38472
     else
         print_info "  ✓ Correct F1-C DNAT rule already exists"
     fi
@@ -198,7 +198,7 @@ setup_sctp_routing() {
 
     # Add correct FORWARD accept rule for f1c_net
     print_info "  Adding F1-C FORWARD accept rule for br-f1c..."
-    sudo nft add rule ip filter DOCKER iifname != "br-f1c" oifname "br-f1c" meta l4proto sctp ip daddr ${CUCP_F1C_IP} sctp dport 501 counter accept
+    sudo nft add rule ip filter DOCKER iifname != "br-f1c" oifname "br-f1c" meta l4proto sctp ip daddr ${CUCP_F1C_IP} sctp dport 38472 counter accept
 
     # Add DOCKER-BRIDGE jump for br-f1c (if not already present)
     if ! sudo nft list chain ip filter DOCKER-BRIDGE 2>/dev/null | grep -q 'oifname "br-f1c".*jump DOCKER'; then
@@ -310,7 +310,7 @@ setup_sctp_routing() {
     print_info ""
     print_info "SCTP port mapping summary:"
     print_info "  AMF  NGAP:  ${MACHINE1_IP}:38412/sctp → ${AMF_CORE_IP}:38412 (core_net)"
-    print_info "  CU-CP F1-C: ${MACHINE1_IP}:38472/sctp → ${CUCP_F1C_IP}:501 (f1c_net)"
+    print_info "  CU-CP F1-C: ${MACHINE1_IP}:38472/sctp → ${CUCP_F1C_IP}:38472 (f1c_net)"
     print_info "  CU-CP E1:   ${MACHINE1_IP}:38462/sctp → ${CUCP_E1_IP}:38462 (e1_net)"
 }
 
@@ -492,7 +492,7 @@ fi
 
 # Check CU-CP SCTP sockets
 print_info "CU-CP SCTP listening sockets:"
-docker exec cucp ss -Slnp 2>/dev/null | grep -E "501|38462" || print_warn "  CU-CP SCTP sockets not found"
+docker exec cucp ss -Slnp 2>/dev/null | grep -E "38472|38462" || print_warn "  CU-CP SCTP sockets not found"
 
 # Check AMF SCTP socket
 print_info "AMF SCTP listening sockets:"
