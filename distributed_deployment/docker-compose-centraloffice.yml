@@ -336,8 +336,6 @@ services:
                                --gNBs.[0].tr_s_preference f1
                                --gNBs.[0].local_s_address 192.168.73.140
                                --gNBs.[0].remote_s_address 192.168.73.151
-                               --gNBs.[0].local_s_portc 501
-                               --gNBs.[0].remote_s_portc 500
                                --gNBs.[0].local_s_portd 601
                                --gNBs.[0].remote_s_portd 600
                                --gNBs.[0].E1_INTERFACE.[0].type cp
