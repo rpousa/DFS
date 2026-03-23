@@ -422,12 +422,6 @@ else
     print_warn "✗ NRF is NOT reachable on ${MACHINE1_IP}:9090"
 fi
 
-if curl -s --max-time 3 http://${MACHINE1_IP}:9090/nnrf-nfm/v1/nf-instances > /dev/null 2>&1; then
-    print_info "✓ NRF HTTP API is responding"
-else
-    print_warn "✗ NRF HTTP API is NOT responding"
-fi
-
 print_info "CU-CP SCTP listening sockets:"
 docker exec cucp ss -Slnp 2>/dev/null | grep -E "38472|38462" || print_warn "  CU-CP SCTP sockets not found"
 
