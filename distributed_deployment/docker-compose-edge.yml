@@ -179,8 +179,7 @@ services:
                                 -E --rfsim --sa --Active_gNBs gNB-OAI
                                 --gNBs.[0].gNB_ID 0xe00 --gNBs.[0].gNB_DU_ID 0xe00  --gNBs.[0].gNB_name gNB-OAI
                                 --gNBs.[0].nr_cellid 11111111 --gNBs.[0].min_rxtxtime 6
-                                --gNBs.[0].servingCellConfigCommon.[0].physCellId 1
-                                --gNBs.[0].servingCellConfigCommon.[0].initialUplinkBWP.rach_ConfigCommon.rach_ConfigGeneric.ra_ResponseWindow 20
+                                --gNBs.[0].servingCellConfigCommon.[0].physCellId 1                                
                                 --MACRLCs.[0].local_n_address 192.168.73.151
                                 --MACRLCs.[0].remote_n_address 192.168.0.193
                                 --MACRLCs.[0].local_n_address_f1u 192.168.74.151
@@ -188,10 +187,11 @@ services:
                                 --MACRLCs.[0].remote_n_portc 38472
                                 --MACRLCs.[0].tr_s_preference local_L1
                                 --MACRLCs.[0].tr_n_preference f1
-                                --rfsimulator.serveraddr server
-                                --rfsimulator.serverport 4043
+                                --rfsimulator.[0].serveraddr server
+                                --rfsimulator.[0].serverport 4043
                                 --log_config.phy_log_level info
                                 --log_config.mac_log_level info
+#--gNBs.[0].servingCellConfigCommon.[0].initialUplinkBWP.rach_ConfigCommon.rach_ConfigGeneric.ra_ResponseWindow 20
     depends_on:
       - cuup_1
     command: >
