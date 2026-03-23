@@ -187,6 +187,8 @@ services:
                                 --MACRLCs.[0].remote_n_portc 38472
                                 --MACRLCs.[0].tr_s_preference local_L1
                                 --MACRLCs.[0].tr_n_preference f1
+                                --MACRLCs.[0].stats_max_ue 11
+                                --gNBs.[0].TIMERS.t300 1000
                                 --rfsimulator.[0].serveraddr server
                                 --rfsimulator.[0].serverport 4043
                                 --log_config.phy_log_level info
@@ -252,8 +254,10 @@ services:
        --rfsim
        -r 106
        --numerology 1
+       --band 78
        -C 3619200000
        --ssb 516
+       -E
        --log_config.global_log_level info
     devices:
       - /dev/net/tun:/dev/net/tun
