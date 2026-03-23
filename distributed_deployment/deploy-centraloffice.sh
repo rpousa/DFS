@@ -121,8 +121,22 @@ setup_sctp_routing() {
     [ -z "$CUCP_E1_IP" ] && CUCP_E1_IP=$(docker inspect -f '{{.NetworkSettings.Networks.e1_net.IPAddress}}' cucp 2>/dev/null || echo "")
 
     # Auto-detect actual listening ports from CU-CP container
-    local CUCP_F1C_PORT=$(docker exec cucp ss -Slnp 2>/dev/null | grep "${CUCP_F1C_IP}" | awk '{print $5}' | cut -d: -f2 | head -1)
-    local CUCP_E1_PORT=$(docker exec cucp ss -Slnp 2>/dev/null | grep "${CUCP_E1_IP}" | awk '{print $5}' | cut -d: -f2 | head -1)
+    local CUCP_F1C_PORT=$(docker exec cucp ss -Slnp 2>/dev/null \
+        | grep "LISTEN" \
+        | grep "${CUCP_F1C}" \
+        | awk '{print $5}' \
+        | grep -o '[0-9]*$' \
+        | head -1)
+    [ -z "$CUCP_F1C_PORT" ] && CUCP_F1C_PORT="38472"
+
+    local CUCP_E1_PORT=$(docker exec cucp ss -Slnp 2>/dev/null \
+        | grep "LISTEN" \
+        | grep "${CUCP_E1}" \
+        | awk '{print $5}' \
+        | grep -o '[0-9]*$' \
+        | head -1)
+    [ -z "$CUCP_E1_PORTT" ] && CUCP_E1_PORT="38462"
+
     [ -z "$CUCP_F1C_PORT" ] && CUCP_F1C_PORT="38472"
     [ -z "$CUCP_E1_PORT" ] && CUCP_E1_PORT="38462"
 
