@@ -22,36 +22,22 @@ echo "  - FlexRIC (Near-RT RIC)"
 echo "  - 10 UEs (User Equipment)"
 echo ""
 
-# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-print_stage() {
-    echo -e "${BLUE}[STAGE]${NC} $1"
-}
-
-print_info() {
-    echo -e "${GREEN}[INFO]${NC} $1"
-}
-
-print_warn() {
-    echo -e "${YELLOW}[WARN]${NC} $1"
-}
-
-print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
+print_stage() { echo -e "${BLUE}[STAGE]${NC} $1"; }
+print_info()  { echo -e "${GREEN}[INFO]${NC} $1"; }
+print_warn()  { echo -e "${YELLOW}[WARN]${NC} $1"; }
+print_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
 wait_for_service() {
     local service=$1
     local max_wait=${2:-60}
     local count=0
-
     print_info "Waiting for $service to be ready..."
-
     while [ $count -lt $max_wait ]; do
         if docker ps --format '{{.Names}}' | grep -q "^${service}$"; then
             local status=$(docker inspect --format='{{.State.Status}}' "$service" 2>/dev/null || echo "not found")
@@ -63,7 +49,6 @@ wait_for_service() {
         sleep 1
         count=$((count + 1))
     done
-
     print_error "$service failed to start within ${max_wait} seconds"
     return 1
 }
@@ -72,9 +57,7 @@ wait_for_healthy() {
     local service=$1
     local max_wait=${2:-120}
     local count=0
-
     print_info "Waiting for $service to become healthy..."
-
     while [ $count -lt $max_wait ]; do
         local health=$(docker inspect --format='{{.State.Health.Status}}' "$service" 2>/dev/null || echo "none")
         if [ "$health" = "healthy" ]; then
@@ -90,7 +73,6 @@ wait_for_healthy() {
         sleep 2
         count=$((count + 2))
     done
-
     print_error "$service failed to become healthy within ${max_wait} seconds"
     return 1
 }
@@ -99,7 +81,6 @@ check_ue_connections() {
     local total_ues=10
     local connected_ues=0
     local ues_with_ip=0
-
     UE_IPS=()
     UE_INTERFACES=()
 
@@ -111,7 +92,6 @@ check_ue_connections() {
         if docker exec ue_1 ip addr show 2>/dev/null | grep -q "$interface"; then
             ((connected_ues++))
             ip_addr=$(docker exec ue_1 ip addr show "$interface" 2>/dev/null | grep -oP 'inet \K[\d.]+' || echo "")
-
             if [ -n "$ip_addr" ]; then
                 print_info "✓ UE$i connected - Interface: $interface - IP: $ip_addr"
                 UE_IPS+=("$ip_addr")
@@ -151,19 +131,32 @@ check_ue_connections() {
 }
 
 # ==========================================
-# SCTP Routing Fix Functions for Machine 2
+# Helper: Remove ALL nftables rules matching a grep pattern
 # ==========================================
-# The DU exposes port 500/sctp for F1-C. Docker creates a DNAT rule
-# pointing to the DU's IP on the FIRST network listed in docker-compose
-# (f1c_net). For the DU, this is actually correct since the DU binds
-# F1-C to its f1c_net IP. However, docker-proxy cannot handle SCTP,
-# so we need to verify the kernel nftables rules are correct and
-# fix them if Docker's DNAT target IP/port is wrong.
+nft_remove_all_matching() {
+    local table=$1
+    local chain=$2
+    local pattern=$3
+    while true; do
+        local H=$(sudo nft -a list chain ${table} ${chain} 2>/dev/null | grep "${pattern}" | head -1 | grep -oP 'handle \K\d+' || echo "")
+        [ -z "$H" ] && break
+        print_info "    Removing rule (handle $H)..."
+        sudo nft delete rule ${table} ${chain} handle $H
+    done
+}
+
+# ==========================================
+# SCTP Routing Fix for Machine 2
+# ==========================================
+# Docker creates nftables DNAT rules for /sctp port mappings, but:
+# 1. May DNAT to the wrong container IP (first network vs actual bind)
+# 2. Uses 'nft add' which appends AFTER catch-all DROP rules
+# 3. docker-proxy cannot handle SCTP (but kernel nftables can)
+# 4. Machine 2 may have DOCKER-ISOLATION-STAGE-1/2 chains that
+#    block cross-bridge SCTP traffic
 #
-# Additionally, the Edge CU-UP initiates an outbound E1 SCTP connection
-# to Machine 1's CU-CP (192.168.0.193:38462). Since it's client-side
-# (outbound), it doesn't need inbound SCTP port mapping — it just needs
-# a route to Machine 1, which exists via the default gateway.
+# The DU exposes port 500/sctp for F1-C (inbound from CU-CP on Machine 1)
+# The Edge CU-UP initiates outbound E1 SCTP to Machine 1 (no inbound DNAT needed)
 
 setup_edge_sctp_routing() {
     print_stage "Setting up SCTP routing rules for Edge components..."
@@ -172,109 +165,82 @@ setup_edge_sctp_routing() {
     # Ensure SCTP kernel module is loaded
     # -------------------------------------------------------
     if ! lsmod | grep -q "^sctp"; then
-        print_info "Loading SCTP kernel module..."
         sudo modprobe sctp
     fi
-    print_info "✓ SCTP kernel module is loaded"
+    print_info "✓ SCTP kernel module loaded"
 
-    # Disable conntrack checksum verification for SCTP compatibility
+    # Disable conntrack checksum for SCTP compatibility
     if [ -f /proc/sys/net/netfilter/nf_conntrack_checksum ]; then
         sudo sysctl -w net.netfilter.nf_conntrack_checksum=0 > /dev/null 2>&1
-        print_info "✓ Disabled conntrack checksum verification for SCTP compatibility"
+        print_info "✓ Conntrack checksum disabled for SCTP"
     fi
 
     # -------------------------------------------------------
-    # Detect container IPs from Docker inspect
+    # Detect container IPs
     # -------------------------------------------------------
     local PROJECT_PREFIX="distributed_deployment_"
 
-    # DU IPs
     local DU_F1C_IP=$(docker inspect -f "{{.NetworkSettings.Networks.${PROJECT_PREFIX}f1c_net.IPAddress}}" du_1 2>/dev/null || echo "")
-    local DU_CORE_IP=$(docker inspect -f "{{.NetworkSettings.Networks.${PROJECT_PREFIX}core_net.IPAddress}}" du_1 2>/dev/null || echo "")
-
-    # Edge CU-UP IPs
     local CUUP1_CORE_IP=$(docker inspect -f "{{.NetworkSettings.Networks.${PROJECT_PREFIX}core_net.IPAddress}}" cuup_1 2>/dev/null || echo "")
     local CUUP1_E1_IP=$(docker inspect -f "{{.NetworkSettings.Networks.${PROJECT_PREFIX}e1_net.IPAddress}}" cuup_1 2>/dev/null || echo "")
 
-    # Fallback: try without project prefix
-    if [ -z "$DU_F1C_IP" ]; then
-        DU_F1C_IP=$(docker inspect -f '{{.NetworkSettings.Networks.f1c_net.IPAddress}}' du_1 2>/dev/null || echo "")
-    fi
-    if [ -z "$DU_CORE_IP" ]; then
-        # DU is NOT on core_net — this is expected
-        DU_CORE_IP=""
-    fi
-    if [ -z "$CUUP1_CORE_IP" ]; then
-        CUUP1_CORE_IP=$(docker inspect -f '{{.NetworkSettings.Networks.core_net.IPAddress}}' cuup_1 2>/dev/null || echo "")
-    fi
-    if [ -z "$CUUP1_E1_IP" ]; then
-        CUUP1_E1_IP=$(docker inspect -f '{{.NetworkSettings.Networks.e1_net.IPAddress}}' cuup_1 2>/dev/null || echo "")
-    fi
+    # Fallback without prefix
+    [ -z "$DU_F1C_IP" ] && DU_F1C_IP=$(docker inspect -f '{{.NetworkSettings.Networks.f1c_net.IPAddress}}' du_1 2>/dev/null || echo "")
+    [ -z "$CUUP1_CORE_IP" ] && CUUP1_CORE_IP=$(docker inspect -f '{{.NetworkSettings.Networks.core_net.IPAddress}}' cuup_1 2>/dev/null || echo "")
+    [ -z "$CUUP1_E1_IP" ] && CUUP1_E1_IP=$(docker inspect -f '{{.NetworkSettings.Networks.e1_net.IPAddress}}' cuup_1 2>/dev/null || echo "")
 
     # Last resort: parse from docker inspect JSON
-    if [ -z "$DU_F1C_IP" ]; then
-        DU_F1C_IP=$(docker inspect du_1 2>/dev/null | grep -A5 'f1c_net' | grep 'IPAddress' | head -1 | grep -oP '"\K[0-9.]+' || echo "")
-    fi
-    if [ -z "$CUUP1_E1_IP" ]; then
-        CUUP1_E1_IP=$(docker inspect cuup_1 2>/dev/null | grep -A5 'e1_net' | grep 'IPAddress' | head -1 | grep -oP '"\K[0-9.]+' || echo "")
-    fi
+    [ -z "$DU_F1C_IP" ] && DU_F1C_IP=$(docker inspect du_1 2>/dev/null | grep -A5 'f1c_net' | grep 'IPAddress' | head -1 | grep -oP '"\K[0-9.]+' || echo "")
+    [ -z "$CUUP1_E1_IP" ] && CUUP1_E1_IP=$(docker inspect cuup_1 2>/dev/null | grep -A5 'e1_net' | grep 'IPAddress' | head -1 | grep -oP '"\K[0-9.]+' || echo "")
 
-    print_info "Container IPs detected:"
-    print_info "  DU     (f1c_net):  ${DU_F1C_IP:-NOT FOUND}"
+    # Auto-detect actual DU F1-C listening port
+    local DU_F1C_PORT=""
+    if [ -n "$DU_F1C_IP" ]; then
+        DU_F1C_PORT=$(docker exec du_1 ss -Slnp 2>/dev/null | grep "${DU_F1C_IP}" | awk '{print $5}' | cut -d: -f2 | head -1 || echo "")
+    fi
+    [ -z "$DU_F1C_PORT" ] && DU_F1C_PORT="500"
+
+    print_info "Container IPs and ports detected:"
+    print_info "  DU     (f1c_net):  ${DU_F1C_IP:-NOT FOUND}:${DU_F1C_PORT}"
     print_info "  CU-UP  (core_net): ${CUUP1_CORE_IP:-NOT FOUND}"
     print_info "  CU-UP  (e1_net):   ${CUUP1_E1_IP:-NOT FOUND}"
 
     # -------------------------------------------------------
-    # 1. DU F1-C: 192.168.0.243:500/sctp → DU on f1c_net:500
+    # 1. DU F1-C: Machine2:500/sctp → DU on f1c_net
     # -------------------------------------------------------
-    # The DU binds F1-C SCTP to its f1c_net IP (192.168.73.151) port 500.
-    # Docker-compose maps 192.168.0.243:500:500/sctp.
-    #
-    # Docker creates DNAT to the DU's IP on the FIRST network listed.
-    # In docker-compose-edge.yml, the DU's networks are listed as:
-    #   f1c_net, f1u_net, ran_net
-    # So Docker should DNAT to f1c_net IP:500 — which is CORRECT.
-    #
-    # However, we still need to verify because Docker may pick a
-    # different primary IP. Also, docker-proxy doesn't handle SCTP,
-    # but the kernel nftables DNAT rule does work for SCTP.
-
     if [ -n "$DU_F1C_IP" ]; then
         print_info ""
         print_info "--- DU F1-C (F1AP) SCTP [3GPP TS 38.472] ---"
 
-        # Check if Docker created the correct DNAT rule
-        if sudo nft -a list chain ip nat DOCKER 2>/dev/null | grep -q "sctp dport 500.*dnat to ${DU_F1C_IP}:500"; then
-            print_info "  ✓ DU F1-C DNAT rule exists and is correct"
-            print_info "    ${MACHINE2_IP}:500/sctp → ${DU_F1C_IP}:500 (f1c_net/br-f1c)"
-        else
-            # Check if Docker created a DNAT to the wrong IP
-            local WRONG_DU_HANDLES=$(sudo nft -a list chain ip nat DOCKER 2>/dev/null | grep "sctp dport 500.*dnat to" | grep -v "dnat to ${DU_F1C_IP}:500" | grep -oP 'handle \K\d+')
-            for handle in $WRONG_DU_HANDLES; do
-                print_info "  Removing incorrect DU F1-C DNAT rule (handle $handle)..."
-                sudo nft delete rule ip nat DOCKER handle $handle
-            done
+        # Remove ALL existing DU F1-C DNAT rules (any target IP/port)
+        print_info "  Cleaning old DU F1-C DNAT rules..."
+        nft_remove_all_matching "ip nat" "DOCKER" "sctp dport 500"
 
-            # Add correct DNAT rule
-            print_info "  Adding correct DU F1-C DNAT: ${MACHINE2_IP}:500 → ${DU_F1C_IP}:500"
-            sudo nft add rule ip nat DOCKER iifname != "br-f1c" meta l4proto sctp ip daddr ${MACHINE2_IP} sctp dport 500 counter dnat to ${DU_F1C_IP}:500
+        # INSERT correct DNAT at TOP of chain
+        sudo nft insert rule ip nat DOCKER iifname != "br-f1c" meta l4proto sctp ip daddr ${MACHINE2_IP} sctp dport 500 counter dnat to ${DU_F1C_IP}:${DU_F1C_PORT}
+        print_info "  ✓ DU F1-C DNAT INSERTED: ${MACHINE2_IP}:500 → ${DU_F1C_IP}:${DU_F1C_PORT}"
+
+        # Remove ALL existing DU F1-C FORWARD rules
+        print_info "  Cleaning old DU F1-C FORWARD rules..."
+        nft_remove_all_matching "ip filter" "DOCKER" "br-f1c.*sctp"
+
+        # INSERT FORWARD accept BEFORE the catch-all DROP for br-f1c
+        local F1C_DROP=$(sudo nft -a list chain ip filter DOCKER 2>/dev/null | grep 'iifname != "br-f1c" oifname "br-f1c" counter.*drop' | grep -oP 'handle \K\d+' | head -1 || echo "")
+        if [ -n "$F1C_DROP" ]; then
+            sudo nft insert rule ip filter DOCKER position $F1C_DROP iifname != "br-f1c" oifname "br-f1c" meta l4proto sctp ip daddr ${DU_F1C_IP} sctp dport ${DU_F1C_PORT} counter accept
+            print_info "  ✓ DU F1-C FORWARD accept INSERTED before drop (position $F1C_DROP)"
+        else
+            sudo nft insert rule ip filter DOCKER iifname != "br-f1c" oifname "br-f1c" meta l4proto sctp ip daddr ${DU_F1C_IP} sctp dport ${DU_F1C_PORT} counter accept
+            print_info "  ✓ DU F1-C FORWARD accept INSERTED at top"
         fi
 
-        # Verify FORWARD accept rule exists for DU F1-C
-        if ! sudo nft -a list chain ip filter DOCKER 2>/dev/null | grep -q "oifname \"br-f1c\".*sctp.*daddr ${DU_F1C_IP}.*sctp dport 500.*accept"; then
-            print_info "  Adding DU F1-C FORWARD accept: br-f1c → ${DU_F1C_IP}:500"
-            sudo nft add rule ip filter DOCKER iifname != "br-f1c" oifname "br-f1c" meta l4proto sctp ip daddr ${DU_F1C_IP} sctp dport 500 counter accept
-        else
-            print_info "  ✓ DU F1-C FORWARD accept rule exists"
-        fi
-
-        # Ensure DOCKER-BRIDGE chain jumps to DOCKER for br-f1c traffic
+        # Ensure DOCKER-BRIDGE jumps to DOCKER for br-f1c
         if ! sudo nft list chain ip filter DOCKER-BRIDGE 2>/dev/null | grep -q 'oifname "br-f1c".*jump DOCKER'; then
-            print_info "  Adding DOCKER-BRIDGE jump for br-f1c..."
             sudo nft add rule ip filter DOCKER-BRIDGE oifname "br-f1c" counter jump DOCKER
+            print_info "  ✓ Added DOCKER-BRIDGE jump for br-f1c"
         fi
 
-        print_info "  ✓ DU F1-C routing: ${MACHINE2_IP}:500/sctp → ${DU_F1C_IP}:500 (br-f1c)"
+        print_info "  ✓ DU F1-C routing: ${MACHINE2_IP}:500/sctp → ${DU_F1C_IP}:${DU_F1C_PORT} (br-f1c)"
     else
         print_warn "  DU f1c_net IP not found — skipping DU F1-C SCTP routing"
     fi
@@ -282,19 +248,6 @@ setup_edge_sctp_routing() {
     # -------------------------------------------------------
     # 2. Edge CU-UP E1: Outbound SCTP to Machine 1 (192.168.0.193:38462)
     # -------------------------------------------------------
-    # The Edge CU-UP initiates an SCTP connection to CU-CP on Machine 1.
-    # This is CLIENT-SIDE (outbound), so no inbound DNAT is needed.
-    # We just need to ensure the CU-UP container can route to Machine 1.
-    #
-    # The CU-UP is on e1_net (192.168.75.144). Its default gateway is
-    # the bridge gateway (192.168.75.129), which is the host. The host
-    # has a route to 192.168.0.193 via the physical interface.
-    #
-    # However, Docker's POSTROUTING masquerade rule will SNAT the
-    # CU-UP's source IP (192.168.75.144) to the host's physical IP
-    # when the packet leaves via the physical interface. This is correct
-    # for outbound connections.
-
     if [ -n "$CUUP1_E1_IP" ]; then
         print_info ""
         print_info "--- Edge CU-UP E1AP SCTP (outbound to Machine 1) [3GPP TS 38.463] ---"
@@ -304,9 +257,6 @@ setup_edge_sctp_routing() {
             print_info "  ✓ Edge CU-UP can reach Machine 1 (${MACHINE1_IP})"
         else
             print_warn "  ✗ Edge CU-UP cannot ping Machine 1 — checking routing..."
-
-            # Add a route inside the CU-UP container if needed
-            # The container should already have a default route via the bridge gateway
             local CUUP_GW=$(docker exec cuup_1 ip route show default 2>/dev/null | awk '{print $3}' | head -1)
             if [ -n "$CUUP_GW" ]; then
                 print_info "  CU-UP default gateway: $CUUP_GW"
@@ -317,30 +267,60 @@ setup_edge_sctp_routing() {
         fi
 
         # Ensure MASQUERADE exists for e1_net outbound traffic
-        if sudo nft list chain ip nat POSTROUTING 2>/dev/null | grep -q 'oifname != "br-e1".*192.168.75.128/26.*masquerade'; then
+        # Check both field orderings Docker might use
+        if sudo nft list chain ip nat POSTROUTING 2>/dev/null | grep -q '192.168.75.128/26.*masquerade'; then
             print_info "  ✓ MASQUERADE rule exists for e1_net outbound traffic"
         else
             print_warn "  Adding MASQUERADE for e1_net outbound traffic..."
             sudo nft add rule ip nat POSTROUTING oifname != "br-e1" ip saddr 192.168.75.128/26 counter masquerade
         fi
 
-        print_info "  ✓ Edge CU-UP E1: ${CUUP1_E1_IP} → ${MACHINE1_IP}:38462/sctp (outbound, via host routing)"
+        print_info "  ✓ Edge CU-UP E1: ${CUUP1_E1_IP} → ${MACHINE1_IP}:38462/sctp (outbound)"
     else
         print_warn "  Edge CU-UP e1_net IP not found — skipping E1 routing check"
     fi
 
     # -------------------------------------------------------
-    # 3. Verify raw table doesn't block our traffic
+    # 3. Handle Docker inter-network isolation (DOCKER-ISOLATION-STAGE-1/2)
+    # -------------------------------------------------------
+    print_info ""
+    print_info "--- Docker isolation chain handling ---"
+
+    if sudo nft list chain ip filter DOCKER-ISOLATION-STAGE-1 2>/dev/null | grep -q "jump DOCKER-ISOLATION-STAGE-2"; then
+        print_info "  Docker isolation chains detected"
+
+        # Allow E1 SCTP from br-e1 to leave (outbound to Machine 1 CU-CP)
+        if ! sudo nft list chain ip filter DOCKER-ISOLATION-STAGE-1 2>/dev/null | grep -q 'iifname "br-e1" meta l4proto sctp.*accept'; then
+            print_info "  Adding SCTP bypass for br-e1 (E1AP outbound)..."
+            sudo nft insert rule ip filter DOCKER-ISOLATION-STAGE-1 \
+                iifname "br-e1" meta l4proto sctp counter accept
+        else
+            print_info "  ✓ SCTP bypass for br-e1 already exists"
+        fi
+
+        # Allow F1-C SCTP from br-f1c to leave (outbound to Machine 1 CU-CP)
+        if ! sudo nft list chain ip filter DOCKER-ISOLATION-STAGE-1 2>/dev/null | grep -q 'iifname "br-f1c" meta l4proto sctp.*accept'; then
+            print_info "  Adding SCTP bypass for br-f1c (F1-C outbound)..."
+            sudo nft insert rule ip filter DOCKER-ISOLATION-STAGE-1 \
+                iifname "br-f1c" meta l4proto sctp counter accept
+        else
+            print_info "  ✓ SCTP bypass for br-f1c already exists"
+        fi
+
+        print_info "  ✓ Docker isolation SCTP bypass rules configured"
+    else
+        print_info "  ✓ No Docker isolation chains found — no bypass needed"
+    fi
+
+    # -------------------------------------------------------
+    # 4. Verify raw table doesn't block our traffic
     # -------------------------------------------------------
     print_info ""
     print_info "--- Raw table verification ---"
 
     if sudo nft list chain ip raw PREROUTING 2>/dev/null | grep -q "ip daddr ${MACHINE2_IP}.*drop"; then
-        print_warn "  WARNING: Raw table has DROP rule for ${MACHINE2_IP} — removing it"
-        local RAW_HANDLES=$(sudo nft -a list chain ip raw PREROUTING 2>/dev/null | grep "ip daddr ${MACHINE2_IP}.*drop" | grep -oP 'handle \K\d+')
-        for handle in $RAW_HANDLES; do
-            sudo nft delete rule ip raw PREROUTING handle $handle
-        done
+        print_warn "  Raw table has DROP rule for ${MACHINE2_IP} — removing..."
+        nft_remove_all_matching "ip raw" "PREROUTING" "ip daddr ${MACHINE2_IP}.*drop"
     else
         print_info "  ✓ Raw table does not block external IP"
     fi
@@ -352,8 +332,8 @@ setup_edge_sctp_routing() {
     print_info "Edge SCTP routing setup complete!"
     print_info ""
     print_info "SCTP connection summary:"
-    print_info "  DU F1-C (inbound):       ${MACHINE2_IP}:500/sctp → ${DU_F1C_IP:-?}:500 (br-f1c) [TS 38.472]"
-    print_info "  CU-UP E1 (outbound):     ${CUUP1_E1_IP:-?} → ${MACHINE1_IP}:38462/sctp [TS 38.463]"
+    print_info "  DU F1-C (inbound):        ${MACHINE2_IP}:500/sctp → ${DU_F1C_IP:-?}:${DU_F1C_PORT} (br-f1c) [TS 38.472]"
+    print_info "  CU-UP E1 (outbound):      ${CUUP1_E1_IP:-?} → ${MACHINE1_IP}:38462/sctp [TS 38.463]"
     print_info "  DU F1-C (outbound to M1): ${DU_F1C_IP:-?} → ${MACHINE1_IP}:38472/sctp [TS 38.472]"
 }
 
@@ -379,7 +359,6 @@ verify_edge_sctp_routing() {
     echo ""
     print_info "=== Testing SCTP connectivity to Machine 1 ==="
 
-    # Test F1-C to CU-CP on Machine 1
     if command -v ncat &> /dev/null; then
         if timeout 3 ncat --sctp ${MACHINE1_IP} 38472 < /dev/null 2>/dev/null; then
             print_info "  ✓ F1-C SCTP to Machine 1 CU-CP (${MACHINE1_IP}:38472) — REACHABLE"
@@ -388,7 +367,6 @@ verify_edge_sctp_routing() {
             print_warn "    Ensure deploy-centraloffice.sh ran setup_sctp_routing on Machine 1"
         fi
 
-        # Test E1 to CU-CP on Machine 1
         if timeout 3 ncat --sctp ${MACHINE1_IP} 38462 < /dev/null 2>/dev/null; then
             print_info "  ✓ E1 SCTP to Machine 1 CU-CP (${MACHINE1_IP}:38462) — REACHABLE"
         else
@@ -408,7 +386,6 @@ verify_edge_sctp_routing() {
 # ==========================================
 print_stage "Running pre-flight checks..."
 
-# Check Docker is running
 if ! docker ps &> /dev/null; then
     print_error "Docker is not running"
     exit 1
@@ -427,7 +404,6 @@ if docker compose ps -q 2>/dev/null | grep -q .; then
 fi
 
 CURRENT_IP=""
-# Check current IP
 ip_addresses=$(hostname -I)
 for ip in $ip_addresses; do
     if [ "$ip" == "$MACHINE2_IP" ]; then
@@ -437,25 +413,22 @@ for ip in $ip_addresses; do
 done
 
 if [ "$CURRENT_IP" != "$MACHINE2_IP" ]; then
-    print_warn "Current IP is $CURRENT_IP, expected $MACHINE2_IP"
+    print_warn "Expected IP $MACHINE2_IP not found"
     read -p "Continue anyway? (y/N): " -n 1 -r
     echo
     [[ ! $REPLY =~ ^[Yy]$ ]] && exit 1
 fi
 
-# Check docker-compose file exists
 if [ ! -f "docker-compose-edge.yml" ]; then
     print_error "docker-compose-edge.yml not found"
     exit 1
 fi
 
-# Check if configs exist
 if [ ! -d "configs" ]; then
     print_error "configs directory not found"
     exit 1
 fi
 
-# Check SCTP kernel module
 if ! lsmod | grep -q "^sctp"; then
     print_info "Loading SCTP kernel module..."
     sudo modprobe sctp
@@ -508,13 +481,12 @@ echo ""
 # Start Deployment
 # ==========================================
 
-# Create networks and prepare containers
 print_stage "Creating Docker networks and preparing containers..."
 docker compose -f docker-compose-edge.yml up --no-start
 echo ""
 
 # Stage 1: Edge UPF
-print_stage "Stage 1/7: Starting Edge UPF and External DN..."
+print_stage "Stage 1/8: Starting Edge UPF and External DN..."
 docker compose -f docker-compose-edge.yml up -d upf_1 ext_dn_1
 wait_for_service "upf_1" 30
 wait_for_service "ext_dn_1" 30
@@ -522,17 +494,18 @@ sleep 10
 echo ""
 
 # Stage 2: Edge CU-UP
-print_stage "Stage 2/7: Starting Edge CU-UP..."
+print_stage "Stage 2/8: Starting Edge CU-UP..."
 docker compose -f docker-compose-edge.yml up -d cuup_1
 wait_for_service "cuup_1" 30
 sleep 10
 echo ""
 
 # Stage 3: DU with RFSimulator
-print_stage "Stage 3/7: Starting DU with RFSimulator..."
+print_stage "Stage 3/8: Starting DU with RFSimulator..."
 docker compose -f docker-compose-edge.yml up -d du_1
 wait_for_service "du_1" 30
-sleep 10
+print_info "Waiting for DU to initialize SCTP sockets..."
+sleep 15
 
 # Check DU RFSimulator status
 if docker logs du_1 2>&1 | grep -q "Running as server"; then
@@ -545,7 +518,7 @@ echo ""
 # ==========================================
 # Stage 4: SCTP Routing Fix (THE KEY FIX)
 # ==========================================
-print_stage "Stage 4/7: Configuring SCTP routing for Edge components..."
+print_stage "Stage 4/8: Configuring SCTP routing for Edge components..."
 echo ""
 setup_edge_sctp_routing
 echo ""
@@ -555,25 +528,26 @@ verify_edge_sctp_routing
 echo ""
 
 # Stage 5: FlexRIC
-print_stage "Stage 5/7: Starting FlexRIC (Near-RT RIC)..."
+print_stage "Stage 5/8: Starting FlexRIC (Near-RT RIC)..."
 docker compose -f docker-compose-edge.yml up -d flexric
 wait_for_service "flexric" 30
 sleep 10
 echo ""
 
 # Stage 6: User Equipment (10 UEs)
-print_stage "Stage 6/7: Starting 10 User Equipment instances..."
+print_stage "Stage 6/8: Starting 10 User Equipment instances..."
 docker compose -f docker-compose-edge.yml up -d ue_1
 wait_for_service "ue_1" 30
 echo ""
 
 # Stage 7: Wait for UE connections
-print_stage "Stage 7/7: Waiting for UE connections..."
+print_stage "Stage 7/8: Waiting for UE connections..."
 print_info "Waiting 30 seconds for UEs to connect and register..."
 sleep 30
 echo ""
 
-# Check UE connections
+# Stage 8: Check UE connections
+print_stage "Stage 8/8: Verifying UE connections..."
 if check_ue_connections; then
     print_info "✓ All 10 UEs successfully connected!"
     echo ""
@@ -595,7 +569,6 @@ else
             [Ww])
                 print_info "Waiting 10 seconds for more UEs to connect..."
                 sleep 10
-
                 if check_ue_connections; then
                     print_info "✓ All 10 UEs are now connected!"
                     break
@@ -604,6 +577,7 @@ else
                     echo ""
                     continue
                 fi
+
                 ;;
             [Pp])
                 print_info "Proceeding with $CONNECTED_UES connected UE(s)..."
