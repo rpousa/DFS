@@ -249,7 +249,6 @@ services:
       # Multi-UE RFSimulator - UEs connect to DU as clients
       USE_ADDITIONAL_OPTIONS: >-
        --num-ues 10
-       --sa
        --rfsim
        -r 106
        --numerology 1
