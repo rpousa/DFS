@@ -2,4 +2,4 @@
 sudo chmod +x deploy-centraloffice.sh stop.sh configs/ext_dn/trfgen_entrypoint.sh configs/mysql/mysql-healthcheck.sh
 
 #Edge 
-sudo chmod +x deploy-edge.sh stop.sh configs/ext_dn_1/trfgen_entrypoint.sh ue_volumes/ue_entrypoint.sh
+sudo chmod +x deploy-edge.sh stop.sh configs/ext_dn_1/trfgen_entrypoint.sh ue_volumes/ue_entrypoint.sh flexric_volumes/ric_watchdog.sh flexric_volumes/topology.py flexric_volumes/xapp_functs.py flexric_volumes/xapp_test.py

@@ -39,86 +39,86 @@ http_version: 2
 ### Each NF takes its local SBI interfaces and remote interfaces from here, unless it gets them using NRF discovery mechanisms
 nfs:
   amf:
-    host: 192.168.71.132
+    host: 192.168.0.193
     sbi:
       port: 8080
       api_version: v1
-      interface_name: amf-sw1
+      interface_name: eth0
     n2:
-      interface_name: amf-sw1
+      interface_name: eth0
       port: 38412
   smf:
-    host: 192.168.71.133
+    host: 192.168.0.193
     sbi:
       port: 8080
       api_version: v1
-      interface_name: smf-sw1
+      interface_name: eth0
     n4:
-      interface_name: smf-sw1
+      interface_name: eth0
       port: 8805
   upf:
-    host: 192.168.71.134
+    host: 192.168.0.193
     sbi:
       port: 8080
       api_version: v1
-      interface_name: upf-core
+      interface_name: eth0
     n3:
-      interface_name: upf-core
+      interface_name: eth0
       port: 2152
     n4:
-      interface_name: upf-core
+      interface_name: eth0
       port: 8805
     n6:
-      interface_name: upf-ext_dn
+      interface_name: eth1
     n9:
-      interface_name: upf-core
+      interface_name: eth0
       port: 2152
   spgwu:
-    host: 192.168.71.134
+    host: 192.168.0.193
     sbi:
       port: 8080
       api_version: v1
-      interface_name: spgwu-sw1
+      interface_name: eth0
   udm:
-    host: 192.168.71.136
+    host: 192.168.0.193
     sbi:
       port: 8080
       api_version: v1
-      interface_name: udm-sw1
+      interface_name: eth0
   udr:
     host: 192.168.71.137
     sbi:
       port: 8080
       api_version: v1
-      interface_name: udr-sw1
+      interface_name: eth0
   ausf:
-    host: 192.168.71.138
+    host: 192.168.0.193
     sbi:
       port: 8080
       api_version: v1
-      interface_name: ausf-sw1
+      interface_name: eth0
   nrf:
     host: 192.168.0.193
     sbi:
       port: 9090
       api_version: v1
-      interface_name: nrf-sw1
+      interface_name: eth0
   pcf:
-    host: 192.168.71.139
+    host: 192.168.0.193
     sbi:
       port: 8080
       api_version: v1
-      interface_name: pcf-sw1
+      interface_name: eth0
   nssf:
-    host: 192.168.71.135
+    host: 192.168.0.193
     sbi:
       port: 8080
       api_version: v1
-      interface_name: nssf-sw1
+      interface_name: eth0
 
 #### Common for UDR and AMF
 database:
-  host: 192.168.71.131
+  host: 192.168.0.193
   user: test
   type: mysql
   password: test
@@ -248,7 +248,7 @@ upf:
   #config:
   #  enable_usage_reporting: yes
   #  enable_dl_pdr_in_pfcp_session_establishment: yes
-  remote_n6_gw: 192.168.72.135      # Dummy host since simple-switch does not use N6 GW
+  remote_n6_gw: 192.168.72.161      # Dummy host since simple-switch does not use N6 GW
   #smfs:
   #  - host: 192.168.71.133
   upf_info:
