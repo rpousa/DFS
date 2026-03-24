@@ -66,13 +66,13 @@ nfs:
     n3:
       #interface_name: eth0
       port: 2152
-      addr: 192.168.71.160
+      addr: 192.168.0.243
     n4:
       addr: 192.168.0.243
       #interface_name: eth0
       port: 8805
     n6:
-      addr: 192.168.72.160
+      addr: 192.168.0.243
       #interface_name: eth1
     n9:
       addr: 192.168.0.243

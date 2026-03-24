@@ -19,15 +19,18 @@ services:
     cap_add:
       - NET_ADMIN
       - SYS_NICE
-    networks:
-      core_net:
-        ipv4_address: 192.168.71.160
-      ext_net:
-        ipv4_address: 192.168.72.160
-    ports:
-      - "192.168.0.243:8080:8080/tcp"
-      - "192.168.0.243:8805:8805/udp"     # PFCP (different port to avoid conflict with SMF)
-      - "192.168.0.243:2152:2152/udp"     # GTP-U N3 (CRITICAL for Machine 2 CU-UP)
+    network_mode: host  
+    # networks:
+    #   core_net:
+    #     ipv4_address: 192.168.71.160
+    #     priority: 100
+    #   ext_net:
+    #     ipv4_address: 192.168.72.160
+    #     priority: 90
+    # ports:
+    #   - "192.168.0.243:8085:8085/tcp"
+    #   - "192.168.0.243:8805:8805/udp"     # PFCP (different port to avoid conflict with SMF)
+    #   - "192.168.0.243:2152:2152/udp"     # GTP-U N3 (CRITICAL for Machine 2 CU-UP)
     volumes:
       - ./configs/upf_1:/openair-upf/etc       # Edge UPF config with modified IP pools
       - ./logs/upf_1:/openair-upf/logs
@@ -55,10 +58,13 @@ services:
     networks:
       ext_net:
         ipv4_address: 192.168.72.161
+        priority: 100
       n3_net:
         ipv4_address: 192.168.100.161
+        priority: 90
       sgi_net:
         ipv4_address: 172.18.0.10
+        priority: 80
     environment:
       - EBPF_GW_SETUP=yes
       - EBPF_GW_N6_IP_ADDR=192.168.72.161
@@ -74,9 +80,12 @@ services:
       - N6_UPF_IP_ADDR=192.168.72.160          # Edge UPF
     entrypoint: /bin/bash -c \
           "iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE;"\
-          "ip route add 12.1.1.0/24 via 192.168.72.160 dev eth0;"\
-          "ip route add 13.1.1.0/24 via 192.168.72.160 dev eth0;"\
-          "ip route add 14.1.1.0/24 via 192.168.72.160 dev eth0; sleep infinity"
+          "ip route add 12.1.1.0/24 via 192.168.0.243 dev eth0;"\
+          "ip route add 13.1.1.0/24 via 192.168.0.243 dev eth0;"\
+          "ip route add 14.1.1.0/24 via 192.168.0.243 dev eth0; sleep infinity"
+          # "ip route add 12.1.1.0/24 via 192.168.72.160 dev eth0;"\
+          # "ip route add 13.1.1.0/24 via 192.168.72.160 dev eth0;"\
+          # "ip route add 14.1.1.0/24 via 192.168.72.160 dev eth0; sleep infinity"
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
