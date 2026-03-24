@@ -187,14 +187,14 @@ amf:
   served_guami_list:
     - mcc: 208                        # Mobile Country Code (France)
       mnc: 95                         # Mobile Network Code
-      amf_region_id: 0x01
-      amf_set_id: 0x001
-      amf_pointer: 0x01
+      amf_region_id: 01
+      amf_set_id: 001
+      amf_pointer: 01
     - mcc: 001
       mnc: 01
-      amf_region_id: 0x01
-      amf_set_id: 0x001
-      amf_pointer: 0x01
+      amf_region_id: 01
+      amf_set_id: 001
+      amf_pointer: 01
   plmn_support_list:
     - mcc: 208 
       mnc: 95
