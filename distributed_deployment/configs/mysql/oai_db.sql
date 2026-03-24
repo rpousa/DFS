@@ -311,16 +311,6 @@ INSERT INTO `SessionManagementSubscriptionData` (`ueid`, `servingPlmnid`, `singl
 ('208950000000319', '20895', '{\"sst\": 3, \"sd\": \"1\"}','{\"oai.2\":{\"pduSessionTypes\":{ \"defaultSessionType\": \"IPV4\"},\"sscModes\": {\"defaultSscMode\": \"SSC_MODE_1\"},\"5gQosProfile\": {\"5qi\": 76,\"arp\":{\"priorityLevel\": 1,\"preemptCap\": \"NOT_PREEMPT\",\"preemptVuln\":\"NOT_PREEMPTABLE\"},\"priorityLevel\":1},\"sessionAmbr\":{\"uplink\":\"20Mbps\", \"downlink\":\"10Mbps\"},\"staticIpAddress\":[{\"ipv4Addr\": \"14.1.1.3\"}]}}');
 
 
-/*('208950000000132',
--- '20895', 
--- '{\"sst\": 1, \"sd\": \"1\"}',
--- '{\"default\":
---    {\"pduSessionTypes\":
---        { \"defaultSessionType\": \"IPV4\"},\"sscModes\": {\"defaultSscMode\": \"SSC_MODE_1\"},\"5gQosProfile\": {\"5qi\": 6,\"arp\":{\"priorityLevel\": 1,\"preemptCap\": \"NOT_PREEMPT\",\"preemptVuln\":\"NOT_PREEMPTABLE\"},\"priorityLevel\":1},\"sessionAmbr\":{\"uplink\":\"20Kbps\", \"downlink\":\"40Kbps\"}}}'),
-*/
--- INSERT INTO `SessionManagementSubscriptionData` (`ueid`, `servingPlmnid`, `singleNssai`, `dnnConfigurations`) VALUES 
--- --------------------------------------------------------
-
 --
 -- Table structure for table `SmfRegistrations`
 --

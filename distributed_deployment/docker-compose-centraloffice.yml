@@ -25,7 +25,8 @@ services:
     ports:
       - "192.168.0.193:3306:3306/tcp"     # MySQL (for external access if needed)
       - "192.168.0.193:33060:33060/tcp"     # MySQL (for external access if needed)
-
+    volumes:
+      - ./configs/mysql/oai_db.sql:/docker-entrypoint-initdb.d/oai_db.sql
     environment:
       - MYSQL_ROOT_PASSWORD=linux
       - MYSQL_DATABASE=oai_db
