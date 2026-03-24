@@ -240,8 +240,8 @@ services:
       ext_net:
         ipv4_address: 192.168.72.134
     ports:
-      - "192.168.0.193:8086:8086/tcp"
-      - "192.168.0.193:8806:8806/udp"     # PFCP (different port to avoid conflict with SMF)
+      - "192.168.0.193:8085:8085/tcp"
+      - "8805/udp"     # PFCP (different port to avoid conflict with SMF)
       - "192.168.0.193:2152:2152/udp"     # GTP-U N3 (CRITICAL for Machine 2 CU-UP)
     devices:
       - /dev/net/tun:/dev/net/tun

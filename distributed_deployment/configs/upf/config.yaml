@@ -65,7 +65,7 @@ nfs:
   upf:
     host: 192.168.71.134              # Primary UPF on Machine 1 (Docker IP)
     sbi:
-      port: 8086
+      port: 8085
       api_version: v1
       interface_name: eth0
     n3:
@@ -73,7 +73,7 @@ nfs:
       port: 2152                      # Exposed on 192.168.0.193:2152 for Machine 2 CU-UP
     n4:
       interface_name: eth0
-      port: 8806
+      port: 8805
     n6:
       interface_name: eth1
     n9:
