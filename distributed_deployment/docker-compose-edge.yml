@@ -22,7 +22,7 @@ services:
     #network_mode: host  
     networks:
       core_net:
-        ipv4_address: 192.168.71.160
+        ipv4_address: 192.168.61.160
         priority: 100
       ext_net:
         ipv4_address: 192.168.72.160
@@ -289,8 +289,8 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: 192.168.71.128/26
-          gateway: 192.168.71.129
+        - subnet: 192.168.61.128/26
+          gateway: 192.168.61.129
     driver_opts:
       com.docker.network.bridge.name: br-core
 

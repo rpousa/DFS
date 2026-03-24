@@ -2,6 +2,13 @@
 
 # stop.sh - Stop 5G network and clean ALL custom nftables rules (SCTP + UDP)
 # Works on both Machine 1 (centraloffice) and Machine 2 (edge)
+#
+# Cleans up:
+# - SCTP DNAT/FORWARD rules (NGAP, F1-C, E1AP)
+# - UDP DNAT/FORWARD rules (PFCP 8805, GTP-U 2152)
+# - MASQUERADE rules for cross-machine routing
+# - IP aliases added to br-core for Edge UPF routing
+# - Docker isolation bypass rules
 
 echo "================================================"
 echo "5G Network Emulation - Shutdown Script"
@@ -31,9 +38,9 @@ while [[ $# -gt 0 ]]; do
         --help|-h)
             echo "Usage: $0 [OPTIONS]"
             echo "  --volumes, -v   Remove volumes"
-            echo "  --all, -a       Remove everything"
-            echo "  --force, -f     No confirmation"
-            echo "  --help, -h      Show help"
+            echo "  --all, -a       Remove everything including volumes"
+            echo "  --force, -f     No confirmation prompts"
+            echo "  --help, -h      Show this help"
             exit 0 ;;
         *) print_error "Unknown option: $1"; exit 1 ;;
     esac
@@ -42,6 +49,13 @@ done
 # ==========================================
 # Bulletproof SCTP and UDP rule cleanup
 # ==========================================
+# This function removes ALL custom nftables rules from ALL chains.
+# It handles:
+# - SCTP rules (38412, 38462, 38472, 500, 501)
+# - UDP rules (8805 PFCP, 2152 GTP-U)
+# - IP aliases we added for cross-machine routing
+# - Duplicate rules from multiple deploy script runs
+
 cleanup_custom_nft_rules() {
     print_stage "Cleaning up ALL custom nftables rules (SCTP + UDP)..."
 
@@ -103,6 +117,7 @@ cleanup_custom_nft_rules() {
     if sudo nft list chain ip nat POSTROUTING > /dev/null 2>&1; then
         print_info "  Cleaning NAT POSTROUTING chain (custom MASQUERADE rules)..."
 
+        # Remove MASQUERADE rules for specific destinations (cross-machine routing)
         for pattern in "192.168.0.243.*8805" "192.168.0.243.*2152" "192.168.0.193.*8805" "192.168.0.193.*2152" "192.168.71.160"; do
             local i=0
             while [ $i -lt 10 ]; do
@@ -170,7 +185,7 @@ cleanup_custom_nft_rules() {
     fi
 
     # -------------------------------------------------------
-    # 6. Clean DOCKER-BRIDGE — remove extra jumps
+    # 6. Clean DOCKER-BRIDGE — remove extra jumps for br-f1c and br-e1
     # -------------------------------------------------------
     if sudo nft list chain ip filter DOCKER-BRIDGE > /dev/null 2>&1; then
         for bridge in "br-f1c" "br-e1" "br-core"; do
@@ -189,7 +204,7 @@ cleanup_custom_nft_rules() {
     fi
 
     # -------------------------------------------------------
-    # 7. Clean DOCKER-ISOLATION-STAGE-1 — SCTP bypass rules
+    # 7. Clean DOCKER-ISOLATION-STAGE-1 — SCTP bypass rules (Machine 2)
     # -------------------------------------------------------
     if sudo nft list chain ip filter DOCKER-ISOLATION-STAGE-1 > /dev/null 2>&1; then
         local i=0
@@ -213,9 +228,16 @@ cleanup_custom_nft_rules() {
     # -------------------------------------------------------
     print_info "  Checking for IP aliases to remove..."
 
+    # Edge UPF IP alias on Machine 1's br-core (used for cross-machine PFCP)
     if ip addr show br-core 2>/dev/null | grep -q "192.168.71.160/32"; then
         sudo ip addr del 192.168.71.160/32 dev br-core 2>/dev/null || true
         print_info "    Removed IP alias 192.168.71.160/32 from br-core"
+    fi
+
+    # Check for any other Edge UPF IPs that might have been added
+    if ip addr show br-core 2>/dev/null | grep -q "192.168.71.161/32"; then
+        sudo ip addr del 192.168.71.161/32 dev br-core 2>/dev/null || true
+        print_info "    Removed IP alias 192.168.71.161/32 from br-core"
     fi
 
     # -------------------------------------------------------
@@ -243,6 +265,11 @@ cleanup_custom_nft_rules() {
     else
         print_warn "⚠ $remaining_sctp SCTP rules and $remaining_udp UDP rules still remain"
     fi
+}
+
+# Keep old function name for backward compatibility
+cleanup_sctp_rules() {
+    cleanup_custom_nft_rules
 }
 
 # ==========================================
@@ -300,6 +327,7 @@ echo ""
 # ==========================================
 print_stage "Stopping containers..."
 
+# Stop in reverse dependency order
 docker compose -f "$COMPOSE_FILE" stop ue_1 l2_proxy flexric 2>/dev/null || true
 docker compose -f "$COMPOSE_FILE" stop du_1 cuup cuup_1 cucp 2>/dev/null || true
 docker compose -f "$COMPOSE_FILE" stop upf ext_dn upf_1 ext_dn_1 2>/dev/null || true
@@ -328,12 +356,30 @@ echo ""
 # ==========================================
 print_stage "Final rule verification..."
 
+# After docker compose down, check for any leftover rules
+local_remaining=0
+if sudo nft list chain ip nat DOCKER > /dev/null 2>&1; then
+    local_remaining=$(sudo nft list chain ip nat DOCKER 2>/dev/null | grep -c "sctp" || echo "0")
+    if [ "$local_remaining" -gt 0 ]; then
+        print_warn "Found $local_remaining leftover SCTP rules — cleaning..."
+        cleanup_custom_nft_rules
+    fi
+fi
+
+# Show final state
 echo ""
 print_info "=== Remaining nftables rules (should be 0 custom rules) ==="
 sudo nft list chain ip nat DOCKER 2>/dev/null | grep -E "sctp|udp dport 8805|udp dport 2152" || print_info "  ✓ No custom NAT DOCKER rules"
 sudo nft list chain ip nat PREROUTING 2>/dev/null | grep -E "udp dport (8805|2152)" || print_info "  ✓ No custom NAT PREROUTING rules"
 sudo nft list chain ip filter DOCKER 2>/dev/null | grep sctp || print_info "  ✓ No custom SCTP FORWARD rules"
 sudo nft list chain ip filter FORWARD 2>/dev/null | grep -E "udp.*(8805|2152)" || print_info "  ✓ No custom UDP FORWARD rules"
+
+# Check IP aliases removed
+if ip addr show br-core 2>/dev/null | grep -q "192.168.71.160/32"; then
+    print_warn "  ⚠ IP alias 192.168.71.160/32 still on br-core"
+else
+    print_info "  ✓ No cross-machine IP aliases on br-core"
+fi
 
 echo ""
 print_info "================================================"
