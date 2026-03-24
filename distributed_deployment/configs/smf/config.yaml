@@ -216,7 +216,7 @@ smf:
   ue_mtu: 1500
   support_features: 
     use_local_subscription_info: no   # Use infos from UDM (via NRF discovery)
-    use_local_pcc_rules: yes           # Use infos from PCF (via NRF discovery)
+    use_local_pcc_rules: no          # Use infos from PCF (via NRF discovery)
   
   # UPF configuration resolved via NRF
   # Both Primary UPF (Machine 1) and Edge UPF (Machine 2) will register with NRF
