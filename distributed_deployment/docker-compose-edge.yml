@@ -113,7 +113,7 @@ services:
       - NET_ADMIN
     networks:
       core_net:
-        ipv4_address: 192.168.71.144
+        ipv4_address: 192.168.61.144
       e1_net:
         ipv4_address: 192.168.75.144
       f1u_net:
@@ -127,7 +127,7 @@ services:
       - ./logs/cuup:/opt/oai-gnb/logs
     environment:
       USE_ADDITIONAL_OPTIONS: >-
-                               --e2_agent.near_ric_ip_addr 192.168.71.150
+                               --e2_agent.near_ric_ip_addr 192.168.61.150
                                --e2_agent.sm_dir /usr/local/lib/flexric/ 
                                --telnetsrv --telnetsrv.shrmod ci
                                -E --sa --log_config.global_log_options level,nocolor,time
@@ -167,7 +167,7 @@ services:
       ran_net:
         ipv4_address: 192.168.80.151
       core_net:                          
-        ipv4_address: 192.168.71.151  
+        ipv4_address: 192.168.61.151  
     ports:
       - "192.168.0.243:500:500/sctp"      # F1-C local SCTP port
       - "192.168.0.243:2155:2152/udp"     # F1-U local GTP-U port
@@ -180,7 +180,7 @@ services:
       # RFSIMULATOR MODE - DU as server
       # F1-C and F1-U connect to CU-CP/CU-UP on Machine 1
       USE_ADDITIONAL_OPTIONS: >-
-                                --e2_agent.near_ric_ip_addr 192.168.71.150 --e2_agent.sm_dir /usr/local/lib/flexric/ 
+                                --e2_agent.near_ric_ip_addr 192.168.61.150 --e2_agent.sm_dir /usr/local/lib/flexric/ 
                                 --telnetsrv --telnetsrv.shrmod ci
                                 -E --rfsim --Active_gNBs gNB-OAI
                                 --gNBs.[0].gNB_ID 0xe00 --gNBs.[0].gNB_DU_ID 0xe00  --gNBs.[0].gNB_name gNB-OAI
@@ -218,7 +218,7 @@ services:
       - SYS_NICE
     networks:
       core_net:
-        ipv4_address: 192.168.71.150
+        ipv4_address: 192.168.61.150
     volumes:
       - ./configs/flexric:/usr/local/etc/flexric
       - ./logs/flexric:/usr/local/logs
