@@ -216,7 +216,7 @@ smf:
   ue_mtu: 1500
   support_features: 
     use_local_subscription_info: no   # Use infos from UDM (via NRF discovery)
-    use_local_pcc_rules: no           # Use infos from PCF (via NRF discovery)
+    use_local_pcc_rules: yes           # Use infos from PCF (via NRF discovery)
   
   # UPF configuration resolved via NRF
   # Both Primary UPF (Machine 1) and Edge UPF (Machine 2) will register with NRF
@@ -228,6 +228,36 @@ smf:
     secondary_ipv4: "1.1.1.1"         # Cloudflare DNS
     secondary_ipv6: "2001:4860:4860::8888"
   
+  upfs:
+    - host: 192.168.71.134
+      config:
+        enable_usage_reporting: no
+        enable_qers: no
+        enable_upf_wo_nf_discovery: no # if y
+        upf_info:
+          interfaceUpfInfoList:
+            - interfaceType: N3
+              networkInstance: 192.168.71.134
+            - interfaceType: N4
+              networkInstance: 192.168.71.134
+            - interfaceType: N6
+              networkInstance: 192.168.71.134
+    
+    - host: 192.168.0.243
+      config:
+        enable_usage_reporting: no
+        enable_qers: no
+        enable_upf_wo_nf_discovery: no 
+        upf_info:
+          interfaceUpfInfoList:
+            - interfaceType: N3
+              networkInstance: 192.168.0.243
+            - interfaceType: N4
+              networkInstance: 192.168.0.243
+            - interfaceType: N6
+              networkInstance: 192.168.0.243
+
+
   #ims:
   #  pcscf_ipv4: "8.8.8.8"
   

@@ -57,7 +57,7 @@ nfs:
       interface_name: eth0
       port: 8805
   upf:
-    host: 192.168.0.193
+    host: 192.168.0.243
     sbi:
       port: 8080
       api_version: v1
