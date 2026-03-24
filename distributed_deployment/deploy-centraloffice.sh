@@ -93,17 +93,40 @@ wait_for_healthy() {
 setup_sctp_routing() {
     print_stage "Setting up SCTP routing rules for cross-machine connectivity..."
 
-    # Ensure SCTP kernel module
     if ! lsmod | grep -q "^sctp"; then
         sudo modprobe sctp
     fi
     print_info "✓ SCTP kernel module loaded"
 
-    # Disable conntrack checksum for SCTP compatibility
     if [ -f /proc/sys/net/netfilter/nf_conntrack_checksum ]; then
         sudo sysctl -w net.netfilter.nf_conntrack_checksum=0 > /dev/null 2>&1
         print_info "✓ Conntrack checksum disabled for SCTP"
     fi
+
+    # -------------------------------------------------------
+    # Helper: extract handle from nft rule line (POSIX compatible)
+    # -------------------------------------------------------
+    extract_handle() {
+        local line="$1"
+        local h=$(echo "$line" | sed -n 's/.*# handle \([0-9]*\)/\1/p')
+        [ -z "$h" ] && h=$(echo "$line" | grep -o 'handle [0-9]*' | grep -o '[0-9]*')
+        echo "$h"
+    }
+
+    # -------------------------------------------------------
+    # Helper: remove all nft rules matching a pattern
+    # -------------------------------------------------------
+    remove_all_matching() {
+        local table=$1 chain=$2 pattern=$3
+        while true; do
+            local line=$(sudo nft -a list chain ${table} ${chain} 2>/dev/null | grep "${pattern}" | head -1)
+            [ -z "$line" ] && break
+            local h=$(extract_handle "$line")
+            [ -z "$h" ] && break
+            print_info "    Removing rule (handle $h)..."
+            sudo nft delete rule ${table} ${chain} handle $h
+        done
+    }
 
     # -------------------------------------------------------
     # Detect container IPs
@@ -114,16 +137,15 @@ setup_sctp_routing() {
     local CUCP_F1C_IP=$(docker inspect -f "{{.NetworkSettings.Networks.${PROJECT_PREFIX}f1c_net.IPAddress}}" cucp 2>/dev/null || echo "")
     local CUCP_E1_IP=$(docker inspect -f "{{.NetworkSettings.Networks.${PROJECT_PREFIX}e1_net.IPAddress}}" cucp 2>/dev/null || echo "")
 
-    # Fallback without prefix
     [ -z "$AMF_CORE_IP" ] && AMF_CORE_IP=$(docker inspect -f '{{.NetworkSettings.Networks.core_net.IPAddress}}' amf 2>/dev/null || echo "")
     [ -z "$CUCP_CORE_IP" ] && CUCP_CORE_IP=$(docker inspect -f '{{.NetworkSettings.Networks.core_net.IPAddress}}' cucp 2>/dev/null || echo "")
     [ -z "$CUCP_F1C_IP" ] && CUCP_F1C_IP=$(docker inspect -f '{{.NetworkSettings.Networks.f1c_net.IPAddress}}' cucp 2>/dev/null || echo "")
     [ -z "$CUCP_E1_IP" ] && CUCP_E1_IP=$(docker inspect -f '{{.NetworkSettings.Networks.e1_net.IPAddress}}' cucp 2>/dev/null || echo "")
 
-    # Auto-detect actual listening ports from CU-CP container
+    # Auto-detect actual listening ports
     local CUCP_F1C_PORT=$(docker exec cucp ss -Slnp 2>/dev/null \
         | grep "LISTEN" \
-        | grep "${CUCP_F1C}" \
+        | grep "${CUCP_F1C_IP}" \
         | awk '{print $5}' \
         | grep -o '[0-9]*$' \
         | head -1)
@@ -131,13 +153,10 @@ setup_sctp_routing() {
 
     local CUCP_E1_PORT=$(docker exec cucp ss -Slnp 2>/dev/null \
         | grep "LISTEN" \
-        | grep "${CUCP_E1}" \
+        | grep "${CUCP_E1_IP}" \
         | awk '{print $5}' \
         | grep -o '[0-9]*$' \
         | head -1)
-    [ -z "$CUCP_E1_PORTT" ] && CUCP_E1_PORT="38462"
-
-    [ -z "$CUCP_F1C_PORT" ] && CUCP_F1C_PORT="38472"
     [ -z "$CUCP_E1_PORT" ] && CUCP_E1_PORT="38462"
 
     print_info "Container IPs and ports detected:"
@@ -151,9 +170,7 @@ setup_sctp_routing() {
         return 1
     fi
 
-    # -------------------------------------------------------
-    # 1. AMF NGAP — Docker's rule is correct (AMF on core_net)
-    # -------------------------------------------------------
+    # --- AMF NGAP ---
     print_info ""
     print_info "--- AMF NGAP (N2) SCTP [TS 38.413] ---"
     if sudo nft list chain ip nat DOCKER 2>/dev/null | grep -q "sctp dport 38412.*dnat to ${AMF_CORE_IP}:38412"; then
@@ -163,111 +180,70 @@ setup_sctp_routing() {
         sudo nft insert rule ip nat DOCKER iifname != "br-core" meta l4proto sctp ip daddr ${MACHINE1_IP} sctp dport 38412 counter dnat to ${AMF_CORE_IP}:38412
     fi
 
-    # -------------------------------------------------------
-    # 2. CU-CP F1-C — Remove ALL old, insert correct at TOP
-    # -------------------------------------------------------
+    # --- CU-CP F1-C ---
     print_info ""
     print_info "--- CU-CP F1-C (F1AP) SCTP [TS 38.472] ---"
+    print_info "  Cleaning old F1-C rules..."
+    remove_all_matching "ip nat" "DOCKER" "sctp dport 38472"
+    remove_all_matching "ip filter" "DOCKER" "br-f1c.*sctp"
 
-    # Remove ALL existing F1-C DNAT rules (any target IP/port including port 501)
-    while true; do
-        local H=$(sudo nft -a list chain ip nat DOCKER 2>/dev/null | grep "sctp dport 38472" | head -1 | grep -oP 'handle \K\d+' || echo "")
-        [ -z "$H" ] && break
-        print_info "  Removing old F1-C DNAT rule (handle $H)..."
-        sudo nft delete rule ip nat DOCKER handle $H
-    done
-
-    # INSERT correct DNAT at TOP of chain
     sudo nft insert rule ip nat DOCKER iifname != "br-f1c" meta l4proto sctp ip daddr ${MACHINE1_IP} sctp dport 38472 counter dnat to ${CUCP_F1C_IP}:${CUCP_F1C_PORT}
     print_info "  ✓ F1-C DNAT INSERTED: ${MACHINE1_IP}:38472 → ${CUCP_F1C_IP}:${CUCP_F1C_PORT}"
 
-    # Remove ALL existing F1-C FORWARD rules (port 501 AND port 38472)
-    while true; do
-        local H=$(sudo nft -a list chain ip filter DOCKER 2>/dev/null | grep "br-f1c.*sctp" | head -1 | grep -oP 'handle \K\d+' || echo "")
-        [ -z "$H" ] && break
-        print_info "  Removing old F1-C FORWARD rule (handle $H)..."
-        sudo nft delete rule ip filter DOCKER handle $H
-    done
-
-    # INSERT FORWARD accept BEFORE the catch-all DROP for br-f1c
-    local F1C_DROP=$(sudo nft -a list chain ip filter DOCKER 2>/dev/null | grep 'iifname != "br-f1c" oifname "br-f1c" counter.*drop' | grep -oP 'handle \K\d+' | head -1 || echo "")
+    local F1C_DROP_LINE=$(sudo nft -a list chain ip filter DOCKER 2>/dev/null | grep 'iifname != "br-f1c" oifname "br-f1c" counter.*drop' | head -1)
+    local F1C_DROP=$(extract_handle "$F1C_DROP_LINE")
     if [ -n "$F1C_DROP" ]; then
         sudo nft insert rule ip filter DOCKER position $F1C_DROP iifname != "br-f1c" oifname "br-f1c" meta l4proto sctp ip daddr ${CUCP_F1C_IP} sctp dport ${CUCP_F1C_PORT} counter accept
-        print_info "  ✓ F1-C FORWARD accept INSERTED before drop (position $F1C_DROP)"
+        print_info "  ✓ F1-C FORWARD INSERTED before drop (position $F1C_DROP)"
     else
         sudo nft insert rule ip filter DOCKER iifname != "br-f1c" oifname "br-f1c" meta l4proto sctp ip daddr ${CUCP_F1C_IP} sctp dport ${CUCP_F1C_PORT} counter accept
-        print_info "  ✓ F1-C FORWARD accept INSERTED at top"
+        print_info "  ✓ F1-C FORWARD INSERTED at top"
     fi
 
-    # Ensure DOCKER-BRIDGE jumps to DOCKER for br-f1c
     if ! sudo nft list chain ip filter DOCKER-BRIDGE 2>/dev/null | grep -q 'oifname "br-f1c".*jump DOCKER'; then
         sudo nft add rule ip filter DOCKER-BRIDGE oifname "br-f1c" counter jump DOCKER
         print_info "  ✓ Added DOCKER-BRIDGE jump for br-f1c"
     fi
 
-    # -------------------------------------------------------
-    # 3. CU-CP E1AP — Remove ALL old, insert correct at TOP
-    # -------------------------------------------------------
+    # --- CU-CP E1AP ---
     print_info ""
     print_info "--- CU-CP E1AP SCTP [TS 38.463] ---"
+    print_info "  Cleaning old E1 rules..."
+    remove_all_matching "ip nat" "DOCKER" "sctp dport 38462"
+    remove_all_matching "ip filter" "DOCKER" "br-e1.*sctp"
 
-    # Remove ALL existing E1 DNAT rules
-    while true; do
-        local H=$(sudo nft -a list chain ip nat DOCKER 2>/dev/null | grep "sctp dport 38462" | head -1 | grep -oP 'handle \K\d+' || echo "")
-        [ -z "$H" ] && break
-        print_info "  Removing old E1 DNAT rule (handle $H)..."
-        sudo nft delete rule ip nat DOCKER handle $H
-    done
-
-    # INSERT correct DNAT at TOP
     sudo nft insert rule ip nat DOCKER iifname != "br-e1" meta l4proto sctp ip daddr ${MACHINE1_IP} sctp dport 38462 counter dnat to ${CUCP_E1_IP}:${CUCP_E1_PORT}
     print_info "  ✓ E1 DNAT INSERTED: ${MACHINE1_IP}:38462 → ${CUCP_E1_IP}:${CUCP_E1_PORT}"
 
-    # Remove ALL existing E1 FORWARD rules
-    while true; do
-        local H=$(sudo nft -a list chain ip filter DOCKER 2>/dev/null | grep "br-e1.*sctp" | head -1 | grep -oP 'handle \K\d+' || echo "")
-        [ -z "$H" ] && break
-        print_info "  Removing old E1 FORWARD rule (handle $H)..."
-        sudo nft delete rule ip filter DOCKER handle $H
-    done
-
-    # INSERT FORWARD accept BEFORE the catch-all DROP for br-e1
-    local E1_DROP=$(sudo nft -a list chain ip filter DOCKER 2>/dev/null | grep 'iifname != "br-e1" oifname "br-e1" counter.*drop' | grep -oP 'handle \K\d+' | head -1 || echo "")
+    local E1_DROP_LINE=$(sudo nft -a list chain ip filter DOCKER 2>/dev/null | grep 'iifname != "br-e1" oifname "br-e1" counter.*drop' | head -1)
+    local E1_DROP=$(extract_handle "$E1_DROP_LINE")
     if [ -n "$E1_DROP" ]; then
         sudo nft insert rule ip filter DOCKER position $E1_DROP iifname != "br-e1" oifname "br-e1" meta l4proto sctp ip daddr ${CUCP_E1_IP} sctp dport ${CUCP_E1_PORT} counter accept
-        print_info "  ✓ E1 FORWARD accept INSERTED before drop (position $E1_DROP)"
+        print_info "  ✓ E1 FORWARD INSERTED before drop (position $E1_DROP)"
     else
         sudo nft insert rule ip filter DOCKER iifname != "br-e1" oifname "br-e1" meta l4proto sctp ip daddr ${CUCP_E1_IP} sctp dport ${CUCP_E1_PORT} counter accept
-        print_info "  ✓ E1 FORWARD accept INSERTED at top"
+        print_info "  ✓ E1 FORWARD INSERTED at top"
     fi
 
-    # Ensure DOCKER-BRIDGE jumps to DOCKER for br-e1
     if ! sudo nft list chain ip filter DOCKER-BRIDGE 2>/dev/null | grep -q 'oifname "br-e1".*jump DOCKER'; then
         sudo nft add rule ip filter DOCKER-BRIDGE oifname "br-e1" counter jump DOCKER
         print_info "  ✓ Added DOCKER-BRIDGE jump for br-e1"
     fi
 
-    # -------------------------------------------------------
-    # 4. Raw table check
-    # -------------------------------------------------------
-    print_info ""
+    # Raw table check
     if sudo nft list chain ip raw PREROUTING 2>/dev/null | grep -q "ip daddr ${MACHINE1_IP}.*drop"; then
-        print_warn "  Raw table has DROP for ${MACHINE1_IP} — removing..."
-        local RAW_H=$(sudo nft -a list chain ip raw PREROUTING 2>/dev/null | grep "ip daddr ${MACHINE1_IP}.*drop" | grep -oP 'handle \K\d+')
-        [ -n "$RAW_H" ] && sudo nft delete rule ip raw PREROUTING handle $RAW_H
+        remove_all_matching "ip raw" "PREROUTING" "ip daddr ${MACHINE1_IP}.*drop"
     else
         print_info "  ✓ Raw table OK"
     fi
 
-    # -------------------------------------------------------
-    # Summary
-    # -------------------------------------------------------
     print_info ""
-    print_info "SCTP routing setup complete!"
-    print_info "  AMF  NGAP:  ${MACHINE1_IP}:38412 → ${AMF_CORE_IP}:38412 (br-core)"
-    print_info "  CU-CP F1-C: ${MACHINE1_IP}:38472 → ${CUCP_F1C_IP}:${CUCP_F1C_PORT} (br-f1c)"
-    print_info "  CU-CP E1:   ${MACHINE1_IP}:38462 → ${CUCP_E1_IP}:${CUCP_E1_PORT} (br-e1)"
+    print_info "SCTP routing complete!"
+    print_info "  AMF  NGAP:  ${MACHINE1_IP}:38412 → ${AMF_CORE_IP}:38412"
+    print_info "  CU-CP F1-C: ${MACHINE1_IP}:38472 → ${CUCP_F1C_IP}:${CUCP_F1C_PORT}"
+    print_info "  CU-CP E1:   ${MACHINE1_IP}:38462 → ${CUCP_E1_IP}:${CUCP_E1_PORT}"
 }
+
 
 verify_sctp_routing() {
     print_stage "Verifying SCTP routing rules..."
