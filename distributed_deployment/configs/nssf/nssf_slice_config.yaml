@@ -8,30 +8,30 @@ configuration:
         sst: 1
         sd: '1'
       nsiInformationList:
-        nrfId: http://192.168.0.193:8080/nnrf-disc/v1/nf-instances
+        nrfId: http://192.168.71.130:9090/nnrf-disc/v1/nf-instances
         nsiId: '11'
-        nrfNfMgtUri: http://192.168.0.193:8080/nnrf-disc/v1/nf-instances
+        nrfNfMgtUri: http://192.168.71.130:9090/nnrf-disc/v1/nf-instances
     - snssai:
         sst: 1
         sd: '2'
       nsiInformationList:
-        nrfId: http://192.168.0.193:808/nnrf-disc/v1/nf-instances
+        nrfId: http://192.168.71.130:9090/nnrf-disc/v1/nf-instances
         nsiId: '12'
-        nrfNfMgtUri: http://192.168.0.193:8080/nnrf-disc/v1/nf-instances
+        nrfNfMgtUri: http://192.168.71.130:9090/nnrf-disc/v1/nf-instances
     - snssai:
         sst: 2 
         sd: '1'
       nsiInformationList:
-        nrfId: http://192.168.0.193:8080/nnrf-disc/v1/nf-instances
+        nrfId: http://192.168.71.130:9090/nnrf-disc/v1/nf-instances
         nsiId: '21'
-        nrfNfMgtUri: http://192.168.0.193:8080/nnrf-disc/v1/nf-instances
+        nrfNfMgtUri: http://192.168.71.130:9090/nnrf-disc/v1/nf-instances
     - snssai:
         sst: 3 
         sd: '1'
       nsiInformationList:
-        nrfId: http://192.168.0.193:8080/nnrf-disc/v1/nf-instances
+        nrfId: http://192.168.71.130:9090/nnrf-disc/v1/nf-instances
         nsiId: '31'
-        nrfNfMgtUri: http://192.168.0.193:8080/nnrf-disc/v1/nf-instances
+        nrfNfMgtUri: http://192.168.71.130:9090/nnrf-disc/v1/nf-instances
   
   taInfoList:
     - tai:
@@ -50,8 +50,8 @@ configuration:
         sd: '1'
   amfInfoList:
     - targetAmfSet: oai5gcn.mcc208.mnc95.regionid128.setid1.3gppnetwork.org
-      nrfAmfSet: http://192.168.0.193:8080/nnrf-disc/v1/nf-instances'
-      nrfAmfSetNfMgtUri: http://192.168.0.193:8080/nnrf-nfm/v1/nf-instances
+      nrfAmfSet: http://192.168.71.130:9090/nnrf-disc/v1/nf-instances'
+      nrfAmfSetNfMgtUri: http://192.168.71.130:9090/nnrf-nfm/v1/nf-instances
       amfList:
         - nfId: 405e8251-cc5a-45dd-a494-efb9eaf1cd58
           supportedNssaiAvailabilityData:
