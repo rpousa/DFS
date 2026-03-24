@@ -247,7 +247,7 @@ services:
       ran_net:
         ipv4_address: 192.168.80.170
     volumes:
-      - ./ue_volumes/nrue.nrue.rfsim_slice_2.conf:/opt/oai-nr-ue/etc/nr-ue.conf
+      - ./ue_volumes/nrue.rfsim_slice_2.conf:/opt/oai-nr-ue/etc/nr-ue.conf
       - ./ue_volumes/ue_entrypoint.sh:/opt/oai-nr-ue/bin/entrypoint.sh
       - ./logs/ue_1:/opt/oai-nr-ue/logs
     environment:
