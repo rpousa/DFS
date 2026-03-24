@@ -146,143 +146,6 @@ nft_remove_all_matching() {
 }
 
 # ==========================================
-# Edge UPF PFCP/GTP-U Routing for Cross-Machine SMF
-# ==========================================
-# The Edge UPF registers with NRF using its Docker internal IP (192.168.71.160).
-# The SMF on Machine 1 discovers this IP and tries to send PFCP there.
-# Machine 1's deploy-centraloffice.sh will add an IP alias and DNAT to route
-# traffic for 192.168.71.160 to Machine 2's host IP (192.168.0.243).
-#
-# This function sets up DNAT on Machine 2 to forward:
-#   192.168.0.243:8805/udp  → 192.168.71.160:8805 (PFCP to UPF container)
-#   192.168.0.243:2152/udp  → 192.168.71.160:2152 (GTP-U to UPF container)
-
-setup_edge_upf_pfcp() {
-    print_stage "Setting up Edge UPF PFCP/GTP-U routing..."
-
-    local PROJECT_PREFIX="distributed_deployment_"
-
-    # Detect UPF container's core_net IP
-    local UPF1_CORE_IP=$(docker inspect -f "{{.NetworkSettings.Networks.${PROJECT_PREFIX}core_net.IPAddress}}" upf_1 2>/dev/null || echo "")
-    [ -z "$UPF1_CORE_IP" ] && UPF1_CORE_IP=$(docker inspect -f '{{.NetworkSettings.Networks.core_net.IPAddress}}' upf_1 2>/dev/null || echo "")
-    [ -z "$UPF1_CORE_IP" ] && UPF1_CORE_IP="192.168.71.160"
-
-    print_info "Edge UPF core_net IP: ${UPF1_CORE_IP}"
-
-    # -------------------------------------------------------
-    # 1. PFCP (UDP 8805): Machine 2 host → UPF container
-    # -------------------------------------------------------
-    print_info ""
-    print_info "--- Edge UPF PFCP (N4) UDP [3GPP TS 29.244] ---"
-
-    # Remove any existing PFCP DNAT rules
-    print_info "  Cleaning old PFCP DNAT rules..."
-    nft_remove_all_matching "ip nat" "PREROUTING" "udp dport 8805"
-    nft_remove_all_matching "ip nat" "DOCKER" "udp dport 8805"
-
-    # INSERT DNAT rule: external PFCP → UPF container
-    sudo nft insert rule ip nat PREROUTING ip daddr ${MACHINE2_IP} udp dport 8805 counter dnat to ${UPF1_CORE_IP}:8805
-    print_info "  ✓ PFCP DNAT: ${MACHINE2_IP}:8805/udp → ${UPF1_CORE_IP}:8805"
-
-    # Remove any existing PFCP FORWARD rules
-    print_info "  Cleaning old PFCP FORWARD rules..."
-    nft_remove_all_matching "ip filter" "FORWARD" "udp dport 8805"
-
-    # INSERT FORWARD accept for PFCP
-    sudo nft insert rule ip filter FORWARD oifname "br-core" udp dport 8805 counter accept
-    sudo nft insert rule ip filter FORWARD iifname "br-core" udp sport 8805 counter accept
-    print_info "  ✓ PFCP FORWARD rules added"
-
-    # -------------------------------------------------------
-    # 2. GTP-U (UDP 2152): Machine 2 host → UPF container
-    # -------------------------------------------------------
-    print_info ""
-    print_info "--- Edge UPF GTP-U (N3/N9) UDP [3GPP TS 29.281] ---"
-
-    # Remove any existing GTP-U DNAT rules for port 2152
-    print_info "  Cleaning old GTP-U DNAT rules..."
-    nft_remove_all_matching "ip nat" "PREROUTING" "udp dport 2152"
-
-    # INSERT GTP-U DNAT
-    sudo nft insert rule ip nat PREROUTING ip daddr ${MACHINE2_IP} udp dport 2152 counter dnat to ${UPF1_CORE_IP}:2152
-    print_info "  ✓ GTP-U DNAT: ${MACHINE2_IP}:2152/udp → ${UPF1_CORE_IP}:2152"
-
-    # INSERT FORWARD accept for GTP-U
-    print_info "  Cleaning old GTP-U FORWARD rules..."
-    nft_remove_all_matching "ip filter" "FORWARD" "udp dport 2152"
-    sudo nft insert rule ip filter FORWARD oifname "br-core" udp dport 2152 counter accept
-    sudo nft insert rule ip filter FORWARD iifname "br-core" udp sport 2152 counter accept
-    print_info "  ✓ GTP-U FORWARD rules added"
-
-    # -------------------------------------------------------
-    # 3. Ensure MASQUERADE for return traffic
-    # -------------------------------------------------------
-    print_info ""
-    print_info "--- MASQUERADE for return traffic ---"
-
-    if ! sudo nft list chain ip nat POSTROUTING 2>/dev/null | grep -q "oifname.*br-core.*masquerade"; then
-        sudo nft add rule ip nat POSTROUTING oifname "br-core" counter masquerade 2>/dev/null || true
-        print_info "  ✓ MASQUERADE added for br-core"
-    else
-        print_info "  ✓ MASQUERADE already exists for br-core"
-    fi
-
-    # -------------------------------------------------------
-    # 4. Verify UPF is listening
-    # -------------------------------------------------------
-    print_info ""
-    print_info "--- Verifying Edge UPF sockets ---"
-    local pfcp_listen=$(docker exec upf_1 ss -ulnp 2>/dev/null | grep ":8805" || echo "")
-    local gtpu_listen=$(docker exec upf_1 ss -ulnp 2>/dev/null | grep ":2152" || echo "")
-
-    if [ -n "$pfcp_listen" ]; then
-        print_info "  ✓ UPF PFCP socket: listening on port 8805"
-    else
-        print_warn "  ⚠ UPF PFCP socket not found (may still be starting)"
-    fi
-
-    if [ -n "$gtpu_listen" ]; then
-        print_info "  ✓ UPF GTP-U socket: listening on port 2152"
-    else
-        print_warn "  ⚠ UPF GTP-U socket not found (may still be starting)"
-    fi
-
-    # -------------------------------------------------------
-    # Summary
-    # -------------------------------------------------------
-    print_info ""
-    print_info "Edge UPF PFCP/GTP-U routing complete!"
-    print_info ""
-    print_info "Traffic flow (SMF on Machine 1 → Edge UPF on Machine 2):"
-    print_info "  1. SMF discovers UPF from NRF with IP ${UPF1_CORE_IP}"
-    print_info "  2. Machine 1 intercepts ${UPF1_CORE_IP}:8805, DNATs to ${MACHINE2_IP}:8805"
-    print_info "  3. Machine 2 receives on ${MACHINE2_IP}:8805, DNATs to ${UPF1_CORE_IP}:8805"
-    print_info "  4. UPF container receives PFCP Association Request"
-    print_info ""
-    print_info "Configured routes:"
-    print_info "  PFCP (N4):  ${MACHINE2_IP}:8805/udp  → ${UPF1_CORE_IP}:8805"
-    print_info "  GTP-U (N3): ${MACHINE2_IP}:2152/udp → ${UPF1_CORE_IP}:2152"
-}
-
-verify_edge_upf_pfcp() {
-    print_stage "Verifying Edge UPF PFCP/GTP-U routing..."
-
-    echo ""
-    print_info "=== NAT PREROUTING rules (UDP) ==="
-    sudo nft -a list chain ip nat PREROUTING 2>/dev/null | grep -E "udp dport (8805|2152)" || print_warn "  No UDP DNAT rules found"
-
-    echo ""
-    print_info "=== Filter FORWARD rules (UDP) ==="
-    sudo nft -a list chain ip filter FORWARD 2>/dev/null | grep -E "udp.*(8805|2152)" || print_warn "  No UDP FORWARD rules found"
-
-    echo ""
-    print_info "=== Edge UPF UDP listening sockets ==="
-    docker exec upf_1 ss -ulnp 2>/dev/null | grep -E "8805|2152" || print_warn "  UPF sockets not found"
-
-    echo ""
-}
-
-# ==========================================
 # SCTP Routing Fix for Machine 2
 # ==========================================
 # Docker creates nftables DNAT rules for /sctp port mappings, but:
@@ -627,12 +490,7 @@ print_stage "Stage 1/8: Starting Edge UPF and External DN..."
 docker compose -f docker-compose-edge.yml up -d upf_1 ext_dn_1
 wait_for_service "upf_1" 30
 wait_for_service "ext_dn_1" 30
-print_info "Waiting for UPF initialization..."
 sleep 10
-
-# Setup PFCP/GTP-U routing for cross-machine SMF → UPF
-setup_edge_upf_pfcp
-verify_edge_upf_pfcp
 echo ""
 
 # Stage 2: Edge CU-UP
@@ -719,6 +577,7 @@ else
                     echo ""
                     continue
                 fi
+
                 ;;
             [Pp])
                 print_info "Proceeding with $CONNECTED_UES connected UE(s)..."
@@ -741,42 +600,4 @@ fi
 
 # Final status check
 echo ""
-print_stage "Checking final status..."
-echo ""
-docker compose -f docker-compose-edge.yml ps
-echo ""
-
-print_info "================================================"
-print_info "Machine 2 Deployment Complete!"
-print_info "================================================"
-echo ""
-
-print_info "Services running:"
-print_info "  - Edge UPF (upf_1):     PFCP to SMF on Machine 1"
-print_info "  - Ext DN (ext_dn_1):    Data network gateway"
-print_info "  - Edge CU-UP (cuup_1):  E1 to CU-CP on Machine 1"
-print_info "  - DU (du_1):            F1 to CU-CP on Machine 1, RFSim server"
-print_info "  - FlexRIC:              Near-RT RIC"
-print_info "  - UE (ue_1):            $CONNECTED_UES UE(s) connected"
-echo ""
-
-print_info "Key Endpoints:"
-print_info "  - Edge UPF PFCP:  ${MACHINE2_IP}:8805/udp → SMF on ${MACHINE1_IP}"
-print_info "  - Edge UPF GTP-U: ${MACHINE2_IP}:2152/udp"
-print_info "  - DU F1-C:        ${MACHINE2_IP}:500/sctp → CU-CP on ${MACHINE1_IP}:38472"
-print_info "  - CU-UP E1:       outbound to CU-CP on ${MACHINE1_IP}:38462"
-echo ""
-
-print_info "Useful commands:"
-echo "  - Check UE connections:  docker exec ue_1 ip addr | grep oaitun"
-echo "  - Check Edge UPF logs:   docker logs upf_1 | grep -i pfcp"
-echo "  - Check DU logs:         docker logs du_1 | grep -i f1ap"
-echo "  - Check CU-UP logs:      docker logs cuup_1 | grep -i e1ap"
-echo "  - Stop deployment:       ./stop.sh"
-echo ""
-
-read -p "Show live logs? (y/N): " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    docker compose -f docker-compose-edge.yml logs -f
-fi
+print_stage

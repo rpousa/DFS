@@ -7,7 +7,6 @@ set -e
 
 MACHINE1_IP="192.168.0.193"
 MACHINE2_IP="192.168.0.243"
-EDGE_UPF_DOCKER_IP="192.168.71.160"
 
 echo "================================================"
 echo "Machine 1: Core Network + Central RAN Deployment"
@@ -75,186 +74,6 @@ wait_for_healthy() {
     done
     print_error "$service failed to become healthy within ${max_wait} seconds"
     return 1
-}
-
-# ==========================================
-# Helper: Remove ALL nftables rules matching a grep pattern
-# ==========================================
-nft_remove_all_matching() {
-    local table=$1
-    local chain=$2
-    local pattern=$3
-    while true; do
-        local H=$(sudo nft -a list chain ${table} ${chain} 2>/dev/null | grep "${pattern}" | head -1 | grep -oP 'handle \K\d+' || echo "")
-        [ -z "$H" ] && break
-        print_info "    Removing rule (handle $H)..."
-        sudo nft delete rule ${table} ${chain} handle $H
-    done
-}
-
-# ==========================================
-# Cross-Machine UPF PFCP Routing
-# ==========================================
-# The Edge UPF on Machine 2 registers with NRF using its Docker
-# internal IP (192.168.71.160). The SMF on Machine 1 discovers this
-# IP and tries to send PFCP there, but it's on a different machine's
-# Docker network.
-#
-# Solution: Add the Edge UPF's IP as an alias on br-core, then DNAT
-# PFCP traffic to Machine 2's host IP (192.168.0.243).
-
-setup_cross_machine_upf_pfcp() {
-    print_stage "Setting up cross-machine UPF PFCP routing..."
-
-    local PFCP_PORT="8805"
-    local GTPU_PORT="2152"
-
-    # -------------------------------------------------------
-    # 1. Add Edge UPF's Docker IP as alias on br-core
-    # -------------------------------------------------------
-    print_info ""
-    print_info "--- Adding Edge UPF IP alias to br-core ---"
-
-    # Check if br-core exists
-    if ! ip link show br-core > /dev/null 2>&1; then
-        print_warn "  br-core does not exist yet — will be created by Docker"
-        print_warn "  Skipping IP alias for now — run this after containers start"
-        return 0
-    fi
-
-    # Check if alias already exists
-    if ip addr show br-core 2>/dev/null | grep -q "${EDGE_UPF_DOCKER_IP}"; then
-        print_info "  ✓ IP alias ${EDGE_UPF_DOCKER_IP} already exists on br-core"
-    else
-        sudo ip addr add ${EDGE_UPF_DOCKER_IP}/32 dev br-core
-        print_info "  ✓ Added IP alias ${EDGE_UPF_DOCKER_IP}/32 to br-core"
-    fi
-
-    # -------------------------------------------------------
-    # 2. PFCP (UDP 8805): DNAT to Machine 2
-    # -------------------------------------------------------
-    print_info ""
-    print_info "--- Edge UPF PFCP (N4) routing [3GPP TS 29.244] ---"
-
-    # Remove any existing rules for this Edge UPF PFCP
-    print_info "  Cleaning old PFCP PREROUTING rules..."
-    nft_remove_all_matching "ip nat" "PREROUTING" "ip daddr ${EDGE_UPF_DOCKER_IP}.*udp dport ${PFCP_PORT}"
-
-    # INSERT DNAT rule: packets to Edge UPF Docker IP → Machine 2 host
-    sudo nft insert rule ip nat PREROUTING iifname "br-core" ip daddr ${EDGE_UPF_DOCKER_IP} udp dport ${PFCP_PORT} counter dnat to ${MACHINE2_IP}:${PFCP_PORT}
-    print_info "  ✓ PFCP DNAT: ${EDGE_UPF_DOCKER_IP}:${PFCP_PORT} → ${MACHINE2_IP}:${PFCP_PORT}"
-
-    # MASQUERADE outgoing packets so replies come back correctly
-    if ! sudo nft list chain ip nat POSTROUTING 2>/dev/null | grep -q "ip daddr ${MACHINE2_IP}.*udp dport ${PFCP_PORT}.*masquerade"; then
-        sudo nft add rule ip nat POSTROUTING ip daddr ${MACHINE2_IP} udp dport ${PFCP_PORT} counter masquerade
-        print_info "  ✓ PFCP MASQUERADE: outbound to ${MACHINE2_IP}:${PFCP_PORT}"
-    else
-        print_info "  ✓ PFCP MASQUERADE rule already exists"
-    fi
-
-    # -------------------------------------------------------
-    # 3. GTP-U (UDP 2152): DNAT to Machine 2 (for N3/N9 traffic)
-    # -------------------------------------------------------
-    print_info ""
-    print_info "--- Edge UPF GTP-U (N3/N9) routing [3GPP TS 29.281] ---"
-
-    # Remove any existing rules for this Edge UPF GTP-U
-    print_info "  Cleaning old GTP-U PREROUTING rules..."
-    nft_remove_all_matching "ip nat" "PREROUTING" "ip daddr ${EDGE_UPF_DOCKER_IP}.*udp dport ${GTPU_PORT}"
-
-    # INSERT DNAT rule for GTP-U
-    sudo nft insert rule ip nat PREROUTING iifname "br-core" ip daddr ${EDGE_UPF_DOCKER_IP} udp dport ${GTPU_PORT} counter dnat to ${MACHINE2_IP}:${GTPU_PORT}
-    print_info "  ✓ GTP-U DNAT: ${EDGE_UPF_DOCKER_IP}:${GTPU_PORT} → ${MACHINE2_IP}:${GTPU_PORT}"
-
-    # MASQUERADE for GTP-U
-    if ! sudo nft list chain ip nat POSTROUTING 2>/dev/null | grep -q "ip daddr ${MACHINE2_IP}.*udp dport ${GTPU_PORT}.*masquerade"; then
-        sudo nft add rule ip nat POSTROUTING ip daddr ${MACHINE2_IP} udp dport ${GTPU_PORT} counter masquerade
-        print_info "  ✓ GTP-U MASQUERADE: outbound to ${MACHINE2_IP}:${GTPU_PORT}"
-    else
-        print_info "  ✓ GTP-U MASQUERADE rule already exists"
-    fi
-
-    # -------------------------------------------------------
-    # 4. Enable IP forwarding (should already be on)
-    # -------------------------------------------------------
-    print_info ""
-    sudo sysctl -w net.ipv4.ip_forward=1 > /dev/null 2>&1
-    print_info "✓ IP forwarding enabled"
-
-    # -------------------------------------------------------
-    # 5. Allow forwarding from br-core to external
-    # -------------------------------------------------------
-    print_info ""
-    print_info "--- Forwarding rules ---"
-
-    # Get the external interface (the one with the host IP)
-    local EXT_IF=$(ip route get ${MACHINE2_IP} | grep -oP 'dev \K\S+' | head -1)
-    [ -z "$EXT_IF" ] && EXT_IF="enp0s31f6"  # Fallback
-
-    print_info "  External interface detected: ${EXT_IF}"
-
-    # Allow forwarding from br-core to external interface
-    if ! sudo nft list chain ip filter FORWARD 2>/dev/null | grep -q "iifname \"br-core\" oifname \"${EXT_IF}\".*accept"; then
-        sudo nft insert rule ip filter FORWARD iifname "br-core" oifname "${EXT_IF}" ip daddr ${MACHINE2_IP} counter accept 2>/dev/null || true
-        print_info "  ✓ FORWARD accept: br-core → ${EXT_IF} (to ${MACHINE2_IP})"
-    fi
-
-    # Allow return traffic
-    if ! sudo nft list chain ip filter FORWARD 2>/dev/null | grep -q "iifname \"${EXT_IF}\" oifname \"br-core\".*accept"; then
-        sudo nft insert rule ip filter FORWARD iifname "${EXT_IF}" oifname "br-core" counter accept 2>/dev/null || true
-        print_info "  ✓ FORWARD accept: ${EXT_IF} → br-core (return traffic)"
-    fi
-
-    # -------------------------------------------------------
-    # Summary
-    # -------------------------------------------------------
-    print_info ""
-    print_info "Cross-machine UPF PFCP routing complete!"
-    print_info ""
-    print_info "Traffic flow:"
-    print_info "  SMF (Machine 1)                Edge UPF (Machine 2)"
-    print_info "  192.168.71.133:8805    →      ${EDGE_UPF_DOCKER_IP}:8805"
-    print_info "       │                              ↑"
-    print_info "       │ (thinks it's local)         │"
-    print_info "       ↓                              │"
-    print_info "  br-core alias                       │"
-    print_info "  ${EDGE_UPF_DOCKER_IP}/32           │"
-    print_info "       │                              │"
-    print_info "       │ DNAT                         │"
-    print_info "       ↓                              │"
-    print_info "  ${MACHINE2_IP}:8805 ──────────────→ │"
-    print_info "  (Machine 2 host)        (DNAT to container)"
-    print_info ""
-}
-
-verify_cross_machine_upf_pfcp() {
-    print_stage "Verifying cross-machine UPF PFCP routing..."
-
-    echo ""
-    print_info "=== IP alias on br-core ==="
-    if ip addr show br-core 2>/dev/null | grep -q "${EDGE_UPF_DOCKER_IP}"; then
-        print_info "  ✓ IP alias ${EDGE_UPF_DOCKER_IP}/32 exists on br-core"
-    else
-        print_warn "  ✗ IP alias ${EDGE_UPF_DOCKER_IP}/32 NOT found on br-core"
-    fi
-
-    echo ""
-    print_info "=== NAT PREROUTING rules (UDP PFCP/GTP-U) ==="
-    sudo nft -a list chain ip nat PREROUTING 2>/dev/null | grep -E "udp dport (8805|2152)" || print_warn "  No UDP DNAT rules found"
-
-    echo ""
-    print_info "=== NAT POSTROUTING rules (MASQUERADE) ==="
-    sudo nft -a list chain ip nat POSTROUTING 2>/dev/null | grep -E "${MACHINE2_IP}.*(8805|2152)" || print_warn "  No MASQUERADE rules found"
-
-    echo ""
-    print_info "=== Testing connectivity to Machine 2 ==="
-    if ping -c 1 -W 2 ${MACHINE2_IP} > /dev/null 2>&1; then
-        print_info "  ✓ Can reach Machine 2 (${MACHINE2_IP})"
-    else
-        print_warn "  ✗ Cannot reach Machine 2 (${MACHINE2_IP})"
-    fi
-
-    echo ""
 }
 
 # ==========================================
@@ -539,12 +358,12 @@ print_stage "Creating Docker networks and preparing containers..."
 docker compose -f docker-compose-centraloffice.yml up --no-start
 echo ""
 
-print_stage "Stage 1/7: Starting MySQL database..."
+print_stage "Stage 1/6: Starting MySQL database..."
 docker compose -f docker-compose-centraloffice.yml up -d mysql
 wait_for_healthy "mysql" 60
 echo ""
 
-print_stage "Stage 2/7: Starting 5G Core Network Functions..."
+print_stage "Stage 2/6: Starting 5G Core Network Functions..."
 docker compose -f docker-compose-centraloffice.yml up -d nrf smf pcf nssf amf udm udr ausf
 wait_for_service "nrf" 30
 wait_for_service "amf" 30
@@ -553,7 +372,7 @@ print_info "Waiting for services to initialize..."
 sleep 5
 echo ""
 
-print_stage "Stage 3/7: Starting Primary UPF and External DN..."
+print_stage "Stage 3/6: Starting Primary UPF and External DN..."
 docker compose -f docker-compose-centraloffice.yml up -d upf ext_dn
 wait_for_service "upf" 30
 wait_for_service "ext_dn" 30
@@ -561,33 +380,23 @@ print_info "Waiting for UPF initialization..."
 sleep 5
 echo ""
 
-# ==========================================
-# Stage 4: Cross-Machine UPF PFCP Routing (NEW)
-# ==========================================
-print_stage "Stage 4/7: Configuring cross-machine UPF PFCP routing for Edge UPF..."
-echo ""
-setup_cross_machine_upf_pfcp
-echo ""
-verify_cross_machine_upf_pfcp
-echo ""
-
-print_stage "Stage 5/7: Starting CU-CP (Central Unit Control Plane)..."
+print_stage "Stage 4/6: Starting CU-CP (Central Unit Control Plane)..."
 docker compose -f docker-compose-centraloffice.yml up -d cucp
 wait_for_service "cucp" 30
 print_info "Waiting for CU-CP to initialize SCTP sockets..."
 sleep 15
 echo ""
 
-print_stage "Stage 6/7: Starting CU-UP (Central Unit User Plane)..."
+print_stage "Stage 5/6: Starting CU-UP (Central Unit User Plane)..."
 docker compose -f docker-compose-centraloffice.yml up -d cuup
 wait_for_service "cuup" 30
 sleep 5
 echo ""
 
 # ==========================================
-# Stage 7: SCTP Routing Fix (THE KEY FIX)
+# Stage 6: SCTP Routing Fix (THE KEY FIX)
 # ==========================================
-print_stage "Stage 7/7: Configuring SCTP routing for cross-machine access..."
+print_stage "Stage 6/6: Configuring SCTP routing for cross-machine access..."
 echo ""
 setup_sctp_routing
 echo ""
@@ -618,13 +427,6 @@ docker exec cucp ss -Slnp 2>/dev/null | grep -E "38472|38462" || print_warn "  C
 
 print_info "AMF SCTP listening sockets:"
 docker exec amf ss -Slnp 2>/dev/null | grep "38412" || print_warn "  AMF SCTP socket not found"
-
-print_info "Cross-machine UPF PFCP routing:"
-if ip addr show br-core 2>/dev/null | grep -q "${EDGE_UPF_DOCKER_IP}"; then
-    print_info "  ✓ Edge UPF IP alias (${EDGE_UPF_DOCKER_IP}) configured on br-core"
-else
-    print_warn "  ✗ Edge UPF IP alias not configured"
-fi
 
 echo ""
 print_info "Next Steps:"
