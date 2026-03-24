@@ -128,7 +128,7 @@ nfs:
       interface_name: eth0
 
   nrf:
-    host: 192.168.0.193              # NRF on Machine 1 (Docker IP)
+    host: 192.168.71.130              # NRF on Machine 1 (Docker IP)
     sbi:
       port: 9090                      # Exposed on 192.168.0.193:9090 for Machine 2
       api_version: v1
