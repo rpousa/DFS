@@ -61,17 +61,22 @@ nfs:
     sbi:
       port: 8080
       api_version: v1
-      interface_name: eth0
+      #interface_name: eth0
+      ipv4_address: 192.168.0.243
     n3:
-      interface_name: eth0
+      #interface_name: eth0
       port: 2152
+      ipv4_address: 192.168.71.160
     n4:
-      interface_name: eth0
+      ipv4_address: 192.168.0.243
+      #interface_name: eth0
       port: 8805
     n6:
-      interface_name: eth1
+      ipv4_address: 192.168.72.160
+      #interface_name: eth1
     n9:
-      interface_name: eth0
+      ipv4_address: 192.168.0.243
+#      interface_name: eth0
       port: 2152
   spgwu:
     host: 192.168.0.193
