@@ -68,17 +68,18 @@ nfs:
       port: 8085
       api_version: v1
       interface_name: eth0
-      host: 192.168.71.134 
+      addr: 192.168.71.134 
     n3:
       interface_name: eth0
       port: 2152                      # Exposed on 192.168.0.193:2152 for Machine 2 CU-UP
+      addr: 192.168.72.134 
     n4:
       interface_name: eth0
       port: 8805
-      host: 192.168.71.134 
+      addr: 192.168.71.134 
     n6:
       interface_name: eth1
-      host: 192.168.71.134 
+      addr: 192.168.72.134 
     n9:
       interface_name: eth0
       port: 2152
