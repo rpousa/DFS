@@ -408,7 +408,7 @@ services:
 # Central RAN - Primary CU-UP
 # ==========================================
 
-flexric:
+  flexric:
     image: flexric_test:comnetsemu
     container_name: flexric
     hostname: flexric
