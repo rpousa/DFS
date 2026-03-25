@@ -14,7 +14,7 @@ build_image() {
   fi
 }
 # old images not needed spgwu ryu flexric flexric_oai flexric_srs
-IMAGES=(ext_dn mysql amf smf nrf ausf udm udr upf nssf pcf gnb ue cu du cuup cucp onos proxy_l2 comnetsemu_flexric) # flexric_test
+IMAGES=(ext_dn mysql amf smf nrf ausf udm udr upf nssf pcf gnb ue cu du cuup cucp onos proxy_l2 flexric_test) # comnetsemu_flexric
 DOCKERFILE_DIR=./dockerfiles
 
 for image in "${IMAGES[@]}"; do
