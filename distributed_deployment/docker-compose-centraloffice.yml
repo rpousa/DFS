@@ -424,9 +424,9 @@ services:
       - ./configs/flexric:/usr/local/etc/flexric
       - ./logs/flexric:/usr/local/logs
       - ./flexric_volumes/ric_watchdog.sh:/usr/local/bin/ric_watchdog.sh
-      - ./flexric_volumes/topology.py:/usr/local/flexric/xApp/python/topology.py
-      - ./flexric_volumes/xapp_functs.py:/usr/local/flexric/xApp/python/xapp_functs.py
-      - ./flexric_volumes/xapp_test.py:/usr/local/flexric/xApp/python/xapp.py
+      - ./flexric_volumes/topology.py:/usr/local/flexric/xApp/python3/topology.py
+      - ./flexric_volumes/xapp_functs.py:/usr/local/flexric/xApp/python3/xapp_functs.py
+      - ./flexric_volumes/xapp_test.py:/usr/local/flexric/xApp/python3/xapp.py
     depends_on:
       - cuup
     command: >
