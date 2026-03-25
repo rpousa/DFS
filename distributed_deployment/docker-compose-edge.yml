@@ -51,8 +51,7 @@ services:
                                --gNBs.[0].remote_s_address 0.0.0.0
                                --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.71.144/26
                                --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.71.144/26
-    depends_on:
-      - upf_1
+    
     command: >
       sh -c "sleep 20 &&
              /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-cuup -O /opt/oai-gnb/etc/gnb.conf"
