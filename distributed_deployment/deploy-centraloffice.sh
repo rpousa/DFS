@@ -114,13 +114,15 @@ setup_sctp_routing() {
     local CUCP_CORE_IP=$(docker inspect -f "{{.NetworkSettings.Networks.${PROJECT_PREFIX}core_net.IPAddress}}" cucp 2>/dev/null || echo "")
     local CUCP_F1C_IP=$(docker inspect -f "{{.NetworkSettings.Networks.${PROJECT_PREFIX}f1c_net.IPAddress}}" cucp 2>/dev/null || echo "")
     local CUCP_E1_IP=$(docker inspect -f "{{.NetworkSettings.Networks.${PROJECT_PREFIX}e1_net.IPAddress}}" cucp 2>/dev/null || echo "")
+    local FLEXRIC_IP=$(docker inspect -f "{{.NetworkSettings.Networks.${PROJECT_PREFIX}core_net.IPAddress}}" flexric 2>/dev/null || echo "")
 
     # Fallback without prefix
     [ -z "$AMF_CORE_IP" ] && AMF_CORE_IP=$(docker inspect -f '{{.NetworkSettings.Networks.core_net.IPAddress}}' amf 2>/dev/null || echo "")
     [ -z "$CUCP_CORE_IP" ] && CUCP_CORE_IP=$(docker inspect -f '{{.NetworkSettings.Networks.core_net.IPAddress}}' cucp 2>/dev/null || echo "")
     [ -z "$CUCP_F1C_IP" ] && CUCP_F1C_IP=$(docker inspect -f '{{.NetworkSettings.Networks.f1c_net.IPAddress}}' cucp 2>/dev/null || echo "")
     [ -z "$CUCP_E1_IP" ] && CUCP_E1_IP=$(docker inspect -f '{{.NetworkSettings.Networks.e1_net.IPAddress}}' cucp 2>/dev/null || echo "")
-
+    [ -z "$FLEXRIC_IP" ] && FLEXRIC_IP=$(docker inspect -f '{{.NetworkSettings.Networks.core_net.IPAddress}}' flexric 2>/dev/null || echo "")
+    
     # Auto-detect actual listening ports from CU-CP container
     local CUCP_F1C_PORT=$(docker exec cucp ss -Slnp 2>/dev/null \
         | grep "LISTEN" \
@@ -138,6 +140,14 @@ setup_sctp_routing() {
         | head -1)
     [ -z "$CUCP_E1_PORT" ] && CUCP_E1_PORT="38462"
 
+    local FLEXRIC_PORT=$(docker exec flexric ss -Slnp 2>/dev/null \
+        | grep "LISTEN" \
+        | grep "${FLEXRIC_IP}" \
+        | awk '{print $5}' \
+        | grep -o '[0-9]*$' \
+        | head -1)
+    [ -z "$FLEXRIC_PORT" ] && FLEXRIC_PORT="36421"
+    
     [ -z "$CUCP_F1C_PORT" ] && CUCP_F1C_PORT="38472"
     [ -z "$CUCP_E1_PORT" ] && CUCP_E1_PORT="38462"
 
@@ -146,6 +156,7 @@ setup_sctp_routing() {
     print_info "  CU-CP (core_net): ${CUCP_CORE_IP:-NOT FOUND}"
     print_info "  CU-CP (f1c_net):  ${CUCP_F1C_IP:-NOT FOUND}:${CUCP_F1C_PORT}"
     print_info "  CU-CP (e1_net):   ${CUCP_E1_IP:-NOT FOUND}:${CUCP_E1_PORT}"
+    print_info "  FLEXRIC (core_net): ${FLEXRIC_IP:-NOT FOUND}:${FLEXRIC_PORT}"
 
     if [ -z "$CUCP_F1C_IP" ] || [ -z "$CUCP_E1_IP" ] || [ -z "$AMF_CORE_IP" ]; then
         print_error "Could not detect container IPs. SCTP routing setup failed."
