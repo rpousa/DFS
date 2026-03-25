@@ -41,7 +41,7 @@ services:
     #   - NRF_IPV4_ADDRESS=192.168.0.193
     #   - NRF_PORT=9090
     #   - REGISTER_NF=yes
-    entrypoint: ["/usr/local/bin/fix-interfaces.sh", "/openair-upf/etc/config.yaml"]
+    entrypoint: ["/openair-upf/etc/fix-interfaces.sh", "/openair-upf/etc/config.yaml"]
     command: >
       sh -c "sleep 2 &&
              sysctl -w net.ipv4.ip_forward=1 &&
