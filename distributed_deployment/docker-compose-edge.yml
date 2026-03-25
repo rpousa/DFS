@@ -36,12 +36,11 @@ services:
       - ./logs/upf_1:/openair-upf/logs
     devices:
       - /dev/net/tun:/dev/net/tun
-    # environment:
-    #   # NRF on Machine 1 - Docker will route via exposed port
-    #   - NRF_IPV4_ADDRESS=192.168.0.193
-    #   - NRF_PORT=9090
-    #   - REGISTER_NF=yes
-    #entrypoint: ["/openair-upf/etc/fix_interfaces.sh", "/openair-upf/etc/config.yaml"]
+    environment:
+    # Define expected interface mapping
+    - ETH0_IP=192.168.61.160    # core_net → eth0
+    - ETH1_IP=192.168.72.160    # ext_net → eth1
+    entrypoint: ["/openair-upf/etc/fix_interfaces.sh"]
     command: >
       sh -c "sleep 2 &&
              sysctl -w net.ipv4.ip_forward=1 &&
