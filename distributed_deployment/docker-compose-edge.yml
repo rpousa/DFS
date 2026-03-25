@@ -36,11 +36,12 @@ services:
       - ./logs/upf_1:/openair-upf/logs
     devices:
       - /dev/net/tun:/dev/net/tun
-    environment:
-      # NRF on Machine 1 - Docker will route via exposed port
-      - NRF_IPV4_ADDRESS=192.168.0.193
-      - NRF_PORT=9090
-      - REGISTER_NF=yes
+    # environment:
+    #   # NRF on Machine 1 - Docker will route via exposed port
+    #   - NRF_IPV4_ADDRESS=192.168.0.193
+    #   - NRF_PORT=9090
+    #   - REGISTER_NF=yes
+    entrypoint: ["/usr/local/bin/fix-interfaces.sh", "/openair-upf/etc/config.yaml"]
     command: >
       sh -c "sleep 2 &&
              sysctl -w net.ipv4.ip_forward=1 &&
@@ -253,7 +254,7 @@ services:
       ran_net:
         ipv4_address: 192.168.80.170
     volumes:
-      - ./ue_volumes/nrue.rfsim_slice_2.conf:/opt/oai-nr-ue/etc/nr-ue.conf
+      - ./ue_volumes/nrue.rfsim.conf:/opt/oai-nr-ue/etc/nr-ue.conf
       - ./ue_volumes/ue_entrypoint.sh:/opt/oai-nr-ue/bin/entrypoint.sh
       - ./logs/ue_1:/opt/oai-nr-ue/logs
     environment:
@@ -268,7 +269,7 @@ services:
        --ssb 516
        -E
        --log_config.global_log_level info
-#      --num-ues 10
+       --num-ues 10
     devices:
       - /dev/net/tun:/dev/net/tun
     depends_on:
