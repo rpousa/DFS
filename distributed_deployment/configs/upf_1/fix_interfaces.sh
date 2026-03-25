@@ -4,8 +4,8 @@
 CONFIG_FILE="${1:-/openair-upf/etc/config.yaml}"
 
 # Define expected IPs
-CORE_IP="${CORE_NET_IP:-192.168.71.134}"
-EXT_IP="${EXT_NET_IP:-192.168.72.134}"
+CORE_IP="${CORE_NET_IP:-192.168.61.160}"
+EXT_IP="${EXT_NET_IP:-192.168.72.160}"
 
 # Find interfaces
 CORE_IF=$(ip -o addr show | grep "${CORE_IP}" | awk '{print $2}' | head -1)
