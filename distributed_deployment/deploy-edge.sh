@@ -556,6 +556,13 @@ if command -v ncat &> /dev/null; then
         print_warn "  Ensure deploy-centraloffice.sh ran setup_sctp_routing() on Machine 1"
         print_warn "  Continuing anyway — Edge CU-UP will retry E1 Setup..."
     fi
+    if timeout 3 ncat --sctp ${MACHINE1_IP} 36421 < /dev/null 2>/dev/null; then
+        print_info "✓ E42 SCTP reachable on $MACHINE1_IP:36421"
+    else
+        print_warn "✗ E42 SCTP NOT reachable on $MACHINE1_IP:36421"
+        print_warn "  Ensure deploy-centraloffice.sh ran setup_sctp_routing() on Machine 1"
+        print_warn "  Continuing anyway — Edge CU-UP will retry E42 Setup..."
+    fi
 else
     print_warn "ncat not installed — skipping SCTP pre-flight test"
 fi

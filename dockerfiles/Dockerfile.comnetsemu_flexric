@@ -10,6 +10,9 @@ RUN apt update --fix-missing && apt upgrade -y && \
     rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update && \
+    apt-get install -y software-properties-common && \
+    add-apt-repository -y ppa:ubuntu-toolchain-r/test && \
+    apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get upgrade --yes && \
     DEBIAN_FRONTEND=noninteractive apt-get install --yes \
        build-essential \
@@ -32,6 +35,7 @@ RUN apt-get update && \
        python3-dev \
        python3-pip \
        libsctp1 \
+       libstdc++6 \
        && \
     apt-get clean
 
