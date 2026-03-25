@@ -658,7 +658,8 @@ else
                 ;;
             [Qq])
                 print_info "Exiting. Check logs with:"
-                docker compose -f docker-compose-centraloffice.yml logs -f
+                docker compose -f docker-compose-edge.yml logs -f
+                break
                 ;;
             *)
                 print_error "Invalid option. Please choose w, p, or q."
