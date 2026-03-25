@@ -249,6 +249,85 @@ setup_sctp_routing() {
     fi
 
     # -------------------------------------------------------
+    # 5. FlexRIC E2AP — Remove ALL old, insert correct at TOP
+    # -------------------------------------------------------
+    print_info ""
+    print_info "--- FlexRIC E2AP SCTP [O-RAN E2AP] ---"
+
+    # Detect FlexRIC container IP on core_net
+    local FLEXRIC_CORE_IP=$(docker inspect -f "{{.NetworkSettings.Networks.${PROJECT_PREFIX}core_net.IPAddress}}" flexric 2>/dev/null || echo "")
+    [ -z "$FLEXRIC_CORE_IP" ] && FLEXRIC_CORE_IP=$(docker inspect -f '{{.NetworkSettings.Networks.core_net.IPAddress}}' flexric 2>/dev/null || echo "")
+
+    print_info "  FlexRIC (core_net): ${FLEXRIC_CORE_IP:-NOT FOUND}"
+
+    if [ -z "$FLEXRIC_CORE_IP" ]; then
+        print_error "  Could not detect FlexRIC IP. Skipping E2AP routing."
+    else
+        # --- Port 36421 (primary E2AP) ---
+        # Remove ALL existing E2AP 36421 DNAT rules
+        while true; do
+            local H=$(sudo nft -a list chain ip nat DOCKER 2>/dev/null | grep "sctp dport 36421" | head -1 | grep -oP 'handle \K\d+' || echo "")
+            [ -z "$H" ] && break
+            print_info "  Removing old E2AP 36421 DNAT rule (handle $H)..."
+            sudo nft delete rule ip nat DOCKER handle $H
+        done
+
+        # INSERT correct DNAT at TOP
+        sudo nft insert rule ip nat DOCKER iifname != "br-core" meta l4proto sctp ip daddr ${MACHINE1_IP} sctp dport 36421 counter dnat to ${FLEXRIC_CORE_IP}:36421
+        print_info "  ✓ E2AP DNAT INSERTED: ${MACHINE1_IP}:36421 → ${FLEXRIC_CORE_IP}:36421"
+
+        # Remove ALL existing E2AP 36421 FORWARD rules
+        while true; do
+            local H=$(sudo nft -a list chain ip filter DOCKER 2>/dev/null | grep "br-core.*sctp.*36421" | head -1 | grep -oP 'handle \K\d+' || echo "")
+            [ -z "$H" ] && break
+            print_info "  Removing old E2AP 36421 FORWARD rule (handle $H)..."
+            sudo nft delete rule ip filter DOCKER handle $H
+        done
+
+        # INSERT FORWARD accept BEFORE the catch-all DROP for br-core
+        local CORE_DROP=$(sudo nft -a list chain ip filter DOCKER 2>/dev/null | grep 'iifname != "br-core" oifname "br-core" counter.*drop' | grep -oP 'handle \K\d+' | head -1 || echo "")
+        if [ -n "$CORE_DROP" ]; then
+            sudo nft insert rule ip filter DOCKER position $CORE_DROP iifname != "br-core" oifname "br-core" meta l4proto sctp ip daddr ${FLEXRIC_CORE_IP} sctp dport 36421 counter accept
+            print_info "  ✓ E2AP 36421 FORWARD accept INSERTED before drop (position $CORE_DROP)"
+        else
+            sudo nft insert rule ip filter DOCKER iifname != "br-core" oifname "br-core" meta l4proto sctp ip daddr ${FLEXRIC_CORE_IP} sctp dport 36421 counter accept
+            print_info "  ✓ E2AP 36421 FORWARD accept INSERTED at top"
+        fi
+
+        # --- Port 36422 (secondary E2AP) ---
+        while true; do
+            local H=$(sudo nft -a list chain ip nat DOCKER 2>/dev/null | grep "sctp dport 36422" | head -1 | grep -oP 'handle \K\d+' || echo "")
+            [ -z "$H" ] && break
+            print_info "  Removing old E2AP 36422 DNAT rule (handle $H)..."
+            sudo nft delete rule ip nat DOCKER handle $H
+        done
+
+        sudo nft insert rule ip nat DOCKER iifname != "br-core" meta l4proto sctp ip daddr ${MACHINE1_IP} sctp dport 36422 counter dnat to ${FLEXRIC_CORE_IP}:36422
+        print_info "  ✓ E2AP DNAT INSERTED: ${MACHINE1_IP}:36422 → ${FLEXRIC_CORE_IP}:36422"
+
+        while true; do
+            local H=$(sudo nft -a list chain ip filter DOCKER 2>/dev/null | grep "br-core.*sctp.*36422" | head -1 | grep -oP 'handle \K\d+' || echo "")
+            [ -z "$H" ] && break
+            print_info "  Removing old E2AP 36422 FORWARD rule (handle $H)..."
+            sudo nft delete rule ip filter DOCKER handle $H
+        done
+
+        if [ -n "$CORE_DROP" ]; then
+            sudo nft insert rule ip filter DOCKER position $CORE_DROP iifname != "br-core" oifname "br-core" meta l4proto sctp ip daddr ${FLEXRIC_CORE_IP} sctp dport 36422 counter accept
+            print_info "  ✓ E2AP 36422 FORWARD accept INSERTED before drop (position $CORE_DROP)"
+        else
+            sudo nft insert rule ip filter DOCKER iifname != "br-core" oifname "br-core" meta l4proto sctp ip daddr ${FLEXRIC_CORE_IP} sctp dport 36422 counter accept
+            print_info "  ✓ E2AP 36422 FORWARD accept INSERTED at top"
+        fi
+
+        # Ensure DOCKER-BRIDGE jumps to DOCKER for br-core (likely already exists for AMF)
+        if ! sudo nft list chain ip filter DOCKER-BRIDGE 2>/dev/null | grep -q 'oifname "br-core".*jump DOCKER'; then
+            sudo nft add rule ip filter DOCKER-BRIDGE oifname "br-core" counter jump DOCKER
+            print_info "  ✓ Added DOCKER-BRIDGE jump for br-core"
+        fi
+    fi
+
+    # -------------------------------------------------------
     # 4. Raw table check
     # -------------------------------------------------------
     print_info ""
@@ -268,6 +347,8 @@ setup_sctp_routing() {
     print_info "  AMF  NGAP:  ${MACHINE1_IP}:38412 → ${AMF_CORE_IP}:38412 (br-core)"
     print_info "  CU-CP F1-C: ${MACHINE1_IP}:38472 → ${CUCP_F1C_IP}:${CUCP_F1C_PORT} (br-f1c)"
     print_info "  CU-CP E1:   ${MACHINE1_IP}:38462 → ${CUCP_E1_IP}:${CUCP_E1_PORT} (br-e1)"
+    print_info "  FlexRIC E2AP: ${MACHINE1_IP}:36421 → ${FLEXRIC_CORE_IP}:36421 (br-core)"
+    print_info "  FlexRIC E2AP: ${MACHINE1_IP}:36422 → ${FLEXRIC_CORE_IP}:36422 (br-core)"
 }
 
 verify_sctp_routing() {
