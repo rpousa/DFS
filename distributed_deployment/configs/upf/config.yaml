@@ -67,21 +67,21 @@ nfs:
     sbi:
       port: 8085
       api_version: v1
-      interface_name: eth0
+      #interface_name: eth0
       addr: 192.168.71.134 
     n3:
-      interface_name: eth0
+      #interface_name: eth0
       port: 2152                      # Exposed on 192.168.0.193:2152 for Machine 2 CU-UP
       addr: 192.168.72.134 
     n4:
-      interface_name: eth0
+      #interface_name: eth0
       port: 8805
       addr: 192.168.71.134 
     n6:
-      interface_name: eth1
+      #interface_name: eth1
       addr: 192.168.72.134 
     n9:
-      interface_name: eth0
+      #interface_name: eth0
       port: 2152
 
   # Edge UPF on Machine 2 (if needed for local breakout)
