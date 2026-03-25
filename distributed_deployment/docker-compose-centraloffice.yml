@@ -253,7 +253,7 @@ services:
     depends_on:
       - nrf
       - smf
-    entrypoint: ["/openair-upf/etc/fix-interfaces.sh", "/openair-upf/etc/config.yaml"]
+    entrypoint: ["/openair-upf/etc/fix_interfaces.sh", "/openair-upf/etc/config.yaml"]
     command: >
       sh -c "sysctl -w net.ipv4.ip_forward=1 &&
              sleep 2 &&
