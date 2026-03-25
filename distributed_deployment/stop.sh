@@ -103,7 +103,7 @@ cleanup_custom_nft_rules() {
     if sudo nft list chain ip nat POSTROUTING > /dev/null 2>&1; then
         print_info "  Cleaning NAT POSTROUTING chain (custom MASQUERADE rules)..."
 
-        for pattern in "192.168.0.243.*8805" "192.168.0.243.*2152" "192.168.0.193.*8805" "192.168.0.193.*2152" "192.168.71.160"; do
+        for pattern in "192.168.0.243.*8805" "192.168.0.243.*2152" "192.168.0.193.*8805" "192.168.0.193.*2152" "192.168.71.160" "192.168.61.128/26.*masquerade" "192.168.75.128/26.*masquerade"; do
             local i=0
             while [ $i -lt 10 ]; do
                 local line=$(sudo nft -a list chain ip nat POSTROUTING 2>/dev/null | grep "$pattern" | head -1)
@@ -173,7 +173,7 @@ cleanup_custom_nft_rules() {
     # 6. Clean DOCKER-BRIDGE — remove extra jumps
     # -------------------------------------------------------
     if sudo nft list chain ip filter DOCKER-BRIDGE > /dev/null 2>&1; then
-        for bridge in "br-f1c" "br-e1" "br-core"; do
+        for bridge in "br-f1c" "br-e1" "br-core" "br-ran" "br-ext" "br-f1u" "br-n3" "br-sgi"; do
             local count=$(sudo nft -a list chain ip filter DOCKER-BRIDGE 2>/dev/null | grep "oifname \"${bridge}\".*jump DOCKER" | wc -l)
             while [ "$count" -gt 1 ]; do
                 local line=$(sudo nft -a list chain ip filter DOCKER-BRIDGE 2>/dev/null | grep "oifname \"${bridge}\".*jump DOCKER" | tail -1)
@@ -238,10 +238,14 @@ cleanup_custom_nft_rules() {
         remaining_udp=$(sudo nft list chain ip nat PREROUTING 2>/dev/null | grep -cE "udp dport (8805|2152)" || echo "0")
     fi
 
-    if [ "$remaining_sctp" -eq 0 ] && [ "$remaining_udp" -eq 0 ]; then
+    if sudo nft list chain ip nat POSTROUTING > /dev/null 2>&1; then
+        remaining_masq=$(sudo nft list chain ip nat POSTROUTING 2>/dev/null | grep -cE "192.168\.(61|75)\.128/26.*masquerade" || echo "0")
+    fi
+
+    if [ "$remaining_sctp" -eq 0 ] && [ "$remaining_udp" -eq 0 ] && [ "$remaining_masq" -eq 0 ]; then
         print_info "✓ ALL custom nftables rules cleaned up successfully"
     else
-        print_warn "⚠ $remaining_sctp SCTP rules and $remaining_udp UDP rules still remain"
+        print_warn "⚠ $remaining_sctp SCTP rules and $remaining_udp UDP rules still remain, and $remaining_masq MASQUERADE rules still remain"
     fi
 }
 
@@ -332,8 +336,10 @@ echo ""
 print_info "=== Remaining nftables rules (should be 0 custom rules) ==="
 sudo nft list chain ip nat DOCKER 2>/dev/null | grep -E "sctp|udp dport 8805|udp dport 2152" || print_info "  ✓ No custom NAT DOCKER rules"
 sudo nft list chain ip nat PREROUTING 2>/dev/null | grep -E "udp dport (8805|2152)" || print_info "  ✓ No custom NAT PREROUTING rules"
+sudo nft list chain ip nat POSTROUTING 2>/dev/null | grep -E "192.168\.(61|75)\.128/26.*masquerade" || print_info "  ✓ No custom MASQUERADE rules"
 sudo nft list chain ip filter DOCKER 2>/dev/null | grep sctp || print_info "  ✓ No custom SCTP FORWARD rules"
 sudo nft list chain ip filter FORWARD 2>/dev/null | grep -E "udp.*(8805|2152)" || print_info "  ✓ No custom UDP FORWARD rules"
+sudo nft list chain ip filter DOCKER-ISOLATION-STAGE-1 2>/dev/null | grep sctp || print_info "  ✓ No SCTP isolation bypass rules"
 
 echo ""
 print_info "================================================"

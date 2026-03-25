@@ -517,11 +517,16 @@ docker exec cucp ss -Slnp 2>/dev/null | grep -E "38472|38462" || print_warn "  C
 print_info "AMF SCTP listening sockets:"
 docker exec amf ss -Slnp 2>/dev/null | grep "38412" || print_warn "  AMF SCTP socket not found"
 
+print_info "Flexric SCTP listening sockets:"
+docker exec flexric ss -Slnp 2>/dev/null | grep "36422|36421" || print_warn "  Flexric SCTP socket not found"
+
 echo ""
 print_info "Next Steps:"
 echo "  1. From Machine 2, test SCTP connectivity:"
-echo "     ncat --sctp ${MACHINE1_IP} 38472    # F1-C to CU-CP"
-echo "     ncat --sctp ${MACHINE1_IP} 38462    # E1 to CU-CP"
+echo "     ncat -v --sctp ${MACHINE1_IP} 38472    # F1-C to CU-CP"
+echo "     ncat -v --sctp ${MACHINE1_IP} 38462    # E1 to CU-CP"
+echo "     ncat -v --sctp ${MACHINE1_IP} 36421    # E2AP to FlexRIC"
+echo "     ncat -v --sctp ${MACHINE1_IP} 36422    # E2AP to FlexRIC"
 echo ""
 echo "  2. Deploy Machine 2 (Edge RAN) on $MACHINE2_IP:"
 echo "     ./deploy-edge.sh"

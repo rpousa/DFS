@@ -279,7 +279,64 @@ setup_edge_sctp_routing() {
     fi
 
     # -------------------------------------------------------
-    # 3. Handle Docker inter-network isolation (DOCKER-ISOLATION-STAGE-1/2)
+    # 3. DU + CU-UP E2AP: Outbound SCTP to FlexRIC on Machine 1 (192.168.0.193:36421)
+    # -------------------------------------------------------
+    print_info ""
+    print_info "--- DU + Edge CU-UP E2AP SCTP (outbound to FlexRIC on Machine 1) [O-RAN E2AP] ---"
+
+    # Get DU's core_net IP (used for E2 agent outbound)
+    local DU_CORE_IP=$(docker inspect -f "{{.NetworkSettings.Networks.${PROJECT_PREFIX}core_net.IPAddress}}" du_1 2>/dev/null || echo "")
+    [ -z "$DU_CORE_IP" ] && DU_CORE_IP=$(docker inspect -f '{{.NetworkSettings.Networks.core_net.IPAddress}}' du_1 2>/dev/null || echo "")
+
+    print_info "  DU     (core_net): ${DU_CORE_IP:-NOT FOUND}"
+    print_info "  CU-UP  (core_net): ${CUUP1_CORE_IP:-NOT FOUND}"
+
+    # --- Ensure DU can reach Machine 1 for E2AP ---
+    if [ -n "$DU_CORE_IP" ]; then
+        if docker exec du_1 ping -c 1 -W 2 ${MACHINE1_IP} > /dev/null 2>&1; then
+            print_info "  ✓ DU can reach Machine 1 (${MACHINE1_IP}) for E2AP"
+        else
+            print_warn "  ✗ DU cannot ping Machine 1 — adding default route via core_net gateway..."
+            docker exec du_1 ip route add default via 192.168.61.129 2>/dev/null || true
+            # Retry
+            if docker exec du_1 ping -c 1 -W 2 ${MACHINE1_IP} > /dev/null 2>&1; then
+                print_info "  ✓ DU can now reach Machine 1 after route fix"
+            else
+                print_warn "  ✗ DU still cannot reach Machine 1 — check routing"
+            fi
+        fi
+    fi
+
+    # --- Ensure CU-UP can reach Machine 1 for E2AP ---
+    if [ -n "$CUUP1_CORE_IP" ]; then
+        if docker exec cuup_1 ping -c 1 -W 2 ${MACHINE1_IP} > /dev/null 2>&1; then
+            print_info "  ✓ CU-UP can reach Machine 1 (${MACHINE1_IP}) for E2AP"
+        else
+            print_warn "  ✗ CU-UP cannot ping Machine 1 — adding default route via core_net gateway..."
+            docker exec cuup_1 ip route add default via 192.168.61.129 2>/dev/null || true
+            if docker exec cuup_1 ping -c 1 -W 2 ${MACHINE1_IP} > /dev/null 2>&1; then
+                print_info "  ✓ CU-UP can now reach Machine 1 after route fix"
+            else
+                print_warn "  ✗ CU-UP still cannot reach Machine 1 — check routing"
+            fi
+        fi
+    fi
+
+    # --- Ensure MASQUERADE exists for core_net outbound traffic ---
+    # DU and CU-UP on Machine 2 use core_net (192.168.61.128/26) to reach Machine 1
+    if sudo nft list chain ip nat POSTROUTING 2>/dev/null | grep -q '192.168.61.128/26.*masquerade'; then
+        print_info "  ✓ MASQUERADE rule exists for core_net (192.168.61.128/26) outbound traffic"
+    else
+        print_warn "  Adding MASQUERADE for core_net outbound traffic..."
+        sudo nft add rule ip nat POSTROUTING oifname != "br-core" ip saddr 192.168.61.128/26 counter masquerade
+        print_info "  ✓ MASQUERADE added for core_net (192.168.61.128/26)"
+    fi
+
+    print_info "  ✓ DU E2AP:    ${DU_CORE_IP:-?} → ${MACHINE1_IP}:36421/sctp (outbound)"
+    print_info "  ✓ CU-UP E2AP: ${CUUP1_CORE_IP:-?} → ${MACHINE1_IP}:36421/sctp (outbound)"
+
+    # -------------------------------------------------------
+    # 4. Handle Docker inter-network isolation (DOCKER-ISOLATION-STAGE-1/2)
     # -------------------------------------------------------
     print_info ""
     print_info "--- Docker isolation chain handling ---"
@@ -304,11 +361,21 @@ setup_edge_sctp_routing() {
         else
             print_info "  ✓ SCTP bypass for br-f1c already exists"
         fi
+    
+        # Allow E2AP SCTP from br-core to leave (outbound to Machine 1 FlexRIC)
+        if ! sudo nft list chain ip filter DOCKER-ISOLATION-STAGE-1 2>/dev/null | grep -q 'iifname "br-core" meta l4proto sctp.*accept'; then
+            print_info "  Adding SCTP bypass for br-core (E2AP outbound to FlexRIC)..."
+            sudo nft insert rule ip filter DOCKER-ISOLATION-STAGE-1 \
+                iifname "br-core" meta l4proto sctp counter accept
+        else
+            print_info "  ✓ SCTP bypass for br-core already exists"
+        fi
 
         print_info "  ✓ Docker isolation SCTP bypass rules configured"
+
     else
         print_info "  ✓ No Docker isolation chains found — no bypass needed"
-    fi
+    fi  
 
     # -------------------------------------------------------
     # 4. Verify raw table doesn't block our traffic
@@ -333,6 +400,8 @@ setup_edge_sctp_routing() {
     print_info "  DU F1-C (inbound):        ${MACHINE2_IP}:500/sctp → ${DU_F1C_IP:-?}:${DU_F1C_PORT} (br-f1c) [TS 38.472]"
     print_info "  CU-UP E1 (outbound):      ${CUUP1_E1_IP:-?} → ${MACHINE1_IP}:38462/sctp [TS 38.463]"
     print_info "  DU F1-C (outbound to M1): ${DU_F1C_IP:-?} → ${MACHINE1_IP}:38472/sctp [TS 38.472]"
+    print_info "  DU E2AP (outbound):       ${DU_CORE_IP:-?} → ${MACHINE1_IP}:36421/sctp [O-RAN E2AP]"
+    print_info "  CU-UP E2AP (outbound):    ${CUUP1_CORE_IP:-?} → ${MACHINE1_IP}:36421/sctp [O-RAN E2AP]"
 }
 
 verify_edge_sctp_routing() {
@@ -375,6 +444,25 @@ verify_edge_sctp_routing() {
         print_warn "  ncat not installed — skipping SCTP connectivity test"
         print_warn "  Install with: sudo apt install ncat"
     fi
+    
+    echo ""
+    print_info "=== Testing E2AP SCTP connectivity to FlexRIC on Machine 1 ==="
+    if command -v ncat &> /dev/null; then
+        if timeout 3 ncat --sctp ${MACHINE1_IP} 36421 < /dev/null 2>/dev/null; then
+            print_info "  ✓ E2AP SCTP to Machine 1 FlexRIC (${MACHINE1_IP}:36421) — REACHABLE"
+        else
+            print_warn "  ✗ E2AP SCTP to Machine 1 FlexRIC (${MACHINE1_IP}:36421) — NOT REACHABLE"
+            print_warn "    Ensure FlexRIC E2AP rules are configured on Machine 1"
+        fi
+    fi
+
+    echo ""
+    print_info "=== DU E2 Agent SCTP sockets ==="
+    docker exec du_1 ss -Slnp 2>/dev/null | grep -i sctp || print_warn "  No DU SCTP sockets found"
+
+    echo ""
+    print_info "=== Edge CU-UP E2 Agent SCTP sockets ==="
+    docker exec cuup_1 ss -Slnp 2>/dev/null | grep -i sctp || print_warn "  No CU-UP SCTP sockets found"
 
     echo ""
 }
@@ -570,10 +658,7 @@ else
                 ;;
             [Qq])
                 print_info "Exiting. Check logs with:"
-                echo "  docker logs ue_1 | grep -i 'attach\|registration\|rrc'"
-                echo "  docker logs du_1 | grep -i 'ue\|rfsim\|f1ap'"
-                echo "  docker logs cuup_1 | grep -i 'e1ap\|sctp'"
-                exit 0
+                docker compose -f docker-compose-centraloffice.yml logs -f
                 ;;
             *)
                 print_error "Invalid option. Please choose w, p, or q."
