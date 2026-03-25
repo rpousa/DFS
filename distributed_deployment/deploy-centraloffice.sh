@@ -147,7 +147,7 @@ setup_sctp_routing() {
         | grep -o '[0-9]*$' \
         | head -1)
     [ -z "$FLEXRIC_PORT" ] && FLEXRIC_PORT="36421"
-    
+
     [ -z "$CUCP_F1C_PORT" ] && CUCP_F1C_PORT="38472"
     [ -z "$CUCP_E1_PORT" ] && CUCP_E1_PORT="38462"
 
@@ -529,7 +529,7 @@ print_info "AMF SCTP listening sockets:"
 docker exec amf ss -Slnp 2>/dev/null | grep "38412" || print_warn "  AMF SCTP socket not found"
 
 print_info "Flexric SCTP listening sockets:"
-docker exec flexric ss -Slnp 2>/dev/null | grep "36422|36421" || print_warn "  Flexric SCTP socket not found"
+docker exec flexric ss -Slnp 2>/dev/null | grep -E "36422|36421" || print_warn "  Flexric SCTP socket not found"
 
 echo ""
 print_info "Next Steps:"
