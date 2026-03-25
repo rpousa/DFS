@@ -8,6 +8,97 @@
 # Machine 1 must be deployed FIRST to create the shared networks
 
 services:
+  # ==========================================
+  # Edge User Plane Function (UPF_1)
+  # ==========================================
+
+  upf_1:
+    image: upf_1:comnetsemu
+    container_name: upf_1
+    hostname: upf_1
+    cap_add:
+      - NET_ADMIN
+      - SYS_NICE
+    #network_mode: host  
+    networks:
+      core_net:
+        ipv4_address: 192.168.61.160
+        priority: 100
+      ext_net:
+        ipv4_address: 192.168.72.160
+        priority: 90
+    ports:
+      - "192.168.0.243:8085:8085/tcp"
+      - "192.168.0.243:8805:8805/udp"     # PFCP (different port to avoid conflict with SMF)
+      - "192.168.0.243:2152:2152/udp"     # GTP-U N3 (CRITICAL for Machine 2 CU-UP)
+    volumes:
+      - ./configs/upf_1:/openair-upf/etc       # Edge UPF config with modified IP pools
+      - ./logs/upf_1:/openair-upf/logs
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+    # Define expected interface mapping
+    - ETH0_IP=192.168.61.160    # core_net → eth0
+    - ETH1_IP=192.168.72.160    # ext_net → eth1
+    entrypoint: ["/openair-upf/etc/fix_interfaces.sh"]
+    command: >
+      sh -c "sleep 2 &&
+             sysctl -w net.ipv4.ip_forward=1 &&
+             sysctl -w net.ipv6.conf.all.accept_ra=2 &&
+             sleep 10 &&
+             /openair-upf/bin/oai_upf -c /openair-upf/etc/config.yaml -o"
+
+  ext_dn_1:
+    image: ext_dn:comnetsemu
+    container_name: ext_dn_1
+    hostname: ext_dn_1
+    cap_add:
+      - SYS_NICE
+      - NET_ADMIN
+    networks:
+      ext_net:
+        ipv4_address: 192.168.72.161
+        priority: 100
+      n3_net:
+        ipv4_address: 192.168.100.161
+        priority: 90
+      sgi_net:
+        ipv4_address: 172.18.0.10
+        priority: 80
+    environment:
+      - EBPF_GW_SETUP=yes
+      - EBPF_GW_N6_IP_ADDR=192.168.72.161
+      - N6_IF_NAME=eth0
+      - SGI_IF_NAME=eth2
+      - GW_SGI_IP_ADDR=172.18.0.10
+      - N3_IF_NAME=eth1
+      - GW_N3_IP_ADDR=192.168.100.161
+      - UE_IP_ADDRESS_POOL_1=12.2.1.0      # Edge pools (different from Machine 1)
+      - UE_IP_ADDRESS_POOL_2=13.2.1.0
+      - UE_IP_ADDRESS_POOL_3=14.2.1.0
+      - SGI_DEMO_OAI_ADDR=172.18.0.1
+      - N6_UPF_IP_ADDR=192.168.72.160          # Edge UPF
+    entrypoint: /bin/bash -c \
+          "iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE;"\
+          "ip route add 12.1.1.0/24 via 192.168.72.160 dev eth0;"\
+          "ip route add 13.1.1.0/24 via 192.168.72.160 dev eth0;"\
+          "ip route add 14.1.1.0/24 via 192.168.72.160 dev eth0; sleep infinity"
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    volumes:
+      - ./configs/ext_dn_1:/tmp
+    depends_on:
+      - upf_1
+    command: >
+      sh -c "sleep 5 &&
+             /tmp/trfgen_entrypoint.sh &&
+             sleep infinity"
+    healthcheck:
+      test: /bin/bash -c "ping -c 2 192.168.72.160"
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # ==========================================
   # Edge CU-UP

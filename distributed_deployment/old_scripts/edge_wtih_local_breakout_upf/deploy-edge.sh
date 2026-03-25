@@ -485,16 +485,23 @@ print_stage "Creating Docker networks and preparing containers..."
 docker compose -f docker-compose-edge.yml up --no-start
 echo ""
 
+# Stage 1: Edge UPF
+print_stage "Stage 1/8: Starting Edge UPF and External DN..."
+docker compose -f docker-compose-edge.yml up -d upf_1 ext_dn_1
+wait_for_service "upf_1" 30
+wait_for_service "ext_dn_1" 30
+sleep 10
+echo ""
 
-# Stage 1: Edge CU-UP
-print_stage "Stage 1/7: Starting Edge CU-UP..."
+# Stage 2: Edge CU-UP
+print_stage "Stage 2/8: Starting Edge CU-UP..."
 docker compose -f docker-compose-edge.yml up -d cuup_1
 wait_for_service "cuup_1" 30
 sleep 10
 echo ""
 
-# Stage 2: DU with RFSimulator
-print_stage "Stage 2/7: Starting DU with RFSimulator..."
+# Stage 3: DU with RFSimulator
+print_stage "Stage 3/8: Starting DU with RFSimulator..."
 docker compose -f docker-compose-edge.yml up -d du_1
 wait_for_service "du_1" 30
 print_info "Waiting for DU to initialize SCTP sockets..."
@@ -509,9 +516,9 @@ fi
 echo ""
 
 # ==========================================
-# Stage 3: SCTP Routing Fix (THE KEY FIX)
+# Stage 4: SCTP Routing Fix (THE KEY FIX)
 # ==========================================
-print_stage "Stage 3/7: Configuring SCTP routing for Edge components..."
+print_stage "Stage 4/8: Configuring SCTP routing for Edge components..."
 echo ""
 setup_edge_sctp_routing
 echo ""
@@ -520,27 +527,27 @@ echo ""
 verify_edge_sctp_routing
 echo ""
 
-# Stage 4: FlexRIC
-print_stage "Stage 4/7: Starting FlexRIC (Near-RT RIC)..."
+# Stage 5: FlexRIC
+print_stage "Stage 5/8: Starting FlexRIC (Near-RT RIC)..."
 docker compose -f docker-compose-edge.yml up -d flexric
 wait_for_service "flexric" 30
 sleep 10
 echo ""
 
-# Stage 5: User Equipment (10 UEs)
-print_stage "Stage 5/7: Starting 10 User Equipment instances..."
+# Stage 6: User Equipment (10 UEs)
+print_stage "Stage 6/8: Starting 10 User Equipment instances..."
 docker compose -f docker-compose-edge.yml up -d ue_1
 wait_for_service "ue_1" 30
 echo ""
 
-# Stage 6: Wait for UE connections
-print_stage "Stage 6/7: Waiting for UE connections..."
+# Stage 7: Wait for UE connections
+print_stage "Stage 7/8: Waiting for UE connections..."
 print_info "Waiting 30 seconds for UEs to connect and register..."
 sleep 30
 echo ""
 
-# Stage 7: Check UE connections
-print_stage "Stage 7/7: Verifying UE connections..."
+# Stage 8: Check UE connections
+print_stage "Stage 8/8: Verifying UE connections..."
 if check_ue_connections; then
     print_info "✓ All 10 UEs successfully connected!"
     echo ""
