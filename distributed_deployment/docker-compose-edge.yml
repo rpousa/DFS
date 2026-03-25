@@ -36,7 +36,7 @@ services:
       - ./logs/cuup:/opt/oai-gnb/logs
     environment:
       USE_ADDITIONAL_OPTIONS: >-
-                               --e2_agent.near_ric_ip_addr 192.168.61.150
+                               --e2_agent.near_ric_ip_addr 192.168.0.193
                                --e2_agent.sm_dir /usr/local/lib/flexric/ 
                                --telnetsrv --telnetsrv.shrmod ci
                                -E --sa --log_config.global_log_options level,nocolor,time
@@ -88,7 +88,7 @@ services:
       # RFSIMULATOR MODE - DU as server
       # F1-C and F1-U connect to CU-CP/CU-UP on Machine 1
       USE_ADDITIONAL_OPTIONS: >-
-                                --e2_agent.near_ric_ip_addr 192.168.61.150 --e2_agent.sm_dir /usr/local/lib/flexric/ 
+                                --e2_agent.near_ric_ip_addr 192.168.0.193 --e2_agent.sm_dir /usr/local/lib/flexric/ 
                                 --telnetsrv --telnetsrv.shrmod ci
                                 -E --rfsim --Active_gNBs gNB-OAI
                                 --gNBs.[0].gNB_ID 0xe00 --gNBs.[0].gNB_DU_ID 0xe00  --gNBs.[0].gNB_name gNB-OAI
@@ -113,35 +113,7 @@ services:
     command: >
       sh -c "sleep 25 &&
              /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem"
-
-  # ==========================================
-  # FlexRIC (Near-RT RIC)
-  # ==========================================
-
-  flexric:
-    image: flexric_test:comnetsemu
-    container_name: flexric
-    hostname: flexric
-    cap_add:
-      - SYS_NICE
-    networks:
-      core_net:
-        ipv4_address: 192.168.61.150
-    ports:
-      - "192.168.0.243:36421:36421/sctp"      # F1-C local SCTP port
-      - "192.168.0.243:36422:36422/sctp" 
-    volumes:
-      - ./configs/flexric:/usr/local/etc/flexric
-      - ./logs/flexric:/usr/local/logs
-      - ./flexric_volumes/ric_watchdog.sh:/usr/local/bin/ric_watchdog.sh
-      - ./flexric_volumes/topology.py:/usr/local/flexric/xApp/python/topology.py
-      - ./flexric_volumes/xapp_functs.py:/usr/local/flexric/xApp/python/xapp_functs.py
-      - ./flexric_volumes/xapp_test.py:/usr/local/flexric/xApp/python/xapp.py
-    depends_on:
-      - du_1
-    command: >
-      sh -c "sleep 5 &&
-             /usr/local/bin/ric_watchdog.sh"
+  
 
   # ==========================================
   # User Equipment (10 UEs) - RFSimulator Mode
@@ -183,7 +155,6 @@ services:
       - /dev/net/tun:/dev/net/tun
     depends_on:
       - du_1
-      - flexric
     command: >
       sh -c "sleep 35 &&
              /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem"
@@ -266,12 +237,3 @@ networks:
           gateway: 172.18.0.1
     driver_opts:
       com.docker.network.bridge.name: br-sgi
-
-
-# ==========================================
-# Volumes
-# ==========================================
-
-volumes:
-  flexric_data:
-    driver: local

@@ -357,7 +357,43 @@ services:
     command: >
       sh -c "sleep 15 &&
              /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem"
-
+  # cucp:
+  #   image: cucp:comnetsemu
+  #   container_name: cucp
+  #   hostname: cucp
+  #   cap_add:
+  #     - SYS_NICE
+  #     - NET_ADMIN
+  #   network_mode: host          # ← USE HOST NETWORKING
+  #   volumes:
+  #     - ./configs/cucp/gnb-cucp.sa.f1.conf:/opt/oai-gnb/etc/gnb.conf
+  #     - ./logs/cucp:/opt/oai-gnb/logs
+  #   environment:
+  #     USE_ADDITIONAL_OPTIONS: >-
+  #                              --e2_agent.near_ric_ip_addr 192.168.71.150
+  #                              --e2_agent.sm_dir /usr/local/lib/flexric/
+  #                              --telnetsrv --telnetsrv.shrmod ci
+  #                              -E --log_config.global_log_options level,nocolor,time
+  #                              --gNBs.[0].gNB_ID 0xe00
+  #                              --gNBs.[0].gNB_name gNB-OAI
+  #                              --gNBs.[0].nr_cellid 11111111
+  #                              --gNBs.[0].tr_s_preference f1
+  #                              --gNBs.[0].local_s_address 192.168.0.193
+  #                              --gNBs.[0].remote_s_address 0.0.0.0
+  #                              --gNBs.[0].local_s_portc 501
+  #                              --gNBs.[0].remote_s_portc 500
+  #                              --gNBs.[0].local_s_portd 601
+  #                              --gNBs.[0].remote_s_portd 600
+  #                              --gNBs.[0].E1_INTERFACE.[0].type cp
+  #                              --gNBs.[0].E1_INTERFACE.[0].ipv4_cucp 192.168.0.193
+  #                              --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.0.193/24
+  #                              --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.0.193/24
+  #                              --gNBs.[0].amf_ip_address.[0].ipv4 192.168.71.132
+  #   depends_on:
+  #     - amf
+  #   command: >
+  #     sh -c "sleep 15 &&
+  #            /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh" 
   # ==========================================
   # Central RAN - Primary CU-UP
   # ==========================================
@@ -403,36 +439,6 @@ services:
     command: >
       sh -c "sleep 20 &&
              /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-cuup -O /opt/oai-gnb/etc/gnb.conf"
-
-# ==========================================
-# Central RAN - Primary CU-UP
-# ==========================================
-
-flexric:
-    image: flexric_test:comnetsemu
-    container_name: flexric
-    hostname: flexric
-    cap_add:
-      - SYS_NICE
-    networks:
-      core_net:
-        ipv4_address: 192.168.71.150
-    ports:
-      - "192.168.0.193:36421:36421/sctp"      # F1-C local SCTP port
-      - "192.168.0.193:36422:36422/sctp" 
-    volumes:
-      - ./configs/flexric:/usr/local/etc/flexric
-      - ./logs/flexric:/usr/local/logs
-      - ./flexric_volumes/ric_watchdog.sh:/usr/local/bin/ric_watchdog.sh
-      - ./flexric_volumes/topology.py:/usr/local/flexric/xApp/python/topology.py
-      - ./flexric_volumes/xapp_functs.py:/usr/local/flexric/xApp/python/xapp_functs.py
-      - ./flexric_volumes/xapp_test.py:/usr/local/flexric/xApp/python/xapp.py
-    depends_on:
-      - cuup_1
-    command: >
-      sh -c "sleep 5 &&
-             /usr/local/bin/ric_watchdog.sh"
-
 
 # ==========================================
 # Networks Configuration

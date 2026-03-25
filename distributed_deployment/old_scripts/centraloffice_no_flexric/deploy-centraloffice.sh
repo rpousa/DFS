@@ -19,7 +19,6 @@ echo "  - 5G Core Network (MySQL, NRF, AMF, SMF, UDM, UDR, AUSF, PCF, NSSF)"
 echo "  - Primary UPF + Ext DN"
 echo "  - CU-CP (Central Unit Control Plane)"
 echo "  - CU-UP (Central Unit User Plane - Primary)"
-echo "  - Flexric"
 echo ""
 
 RED='\033[0;31m'
@@ -359,12 +358,12 @@ print_stage "Creating Docker networks and preparing containers..."
 docker compose -f docker-compose-centraloffice.yml up --no-start
 echo ""
 
-print_stage "Stage 1/7: Starting MySQL database..."
+print_stage "Stage 1/6: Starting MySQL database..."
 docker compose -f docker-compose-centraloffice.yml up -d mysql
 wait_for_healthy "mysql" 60
 echo ""
 
-print_stage "Stage 2/7: Starting 5G Core Network Functions..."
+print_stage "Stage 2/6: Starting 5G Core Network Functions..."
 docker compose -f docker-compose-centraloffice.yml up -d nrf smf pcf nssf amf udm udr ausf
 wait_for_service "nrf" 30
 wait_for_service "amf" 30
@@ -373,7 +372,7 @@ print_info "Waiting for services to initialize..."
 sleep 5
 echo ""
 
-print_stage "Stage 3/7: Starting Primary UPF and External DN..."
+print_stage "Stage 3/6: Starting Primary UPF and External DN..."
 docker compose -f docker-compose-centraloffice.yml up -d upf ext_dn
 wait_for_service "upf" 30
 wait_for_service "ext_dn" 30
@@ -381,30 +380,23 @@ print_info "Waiting for UPF initialization..."
 sleep 5
 echo ""
 
-print_stage "Stage 4/7: Starting CU-CP (Central Unit Control Plane)..."
+print_stage "Stage 4/6: Starting CU-CP (Central Unit Control Plane)..."
 docker compose -f docker-compose-centraloffice.yml up -d cucp
 wait_for_service "cucp" 30
 print_info "Waiting for CU-CP to initialize SCTP sockets..."
 sleep 15
 echo ""
 
-print_stage "Stage 5/7: Starting CU-UP (Central Unit User Plane)..."
+print_stage "Stage 5/6: Starting CU-UP (Central Unit User Plane)..."
 docker compose -f docker-compose-centraloffice.yml up -d cuup
 wait_for_service "cuup" 30
 sleep 5
 echo ""
 
-# Stage 5: FlexRIC
-print_stage "Stage 6/7: Starting FlexRIC (Near-RT RIC)..."
-docker compose -f docker-compose-centraloffice.yml up -d flexric
-wait_for_service "flexric" 30
-sleep 10
-echo ""
-
 # ==========================================
 # Stage 6: SCTP Routing Fix (THE KEY FIX)
 # ==========================================
-print_stage "Stage 7/7: Configuring SCTP routing for cross-machine access..."
+print_stage "Stage 6/6: Configuring SCTP routing for cross-machine access..."
 echo ""
 setup_sctp_routing
 echo ""

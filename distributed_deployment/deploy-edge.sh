@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# deploy-edge.sh - Deploy Edge RAN + Edge UPF + UEs on Machine 2
+# deploy-edge.sh - Deploy Edge RAN + UEs on Machine 2
 # Deploy on PC: 192.168.0.243
 
 set -e
@@ -9,16 +9,14 @@ MACHINE1_IP="192.168.0.193"
 MACHINE2_IP="192.168.0.243"
 
 echo "================================================"
-echo "Machine 2: Edge RAN + Edge UPF + UEs Deployment"
+echo "Machine 2: Edge RAN + UEs Deployment"
 echo "================================================"
 echo "Machine 1 (Core PC): $MACHINE1_IP"
 echo "Machine 2 (This PC): $MACHINE2_IP"
 echo ""
 echo "Components on this machine:"
-echo "  - Edge UPF + Ext DN (for local breakout)"
 echo "  - CU-UP (Edge - for local processing)"
 echo "  - DU (Distributed Unit with RFSimulator)"
-echo "  - FlexRIC (Near-RT RIC)"
 echo "  - 10 UEs (User Equipment)"
 echo ""
 
@@ -520,12 +518,6 @@ echo ""
 verify_edge_sctp_routing
 echo ""
 
-# Stage 4: FlexRIC
-print_stage "Stage 4/7: Starting FlexRIC (Near-RT RIC)..."
-docker compose -f docker-compose-edge.yml up -d flexric
-wait_for_service "flexric" 30
-sleep 10
-echo ""
 
 # Stage 5: User Equipment (10 UEs)
 print_stage "Stage 5/7: Starting 10 User Equipment instances..."
