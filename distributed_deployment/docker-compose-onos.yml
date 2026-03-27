@@ -6,7 +6,7 @@ services:
     restart: unless-stopped
     network_mode: host
     environment:
-      - ONOS_APPS=org.onosproject.openflow,org.onosproject.fwd,org.onosproject.lldpprovider,org.onosproject.hostprovider,org.onosproject.proxyarp
+      - ONOS_APPS=org.onosproject.openflow,org.onosproject.fwd,org.onosproject.lldpprovider,org.onosproject.hostprovider,org.onosproject.proxyarp,org.onosproject.drivers.hp
       - ONOS_IP=192.168.0.193
     volumes:
       - onos_data:/root/onos/apache-karaf-4.2.14/data
