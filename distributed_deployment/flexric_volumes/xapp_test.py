@@ -7,7 +7,7 @@ import xapp_functs
 
 if __name__ == "__main__":
     devices = {}
-    onos_url = "http://192.168.71.168:8181/onos/v1"
+    onos_url = "http://192.168.0.193:8181/onos/v1"
     interface = "eth0"
     devices_from_onos = get_devices(onos_url, interface)
     # global maps
