@@ -1,0 +1,15 @@
+services:
+  onos:
+    image: onos:comnetsemu
+    container_name: onos
+    hostname: onos
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - ONOS_APPS=org.onosproject.openflow,org.onosproject.fwd,org.onosproject.lldpprovider,org.onosproject.hostprovider,org.onosproject.proxyarp
+    volumes:
+      - onos_data:/root/onos/apache-karaf-4.2.14/data
+
+volumes:
+  onos_data:
+    driver: local

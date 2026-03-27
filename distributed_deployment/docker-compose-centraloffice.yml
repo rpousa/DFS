@@ -405,7 +405,7 @@ services:
              /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-cuup -O /opt/oai-gnb/etc/gnb.conf"
 
 # ==========================================
-# Central RAN - Primary CU-UP
+# Flexric Near Real-Time RIC
 # ==========================================
 
   flexric:
