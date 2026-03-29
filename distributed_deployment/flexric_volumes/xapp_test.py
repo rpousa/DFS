@@ -85,6 +85,7 @@ if __name__ == "__main__":
                 storage.add_node(node_idx, node_type, ['pdcp','gtp'])        
                 pdcp_cb, gtp_cb = xapp_functs.PDCPCallback(storage,node_idx), xapp_functs.GTPCallback(storage,node_idx)
                 node_handlers[node_idx]['pdcp_hndlr'] = xapp_sdk.report_pdcp_sm(nid, xapp_sdk.Interval_ms_10, pdcp_cb)
+                node_handlers[node_idx]['gtp_hndlr'] = xapp_sdk.report_gtp_sm(nid, xapp_sdk.Interval_ms_10, gtp_cb)
             elif node_type == "ngran_gNB_CUCP":
                 storage.add_node(node_idx, node_type, ['gtp'])
                 gtp_cb = xapp_functs.GTPCallback(storage,node_idx)
@@ -103,9 +104,8 @@ if __name__ == "__main__":
     #     result = set_udp_flow_queue(onos_url, interface, device_id=dev_id, tunnelID=0x1234)
     #     print(result)
     print("===================================DYNAMIC TEID FLOWS===================================")
-    from xapp_functs import GTPCallback
 
-    for rnti, tunnels in GTPCallback.ue_gtp_map.items():
+    for rnti, tunnels in xapp_functs.GTPCallback.ue_gtp_map.items():
         for tunnel in tunnels:
             teid_gnb = tunnel['teidgnb']
             teid_upf = tunnel['teidupf']
