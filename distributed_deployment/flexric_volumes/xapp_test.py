@@ -49,9 +49,7 @@ if __name__ == "__main__":
     #topology_setup = get_topology(onos_url, interface)
     #print(topology_setup)
     
-    print("===================================SET UDP FLOW===================================")
-    print(set_udp_flow_queue(onos_url, interface))
-
+    
     
     # initialize xapp framework (if required by your env)
     xapp_sdk.init()
@@ -93,8 +91,38 @@ if __name__ == "__main__":
                 print("No stats callbacks implemented for CU-CP nodes yet.")
 
     print("All callbacks registered, waiting for indications...")
+
     time.sleep(10)  # wait/run for 10 seconds
+
     #print(storage)
+    # print("===================================SET UDP FLOW===================================")
+    # #print(set_udp_flow_queue(onos_url, interface))
+    # for dev_id in devices:
+    #     print(f"Installing UDP flow on {dev_id}...")
+    #     result = set_udp_flow_queue(onos_url, interface, device_id=dev_id, tunnelID=0x1234)
+    #     print(result)
+    print("===================================DYNAMIC TEID FLOWS===================================")
+    from xapp_functs import GTPCallback
+
+    for rnti, tunnels in GTPCallback.ue_gtp_map.items():
+        for tunnel in tunnels:
+            teid_gnb = tunnel['teidgnb']
+            teid_upf = tunnel['teidupf']
+            qfi = tunnel['qfi']
+            
+            print(f"Installing flow for RNTI={rnti:#06x}, "
+                f"TEID_gNB={teid_gnb:#010x}, TEID_UPF={teid_upf:#010x}, QFI={qfi}")
+            
+            # Install flow on the correct switch using the actual TEID
+            for dev_id in devices:
+                result = set_udp_flow_queue(
+                    onos_url, interface,
+                    device_id=dev_id,
+                    tunnelID=teid_upf,  # Use the UPF-assigned TEID for N3 downlink
+                    queue_id=str(qfi),  # Map QFI to queue
+                    port="1"
+                )
+                print(f"  -> {dev_id}: {result.returncode}")
 
     for i in range(0, len(conn)):  
         for hdlr in node_handlers[i]:
@@ -103,6 +131,8 @@ if __name__ == "__main__":
                 if hdlr == 'rlc_hndlr':  xapp_sdk.rm_report_rlc_sm(node_handlers[i][hdlr])
                 if hdlr == 'pdcp_hndlr': xapp_sdk.rm_report_pdcp_sm(node_handlers[i][hdlr])
                 if hdlr == 'gtp_hndlr':  xapp_sdk.rm_report_gtp_sm(node_handlers[i][hdlr]) 
+
+    
 
     xapp_sdk.try_stop()
 

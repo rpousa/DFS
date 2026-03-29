@@ -117,37 +117,37 @@ def get_topology(onos_url, interface):
     return topology_setup
 
 
-def set_udp_flow_queue(onos_url, interface, tunnelID = 0x1234):
-    # fix to check port_in and set port_out, no queues just flows priorities
-    # fix als deviceIds and tunnelIDs
+def set_udp_flow_queue(onos_url, interface, device_id, tunnelID=0x1234, queue_id="1", port="1"):
     Flow_and_queue_setup = {
-            "priority": 50000,
-            "timeout": 0,
-            "isPermanent": True,
-            "deviceId": "of:0000000000000002",
-            "treatment": {
-                "instructions": [ {"type": "QUEUE","queueId": "1","port": "1"} ]
-            },
-            "selector": {
-                "criteria": [
-                {"type": "ETH_TYPE","ethType": "0x0800"},
-                {"type": "IP_PROTO","protocol": 17}, 
-                {"type": "UDP_DST","udpPort": 2152}, 
-                {"type": "TUNNEL_ID","tunnelId": 0x1234},
-                ]
-            }
-        }
-    cmd = ["curl",
-            "--interface", interface,
-            "-X", "POST",
-            "-H", "Content-Type: application/json",
-            "-u", "karaf:karaf",
-            "-d", json.dumps(Flow_and_queue_setup).encode("utf-8"),
-            f"{onos_url}/flows/of:0000000000000002"
+        "priority": 50000,
+        "timeout": 0,
+        "isPermanent": True,
+        "deviceId": device_id,
+        "treatment": {
+            "instructions": [{"type": "QUEUE", "queueId": queue_id, "port": port}]
+        },
+        "selector": {
+            "criteria": [
+                {"type": "ETH_TYPE", "ethType": "0x0800"},
+                {"type": "IP_PROTO", "protocol": 17},
+                {"type": "UDP_DST", "udpPort": 2152},
+                {"type": "TUNNEL_ID", "tunnelId": tunnelID},
             ]
+        }
+    }
+    cmd = [
+        "curl",
+        "--interface", interface,
+        "-X", "POST",
+        "-H", "Content-Type: application/json",
+        "-u", "karaf:karaf",
+        "-d", json.dumps(Flow_and_queue_setup).encode("utf-8"),
+        f"{onos_url}/flows/{device_id}"
+    ]
 
     result_flow_setup = subprocess.run(cmd, capture_output=True, text=True)
     return result_flow_setup
+
 
 #{'id': 'AE:96:D1:27:79:73/None', 'mac': 'AE:96:D1:27:79:73', 'vlan': 'None', 'innerVlan': 'None', 'outerTpid': '0x0000', 'configured': False, 'suspended': False, 'ipAddresses': ['192.168.71.138'], 'locations': [{'elementId': 'of:0000000000000001', 'port': '4'}]}
 #if __name__ == "__main__":

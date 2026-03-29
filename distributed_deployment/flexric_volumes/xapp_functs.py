@@ -128,22 +128,57 @@ class PDCPCallback(xapp_sdk.pdcp_cb):
 class GTPCallback(xapp_sdk.gtp_cb):
     internal_storage = None
     internal_node_id = None
+    
+    # Shared map: rnti -> [{'teidgnb': ..., 'teidupf': ..., 'qfi': ...}, ...]
+    ue_gtp_map = {}
+
     def __init__(self, storage, node_id):
-        # Inherit C++ gtp_cb class
         xapp_sdk.gtp_cb.__init__(self)
         self.internal_storage = storage
         self.internal_node_id = node_id
 
-    # Create an override C++ method 
     def handle(self, ind):
-        print("GTPCallback handle called")
-        print(dir(ind))
         if len(ind.gtp_stats) > 0:
             t_now = time.time_ns() / 1000.0
             t_gtp = ind.tstamp / 1.0
             t_diff = t_now - t_gtp
+
+            # Store raw stats
             self.internal_storage.metrics[self.internal_node_id]['gtp'].append(ind.gtp_stats)
-            #print('GTP Indication tstamp = ' + str(ind.tstamp) + ' diff = ' + str(t_diff) + ' μs')
+
+            # Extract per-UE TEID information
+            for i in range(len(ind.gtp_stats)):
+                stat = ind.gtp_stats[i]
+                rnti = stat.rnti
+                teidgnb = stat.teidgnb
+                teidupf = stat.teidupf
+                qfi = stat.qfi
+
+                if rnti not in GTPCallback.ue_gtp_map:
+                    GTPCallback.ue_gtp_map[rnti] = []
+
+                # Update or add tunnel entry for this UE
+                tunnel_entry = {
+                    'teidgnb': teidgnb,
+                    'teidupf': teidupf,
+                    'qfi': qfi,
+                    'node_idx': self.internal_node_id,
+                    'last_seen': t_now
+                }
+
+                # Check if this tunnel already exists (same QFI)
+                found = False
+                for existing in GTPCallback.ue_gtp_map[rnti]:
+                    if existing['qfi'] == qfi:
+                        existing.update(tunnel_entry)
+                        found = True
+                        break
+                if not found:
+                    GTPCallback.ue_gtp_map[rnti].append(tunnel_entry)
+
+                print(f"[GTP] RNTI={rnti:#06x} QFI={qfi} "
+                      f"TEID_gNB={teidgnb:#010x} TEID_UPF={teidupf:#010x} "
+                      f"node={self.internal_node_id}")
 
 ##########################
 #### Handler Handler #####
