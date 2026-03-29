@@ -74,10 +74,11 @@ if __name__ == "__main__":
             if node_type == "ngran_gNB_DU":
                 print("Registering MAC and RLC stats callback for DU node.")
                 storage.add_node(node_idx, node_type, ['mac','rlc','gtp'])        
-                mac_cb, rlc_cb, gtp_cb= xapp_functs.MACCallback(storage,node_idx), xapp_functs.RLCCallback(storage,node_idx),xapp_functs.GTPCallback(storage,node_idx) 
+                mac_cb, rlc_cb= xapp_functs.MACCallback(storage,node_idx), xapp_functs.RLCCallback(storage,node_idx) 
+                #mac_cb, rlc_cb, gtp_cb= xapp_functs.MACCallback(storage,node_idx), xapp_functs.RLCCallback(storage,node_idx),xapp_functs.GTPCallback(storage,node_idx) 
                 node_handlers[node_idx]['mac_hndlr'] = xapp_sdk.report_mac_sm(nid, xapp_sdk.Interval_ms_10, mac_cb)                
                 node_handlers[node_idx]['rlc_hndlr'] = xapp_sdk.report_rlc_sm(nid, xapp_sdk.Interval_ms_10, rlc_cb)
-                node_handlers[node_idx]['gtp_hndlr'] = xapp_sdk.report_gtp_sm(nid, xapp_sdk.Interval_ms_10, gtp_cb)
+                #node_handlers[node_idx]['gtp_hndlr'] = xapp_sdk.report_gtp_sm(nid, xapp_sdk.Interval_ms_10, gtp_cb)
 
             elif node_type == "ngran_gNB_CUUP":
                 print("Registering GTP and PDCP stats callback for CU-UP node.")
