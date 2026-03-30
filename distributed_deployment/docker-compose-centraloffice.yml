@@ -432,9 +432,8 @@ services:
     depends_on:
       - cuup
     command: >
-      sh -c "sleep infinity"
-    # &&
-    #         /usr/local/bin/ric_watchdog.sh"
+      sh -c "sleep infinity &&
+             /usr/local/bin/ric_watchdog.sh"
 
 
 # ==========================================
