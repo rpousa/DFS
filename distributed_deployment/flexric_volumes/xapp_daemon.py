@@ -23,7 +23,7 @@ ONOS_REFRESH_INTERVAL = 60   # seconds between ONOS topology refreshes
 RIC_CONNECT_RETRY = 5        # seconds between RIC connection retries
 MAX_RIC_RETRIES = 60         # max retries before giving up
 
-TYPES_ACCEPTED = ["ngran_gNB_CUUP", "ngran_gNB_DU", "ngran_gNB_CUCP"]
+TYPES_ACCEPTED = ["ngran_gNB_CUUP", "ngran_gNB_DU", "ngran_gNB_CUCP","ngran_gNB_CU"]  # node types we care about for subscription
 
 # ============================================================
 # Global State
