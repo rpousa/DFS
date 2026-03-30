@@ -4,6 +4,10 @@ import time
 from topology import switch, flow, host, get_devices, get_flows, get_hosts, print_device_info, get_topology, set_udp_flow_queue
 import xapp_functs
 
+def extract_criteria(criteria):
+    """Build a dict of criteria by type for safe lookup."""
+    return {c.get("type"): c for c in criteria}
+
 
 if __name__ == "__main__":
     devices = {}
@@ -22,9 +26,11 @@ if __name__ == "__main__":
         flows = r_flows['flows']
         for fl in flows:
             if len(fl["selector"]["criteria"]) >1: # L3 flows 
-                if fl["selector"]["criteria"][2].get(type) == "IP_PROTO":
+                #if fl["selector"]["criteria"][2].get("type") == "IP_PROTO": 
+                crit = extract_criteria(fl["selector"]["criteria"])
+                if "IP_PROTO" in crit:
                     flow_obj = flow(fl["groupId"],fl["state"], fl["liveType"], fl["packets"], fl["id"], fl["priority"], fl["timeout"], fl["isPermanent"], fl["deviceId"],
-                                ip_dst=fl["selector"]["criteria"][4].get("ip"), ip_src=fl["selector"]["criteria"][3].get("ip"), type_of_protocol=fl["selector"]["criteria"][2].get("protocol"))
+                                ip_dst=crit.get("IPV4_DST", {}).get("ip"), ip_src=crit.get("IPV4_SRC", {}).get("ip"), type_of_protocol=crit.get("IP_PROTO", {}).get("protocol"))
                 else: # UDP tunnel
                     flow_obj = flow(fl["groupId"],fl["state"], fl["liveType"], fl["packets"], fl["id"], fl["priority"], fl["timeout"], fl["isPermanent"], fl["deviceId"],
                                 ip_dst=None, ip_src=None, type_of_protocol=fl["selector"]["criteria"][1].get("type"), tun_id=fl["selector"]["criteria"][3].get("tunnelId"),
@@ -73,7 +79,7 @@ if __name__ == "__main__":
             print(f"Registering stats callbacks for node type: {node_type}")
             if node_type == "ngran_gNB_DU":
                 print("Registering MAC and RLC stats callback for DU node.")
-                storage.add_node(node_idx, node_type, ['mac','rlc','gtp'])        
+                storage.add_node(node_idx, node_type, ['mac','rlc'])        
                 mac_cb, rlc_cb= xapp_functs.MACCallback(storage,node_idx), xapp_functs.RLCCallback(storage,node_idx) 
                 #mac_cb, rlc_cb, gtp_cb= xapp_functs.MACCallback(storage,node_idx), xapp_functs.RLCCallback(storage,node_idx),xapp_functs.GTPCallback(storage,node_idx) 
                 node_handlers[node_idx]['mac_hndlr'] = xapp_sdk.report_mac_sm(nid, xapp_sdk.Interval_ms_10, mac_cb)                
@@ -87,9 +93,9 @@ if __name__ == "__main__":
                 node_handlers[node_idx]['pdcp_hndlr'] = xapp_sdk.report_pdcp_sm(nid, xapp_sdk.Interval_ms_10, pdcp_cb)
                 node_handlers[node_idx]['gtp_hndlr'] = xapp_sdk.report_gtp_sm(nid, xapp_sdk.Interval_ms_10, gtp_cb)
             elif node_type == "ngran_gNB_CUCP":
-                storage.add_node(node_idx, node_type, ['gtp'])
-                gtp_cb = xapp_functs.GTPCallback(storage,node_idx)
-                node_handlers[node_idx]['gtp_hndlr'] = xapp_sdk.report_gtp_sm(nid, xapp_sdk.Interval_ms_10, gtp_cb)
+                storage.add_node(node_idx, node_type, [''])
+                #gtp_cb = xapp_functs.GTPCallback(storage,node_idx)
+                #node_handlers[node_idx]['gtp_hndlr'] = xapp_sdk.report_gtp_sm(nid, xapp_sdk.Interval_ms_10, gtp_cb)
                 print("No stats callbacks implemented for CU-CP nodes yet.")
 
     print("All callbacks registered, waiting for indications...")
