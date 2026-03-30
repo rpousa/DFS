@@ -1,7 +1,11 @@
 #!/bin/bash
 
-# deploy-centraloffice.sh - Deploy Core Network + CU-CP + CU-UP on Machine 1
+# deploy-centraloffice.sh - Deploy Core Network + Unified CU on Machine 1
 # Deploy on PC: 192.168.0.193
+#
+# ARCHITECTURE: Single unified CU replaces separate CU-CP + CU-UP
+# The CU handles F1-C, F1-U, E1, NGAP, and GTP-U internally on core_net.
+# No more f1c_net, f1u_net, or e1_net on Machine 1.
 
 set -e
 
@@ -9,7 +13,7 @@ MACHINE1_IP="192.168.0.193"
 MACHINE2_IP="192.168.0.243"
 
 echo "================================================"
-echo "Machine 1: Core Network + Central RAN Deployment"
+echo "Machine 1: Core Network + Unified CU Deployment"
 echo "================================================"
 echo "Machine 1 (This PC): $MACHINE1_IP"
 echo "Machine 2 (Edge PC): $MACHINE2_IP"
@@ -17,9 +21,8 @@ echo ""
 echo "Components on this machine:"
 echo "  - 5G Core Network (MySQL, NRF, AMF, SMF, UDM, UDR, AUSF, PCF, NSSF)"
 echo "  - Primary UPF + Ext DN"
-echo "  - CU-CP (Central Unit Control Plane)"
-echo "  - CU-UP (Central Unit User Plane - Primary)"
-echo "  - Flexric"
+echo "  - CU (Unified Central Unit: Control + User Plane)"
+echo "  - FlexRIC (Near-RT RIC + xApp)"
 echo ""
 
 RED='\033[0;31m'
@@ -78,18 +81,36 @@ wait_for_healthy() {
 }
 
 # ==========================================
-# SCTP Routing Fix
+# Helper: Remove ALL nftables rules matching a grep pattern
 # ==========================================
+nft_remove_all_matching() {
+    local table=$1
+    local chain=$2
+    local pattern=$3
+    while true; do
+        local H=$(sudo nft -a list chain ${table} ${chain} 2>/dev/null | grep "${pattern}" | head -1 | grep -oP 'handle \K\d+' || echo "")
+        [ -z "$H" ] && break
+        print_info "    Removing rule (handle $H)..."
+        sudo nft delete rule ${table} ${chain} handle $H
+    done
+}
+
+# ==========================================
+# SCTP Routing Fix for Unified CU Architecture
+# ==========================================
+# With a unified CU, all interfaces (F1-C, NGAP, E2AP, GTP-U) are on core_net.
 # Docker creates nftables DNAT rules for /sctp port mappings, but:
-# 1. DNATs to the container's IP on the FIRST network (core_net)
-#    instead of the network where SCTP actually binds (f1c_net, e1_net)
+# 1. May DNAT to the wrong container IP
 # 2. Uses 'nft add' which appends AFTER catch-all DROP rules
 # 3. docker-proxy cannot handle SCTP (but kernel nftables can)
 #
-# This function:
-# - Removes ALL old/incorrect SCTP rules (including duplicates from reruns)
-# - Auto-detects actual container IPs and listening ports
-# - INSERTs correct rules at the TOP of chains / BEFORE catch-all DROPs
+# The CU exposes on core_net (192.168.71.140):
+#   - 38472/sctp for F1-C (inbound from DU on Machine 2)
+#   - 2153/udp for F1-U GTP-U (inbound from DU on Machine 2)
+# The CU initiates (outbound, no DNAT needed):
+#   - NGAP to AMF (192.168.71.132:38412) — internal
+#   - GTP-U to UPF (192.168.71.134:2152) — internal
+#   - E2AP to FlexRIC (192.168.71.150:36421) — internal
 
 setup_sctp_routing() {
     print_stage "Setting up SCTP routing rules for cross-machine connectivity..."
@@ -107,58 +128,43 @@ setup_sctp_routing() {
     fi
 
     # -------------------------------------------------------
-    # Detect container IPs
+    # Detect container IPs on core_net
     # -------------------------------------------------------
     local PROJECT_PREFIX="distributed_deployment_"
+
     local AMF_CORE_IP=$(docker inspect -f "{{.NetworkSettings.Networks.${PROJECT_PREFIX}core_net.IPAddress}}" amf 2>/dev/null || echo "")
-    local CUCP_CORE_IP=$(docker inspect -f "{{.NetworkSettings.Networks.${PROJECT_PREFIX}core_net.IPAddress}}" cucp 2>/dev/null || echo "")
-    local CUCP_F1C_IP=$(docker inspect -f "{{.NetworkSettings.Networks.${PROJECT_PREFIX}f1c_net.IPAddress}}" cucp 2>/dev/null || echo "")
-    local CUCP_E1_IP=$(docker inspect -f "{{.NetworkSettings.Networks.${PROJECT_PREFIX}e1_net.IPAddress}}" cucp 2>/dev/null || echo "")
-    local FLEXRIC_IP=$(docker inspect -f "{{.NetworkSettings.Networks.${PROJECT_PREFIX}core_net.IPAddress}}" flexric 2>/dev/null || echo "")
+    local CU_CORE_IP=$(docker inspect -f "{{.NetworkSettings.Networks.${PROJECT_PREFIX}core_net.IPAddress}}" cu 2>/dev/null || echo "")
+    local FLEXRIC_CORE_IP=$(docker inspect -f "{{.NetworkSettings.Networks.${PROJECT_PREFIX}core_net.IPAddress}}" flexric 2>/dev/null || echo "")
 
     # Fallback without prefix
     [ -z "$AMF_CORE_IP" ] && AMF_CORE_IP=$(docker inspect -f '{{.NetworkSettings.Networks.core_net.IPAddress}}' amf 2>/dev/null || echo "")
-    [ -z "$CUCP_CORE_IP" ] && CUCP_CORE_IP=$(docker inspect -f '{{.NetworkSettings.Networks.core_net.IPAddress}}' cucp 2>/dev/null || echo "")
-    [ -z "$CUCP_F1C_IP" ] && CUCP_F1C_IP=$(docker inspect -f '{{.NetworkSettings.Networks.f1c_net.IPAddress}}' cucp 2>/dev/null || echo "")
-    [ -z "$CUCP_E1_IP" ] && CUCP_E1_IP=$(docker inspect -f '{{.NetworkSettings.Networks.e1_net.IPAddress}}' cucp 2>/dev/null || echo "")
-    [ -z "$FLEXRIC_IP" ] && FLEXRIC_IP=$(docker inspect -f '{{.NetworkSettings.Networks.core_net.IPAddress}}' flexric 2>/dev/null || echo "")
-    
-    # Auto-detect actual listening ports from CU-CP container
-    local CUCP_F1C_PORT=$(docker exec cucp ss -Slnp 2>/dev/null \
-        | grep "LISTEN" \
-        | grep "${CUCP_F1C_IP}" \
-        | awk '{print $5}' \
-        | grep -o '[0-9]*$' \
-        | head -1)
-    [ -z "$CUCP_F1C_PORT" ] && CUCP_F1C_PORT="38472"
+    [ -z "$CU_CORE_IP" ] && CU_CORE_IP=$(docker inspect -f '{{.NetworkSettings.Networks.core_net.IPAddress}}' cu 2>/dev/null || echo "")
+    [ -z "$FLEXRIC_CORE_IP" ] && FLEXRIC_CORE_IP=$(docker inspect -f '{{.NetworkSettings.Networks.core_net.IPAddress}}' flexric 2>/dev/null || echo "")
 
-    local CUCP_E1_PORT=$(docker exec cucp ss -Slnp 2>/dev/null \
-        | grep "LISTEN" \
-        | grep "${CUCP_E1_IP}" \
-        | awk '{print $5}' \
-        | grep -o '[0-9]*$' \
-        | head -1)
-    [ -z "$CUCP_E1_PORT" ] && CUCP_E1_PORT="38462"
+    # Last resort: parse from docker inspect JSON
+    [ -z "$CU_CORE_IP" ] && CU_CORE_IP=$(docker inspect cu 2>/dev/null | grep -A5 'core_net' | grep 'IPAddress' | head -1 | grep -oP '"\K[0-9.]+' || echo "")
+    [ -z "$FLEXRIC_CORE_IP" ] && FLEXRIC_CORE_IP=$(docker inspect flexric 2>/dev/null | grep -A5 'core_net' | grep 'IPAddress' | head -1 | grep -oP '"\K[0-9.]+' || echo "")
 
-    local FLEXRIC_PORT=$(docker exec flexric ss -Slnp 2>/dev/null \
-        | grep "LISTEN" \
-        | grep "${FLEXRIC_IP}" \
-        | awk '{print $5}' \
-        | grep -o '[0-9]*$' \
-        | head -1)
+    # Auto-detect actual CU F1-C listening port
+    local CU_F1C_PORT=""
+    if [ -n "$CU_CORE_IP" ]; then
+        CU_F1C_PORT=$(docker exec cu ss -Slnp 2>/dev/null | grep "${CU_CORE_IP}" | grep -oP ':\K[0-9]+' | head -1 || echo "")
+    fi
+    [ -z "$CU_F1C_PORT" ] && CU_F1C_PORT="38472"
+
+    # Auto-detect FlexRIC E2AP listening port
+    local FLEXRIC_PORT=""
+    if [ -n "$FLEXRIC_CORE_IP" ]; then
+        FLEXRIC_PORT=$(docker exec flexric ss -Slnp 2>/dev/null | grep "${FLEXRIC_CORE_IP}" | grep -oP ':\K[0-9]+' | head -1 || echo "")
+    fi
     [ -z "$FLEXRIC_PORT" ] && FLEXRIC_PORT="36421"
 
-    [ -z "$CUCP_F1C_PORT" ] && CUCP_F1C_PORT="38472"
-    [ -z "$CUCP_E1_PORT" ] && CUCP_E1_PORT="38462"
-
     print_info "Container IPs and ports detected:"
-    print_info "  AMF   (core_net): ${AMF_CORE_IP:-NOT FOUND}"
-    print_info "  CU-CP (core_net): ${CUCP_CORE_IP:-NOT FOUND}"
-    print_info "  CU-CP (f1c_net):  ${CUCP_F1C_IP:-NOT FOUND}:${CUCP_F1C_PORT}"
-    print_info "  CU-CP (e1_net):   ${CUCP_E1_IP:-NOT FOUND}:${CUCP_E1_PORT}"
-    print_info "  FLEXRIC (core_net): ${FLEXRIC_IP:-NOT FOUND}:${FLEXRIC_PORT}"
+    print_info "  AMF     (core_net): ${AMF_CORE_IP:-NOT FOUND}"
+    print_info "  CU      (core_net): ${CU_CORE_IP:-NOT FOUND}:${CU_F1C_PORT}"
+    print_info "  FlexRIC (core_net): ${FLEXRIC_CORE_IP:-NOT FOUND}:${FLEXRIC_PORT}"
 
-    if [ -z "$CUCP_F1C_IP" ] || [ -z "$CUCP_E1_IP" ] || [ -z "$AMF_CORE_IP" ]; then
+    if [ -z "$CU_CORE_IP" ] || [ -z "$AMF_CORE_IP" ]; then
         print_error "Could not detect container IPs. SCTP routing setup failed."
         return 1
     fi
@@ -172,131 +178,67 @@ setup_sctp_routing() {
         print_info "  ✓ AMF NGAP DNAT rule correct"
     else
         print_warn "  Adding AMF NGAP DNAT rule..."
+        nft_remove_all_matching "ip nat" "DOCKER" "sctp dport 38412"
         sudo nft insert rule ip nat DOCKER iifname != "br-core" meta l4proto sctp ip daddr ${MACHINE1_IP} sctp dport 38412 counter dnat to ${AMF_CORE_IP}:38412
+        print_info "  ✓ AMF NGAP DNAT INSERTED"
     fi
 
     # -------------------------------------------------------
-    # 2. CU-CP F1-C — Remove ALL old, insert correct at TOP
+    # 2. CU F1-C — For Machine 2 DU to connect
+    #    All on core_net now (no more br-f1c)
     # -------------------------------------------------------
     print_info ""
-    print_info "--- CU-CP F1-C (F1AP) SCTP [TS 38.472] ---"
+    print_info "--- CU F1-C (F1AP) SCTP [TS 38.472] ---"
 
-    # Remove ALL existing F1-C DNAT rules (any target IP/port including port 501)
-    while true; do
-        local H=$(sudo nft -a list chain ip nat DOCKER 2>/dev/null | grep "sctp dport 38472" | head -1 | grep -oP 'handle \K\d+' || echo "")
-        [ -z "$H" ] && break
-        print_info "  Removing old F1-C DNAT rule (handle $H)..."
-        sudo nft delete rule ip nat DOCKER handle $H
-    done
+    # Remove ALL existing F1-C DNAT rules
+    print_info "  Cleaning old F1-C DNAT rules..."
+    nft_remove_all_matching "ip nat" "DOCKER" "sctp dport 38472"
 
-    # INSERT correct DNAT at TOP of chain
-    sudo nft insert rule ip nat DOCKER iifname != "br-f1c" meta l4proto sctp ip daddr ${MACHINE1_IP} sctp dport 38472 counter dnat to ${CUCP_F1C_IP}:${CUCP_F1C_PORT}
-    print_info "  ✓ F1-C DNAT INSERTED: ${MACHINE1_IP}:38472 → ${CUCP_F1C_IP}:${CUCP_F1C_PORT}"
+    # INSERT correct DNAT at TOP of chain — CU is on core_net
+    sudo nft insert rule ip nat DOCKER iifname != "br-core" meta l4proto sctp ip daddr ${MACHINE1_IP} sctp dport 38472 counter dnat to ${CU_CORE_IP}:${CU_F1C_PORT}
+    print_info "  ✓ F1-C DNAT INSERTED: ${MACHINE1_IP}:38472 → ${CU_CORE_IP}:${CU_F1C_PORT}"
 
-    # Remove ALL existing F1-C FORWARD rules (port 501 AND port 38472)
-    while true; do
-        local H=$(sudo nft -a list chain ip filter DOCKER 2>/dev/null | grep "br-f1c.*sctp" | head -1 | grep -oP 'handle \K\d+' || echo "")
-        [ -z "$H" ] && break
-        print_info "  Removing old F1-C FORWARD rule (handle $H)..."
-        sudo nft delete rule ip filter DOCKER handle $H
-    done
+    # Remove ALL existing F1-C FORWARD rules on br-core for this port
+    print_info "  Cleaning old F1-C FORWARD rules..."
+    nft_remove_all_matching "ip filter" "DOCKER" "br-core.*sctp.*${CU_F1C_PORT}"
 
-    # INSERT FORWARD accept BEFORE the catch-all DROP for br-f1c
-    local F1C_DROP=$(sudo nft -a list chain ip filter DOCKER 2>/dev/null | grep 'iifname != "br-f1c" oifname "br-f1c" counter.*drop' | grep -oP 'handle \K\d+' | head -1 || echo "")
-    if [ -n "$F1C_DROP" ]; then
-        sudo nft insert rule ip filter DOCKER position $F1C_DROP iifname != "br-f1c" oifname "br-f1c" meta l4proto sctp ip daddr ${CUCP_F1C_IP} sctp dport ${CUCP_F1C_PORT} counter accept
-        print_info "  ✓ F1-C FORWARD accept INSERTED before drop (position $F1C_DROP)"
+    # INSERT FORWARD accept BEFORE the catch-all DROP for br-core
+    local CORE_DROP=$(sudo nft -a list chain ip filter DOCKER 2>/dev/null | grep 'iifname != "br-core" oifname "br-core" counter.*drop' | grep -oP 'handle \K\d+' | head -1 || echo "")
+    if [ -n "$CORE_DROP" ]; then
+        sudo nft insert rule ip filter DOCKER position $CORE_DROP iifname != "br-core" oifname "br-core" meta l4proto sctp ip daddr ${CU_CORE_IP} sctp dport ${CU_F1C_PORT} counter accept
+        print_info "  ✓ F1-C FORWARD accept INSERTED before drop (position $CORE_DROP)"
     else
-        sudo nft insert rule ip filter DOCKER iifname != "br-f1c" oifname "br-f1c" meta l4proto sctp ip daddr ${CUCP_F1C_IP} sctp dport ${CUCP_F1C_PORT} counter accept
+        sudo nft insert rule ip filter DOCKER iifname != "br-core" oifname "br-core" meta l4proto sctp ip daddr ${CU_CORE_IP} sctp dport ${CU_F1C_PORT} counter accept
         print_info "  ✓ F1-C FORWARD accept INSERTED at top"
     fi
 
-    # Ensure DOCKER-BRIDGE jumps to DOCKER for br-f1c
-    if ! sudo nft list chain ip filter DOCKER-BRIDGE 2>/dev/null | grep -q 'oifname "br-f1c".*jump DOCKER'; then
-        sudo nft add rule ip filter DOCKER-BRIDGE oifname "br-f1c" counter jump DOCKER
-        print_info "  ✓ Added DOCKER-BRIDGE jump for br-f1c"
+    # Ensure DOCKER-BRIDGE jumps to DOCKER for br-core
+    if ! sudo nft list chain ip filter DOCKER-BRIDGE 2>/dev/null | grep -q 'oifname "br-core".*jump DOCKER'; then
+        sudo nft add rule ip filter DOCKER-BRIDGE oifname "br-core" counter jump DOCKER
+        print_info "  ✓ Added DOCKER-BRIDGE jump for br-core"
     fi
 
     # -------------------------------------------------------
-    # 3. CU-CP E1AP — Remove ALL old, insert correct at TOP
-    # -------------------------------------------------------
-    print_info ""
-    print_info "--- CU-CP E1AP SCTP [TS 38.463] ---"
-
-    # Remove ALL existing E1 DNAT rules
-    while true; do
-        local H=$(sudo nft -a list chain ip nat DOCKER 2>/dev/null | grep "sctp dport 38462" | head -1 | grep -oP 'handle \K\d+' || echo "")
-        [ -z "$H" ] && break
-        print_info "  Removing old E1 DNAT rule (handle $H)..."
-        sudo nft delete rule ip nat DOCKER handle $H
-    done
-
-    # INSERT correct DNAT at TOP
-    sudo nft insert rule ip nat DOCKER iifname != "br-e1" meta l4proto sctp ip daddr ${MACHINE1_IP} sctp dport 38462 counter dnat to ${CUCP_E1_IP}:${CUCP_E1_PORT}
-    print_info "  ✓ E1 DNAT INSERTED: ${MACHINE1_IP}:38462 → ${CUCP_E1_IP}:${CUCP_E1_PORT}"
-
-    # Remove ALL existing E1 FORWARD rules
-    while true; do
-        local H=$(sudo nft -a list chain ip filter DOCKER 2>/dev/null | grep "br-e1.*sctp" | head -1 | grep -oP 'handle \K\d+' || echo "")
-        [ -z "$H" ] && break
-        print_info "  Removing old E1 FORWARD rule (handle $H)..."
-        sudo nft delete rule ip filter DOCKER handle $H
-    done
-
-    # INSERT FORWARD accept BEFORE the catch-all DROP for br-e1
-    local E1_DROP=$(sudo nft -a list chain ip filter DOCKER 2>/dev/null | grep 'iifname != "br-e1" oifname "br-e1" counter.*drop' | grep -oP 'handle \K\d+' | head -1 || echo "")
-    if [ -n "$E1_DROP" ]; then
-        sudo nft insert rule ip filter DOCKER position $E1_DROP iifname != "br-e1" oifname "br-e1" meta l4proto sctp ip daddr ${CUCP_E1_IP} sctp dport ${CUCP_E1_PORT} counter accept
-        print_info "  ✓ E1 FORWARD accept INSERTED before drop (position $E1_DROP)"
-    else
-        sudo nft insert rule ip filter DOCKER iifname != "br-e1" oifname "br-e1" meta l4proto sctp ip daddr ${CUCP_E1_IP} sctp dport ${CUCP_E1_PORT} counter accept
-        print_info "  ✓ E1 FORWARD accept INSERTED at top"
-    fi
-
-    # Ensure DOCKER-BRIDGE jumps to DOCKER for br-e1
-    if ! sudo nft list chain ip filter DOCKER-BRIDGE 2>/dev/null | grep -q 'oifname "br-e1".*jump DOCKER'; then
-        sudo nft add rule ip filter DOCKER-BRIDGE oifname "br-e1" counter jump DOCKER
-        print_info "  ✓ Added DOCKER-BRIDGE jump for br-e1"
-    fi
-
-    # -------------------------------------------------------
-    # 5. FlexRIC E2AP — Remove ALL old, insert correct at TOP
+    # 3. FlexRIC E2AP — Port 36421 (primary)
     # -------------------------------------------------------
     print_info ""
     print_info "--- FlexRIC E2AP SCTP [O-RAN E2AP] ---"
-
-    # Detect FlexRIC container IP on core_net
-    local FLEXRIC_CORE_IP=$(docker inspect -f "{{.NetworkSettings.Networks.${PROJECT_PREFIX}core_net.IPAddress}}" flexric 2>/dev/null || echo "")
-    [ -z "$FLEXRIC_CORE_IP" ] && FLEXRIC_CORE_IP=$(docker inspect -f '{{.NetworkSettings.Networks.core_net.IPAddress}}' flexric 2>/dev/null || echo "")
-
-    print_info "  FlexRIC (core_net): ${FLEXRIC_CORE_IP:-NOT FOUND}"
 
     if [ -z "$FLEXRIC_CORE_IP" ]; then
         print_error "  Could not detect FlexRIC IP. Skipping E2AP routing."
     else
         # --- Port 36421 (primary E2AP) ---
-        # Remove ALL existing E2AP 36421 DNAT rules
-        while true; do
-            local H=$(sudo nft -a list chain ip nat DOCKER 2>/dev/null | grep "sctp dport 36421" | head -1 | grep -oP 'handle \K\d+' || echo "")
-            [ -z "$H" ] && break
-            print_info "  Removing old E2AP 36421 DNAT rule (handle $H)..."
-            sudo nft delete rule ip nat DOCKER handle $H
-        done
+        print_info "  Cleaning old E2AP 36421 DNAT rules..."
+        nft_remove_all_matching "ip nat" "DOCKER" "sctp dport 36421"
 
-        # INSERT correct DNAT at TOP
         sudo nft insert rule ip nat DOCKER iifname != "br-core" meta l4proto sctp ip daddr ${MACHINE1_IP} sctp dport 36421 counter dnat to ${FLEXRIC_CORE_IP}:36421
         print_info "  ✓ E2AP DNAT INSERTED: ${MACHINE1_IP}:36421 → ${FLEXRIC_CORE_IP}:36421"
 
-        # Remove ALL existing E2AP 36421 FORWARD rules
-        while true; do
-            local H=$(sudo nft -a list chain ip filter DOCKER 2>/dev/null | grep "br-core.*sctp.*36421" | head -1 | grep -oP 'handle \K\d+' || echo "")
-            [ -z "$H" ] && break
-            print_info "  Removing old E2AP 36421 FORWARD rule (handle $H)..."
-            sudo nft delete rule ip filter DOCKER handle $H
-        done
+        print_info "  Cleaning old E2AP 36421 FORWARD rules..."
+        nft_remove_all_matching "ip filter" "DOCKER" "br-core.*sctp.*36421"
 
-        # INSERT FORWARD accept BEFORE the catch-all DROP for br-core
-        local CORE_DROP=$(sudo nft -a list chain ip filter DOCKER 2>/dev/null | grep 'iifname != "br-core" oifname "br-core" counter.*drop' | grep -oP 'handle \K\d+' | head -1 || echo "")
+        # Re-fetch CORE_DROP handle (may have changed after previous inserts)
+        CORE_DROP=$(sudo nft -a list chain ip filter DOCKER 2>/dev/null | grep 'iifname != "br-core" oifname "br-core" counter.*drop' | grep -oP 'handle \K\d+' | head -1 || echo "")
         if [ -n "$CORE_DROP" ]; then
             sudo nft insert rule ip filter DOCKER position $CORE_DROP iifname != "br-core" oifname "br-core" meta l4proto sctp ip daddr ${FLEXRIC_CORE_IP} sctp dport 36421 counter accept
             print_info "  ✓ E2AP 36421 FORWARD accept INSERTED before drop (position $CORE_DROP)"
@@ -306,35 +248,22 @@ setup_sctp_routing() {
         fi
 
         # --- Port 36422 (secondary E2AP) ---
-        while true; do
-            local H=$(sudo nft -a list chain ip nat DOCKER 2>/dev/null | grep "sctp dport 36422" | head -1 | grep -oP 'handle \K\d+' || echo "")
-            [ -z "$H" ] && break
-            print_info "  Removing old E2AP 36422 DNAT rule (handle $H)..."
-            sudo nft delete rule ip nat DOCKER handle $H
-        done
+        print_info "  Cleaning old E2AP 36422 DNAT rules..."
+        nft_remove_all_matching "ip nat" "DOCKER" "sctp dport 36422"
 
         sudo nft insert rule ip nat DOCKER iifname != "br-core" meta l4proto sctp ip daddr ${MACHINE1_IP} sctp dport 36422 counter dnat to ${FLEXRIC_CORE_IP}:36422
         print_info "  ✓ E2AP DNAT INSERTED: ${MACHINE1_IP}:36422 → ${FLEXRIC_CORE_IP}:36422"
 
-        while true; do
-            local H=$(sudo nft -a list chain ip filter DOCKER 2>/dev/null | grep "br-core.*sctp.*36422" | head -1 | grep -oP 'handle \K\d+' || echo "")
-            [ -z "$H" ] && break
-            print_info "  Removing old E2AP 36422 FORWARD rule (handle $H)..."
-            sudo nft delete rule ip filter DOCKER handle $H
-        done
+        print_info "  Cleaning old E2AP 36422 FORWARD rules..."
+        nft_remove_all_matching "ip filter" "DOCKER" "br-core.*sctp.*36422"
 
+        CORE_DROP=$(sudo nft -a list chain ip filter DOCKER 2>/dev/null | grep 'iifname != "br-core" oifname "br-core" counter.*drop' | grep -oP 'handle \K\d+' | head -1 || echo "")
         if [ -n "$CORE_DROP" ]; then
             sudo nft insert rule ip filter DOCKER position $CORE_DROP iifname != "br-core" oifname "br-core" meta l4proto sctp ip daddr ${FLEXRIC_CORE_IP} sctp dport 36422 counter accept
             print_info "  ✓ E2AP 36422 FORWARD accept INSERTED before drop (position $CORE_DROP)"
         else
             sudo nft insert rule ip filter DOCKER iifname != "br-core" oifname "br-core" meta l4proto sctp ip daddr ${FLEXRIC_CORE_IP} sctp dport 36422 counter accept
             print_info "  ✓ E2AP 36422 FORWARD accept INSERTED at top"
-        fi
-
-        # Ensure DOCKER-BRIDGE jumps to DOCKER for br-core (likely already exists for AMF)
-        if ! sudo nft list chain ip filter DOCKER-BRIDGE 2>/dev/null | grep -q 'oifname "br-core".*jump DOCKER'; then
-            sudo nft add rule ip filter DOCKER-BRIDGE oifname "br-core" counter jump DOCKER
-            print_info "  ✓ Added DOCKER-BRIDGE jump for br-core"
         fi
     fi
 
@@ -344,8 +273,7 @@ setup_sctp_routing() {
     print_info ""
     if sudo nft list chain ip raw PREROUTING 2>/dev/null | grep -q "ip daddr ${MACHINE1_IP}.*drop"; then
         print_warn "  Raw table has DROP for ${MACHINE1_IP} — removing..."
-        local RAW_H=$(sudo nft -a list chain ip raw PREROUTING 2>/dev/null | grep "ip daddr ${MACHINE1_IP}.*drop" | grep -oP 'handle \K\d+')
-        [ -n "$RAW_H" ] && sudo nft delete rule ip raw PREROUTING handle $RAW_H
+        nft_remove_all_matching "ip raw" "PREROUTING" "ip daddr ${MACHINE1_IP}.*drop"
     else
         print_info "  ✓ Raw table OK"
     fi
@@ -355,11 +283,10 @@ setup_sctp_routing() {
     # -------------------------------------------------------
     print_info ""
     print_info "SCTP routing setup complete!"
-    print_info "  AMF  NGAP:  ${MACHINE1_IP}:38412 → ${AMF_CORE_IP}:38412 (br-core)"
-    print_info "  CU-CP F1-C: ${MACHINE1_IP}:38472 → ${CUCP_F1C_IP}:${CUCP_F1C_PORT} (br-f1c)"
-    print_info "  CU-CP E1:   ${MACHINE1_IP}:38462 → ${CUCP_E1_IP}:${CUCP_E1_PORT} (br-e1)"
-    print_info "  FlexRIC E2AP: ${MACHINE1_IP}:36421 → ${FLEXRIC_CORE_IP}:36421 (br-core)"
-    print_info "  FlexRIC E2AP: ${MACHINE1_IP}:36422 → ${FLEXRIC_CORE_IP}:36422 (br-core)"
+    print_info "  AMF  NGAP:    ${MACHINE1_IP}:38412 → ${AMF_CORE_IP}:38412 (br-core)"
+    print_info "  CU   F1-C:    ${MACHINE1_IP}:38472 → ${CU_CORE_IP}:${CU_F1C_PORT} (br-core)"
+    print_info "  FlexRIC E2AP: ${MACHINE1_IP}:36421 → ${FLEXRIC_CORE_IP:-?}:36421 (br-core)"
+    print_info "  FlexRIC E2AP: ${MACHINE1_IP}:36422 → ${FLEXRIC_CORE_IP:-?}:36422 (br-core)"
 }
 
 verify_sctp_routing() {
@@ -371,11 +298,14 @@ verify_sctp_routing() {
     print_info "=== Filter FORWARD rules (SCTP) ==="
     sudo nft -a list chain ip filter DOCKER 2>/dev/null | grep sctp || print_warn "  No SCTP FORWARD rules found"
     echo ""
-    print_info "=== CU-CP SCTP listening sockets ==="
-    docker exec cucp ss -Slnp 2>/dev/null || print_warn "  Could not check CU-CP sockets"
+    print_info "=== CU SCTP listening sockets ==="
+    docker exec cu ss -Slnp 2>/dev/null || print_warn "  Could not check CU sockets"
     echo ""
     print_info "=== AMF SCTP listening sockets ==="
     docker exec amf ss -Slnp 2>/dev/null || print_warn "  Could not check AMF sockets"
+    echo ""
+    print_info "=== FlexRIC SCTP listening sockets ==="
+    docker exec flexric ss -Slnp 2>/dev/null || print_warn "  Could not check FlexRIC sockets"
     echo ""
 }
 
@@ -451,12 +381,18 @@ print_stage "Creating Docker networks and preparing containers..."
 docker compose -f docker-compose-centraloffice.yml up --no-start
 echo ""
 
-print_stage "Stage 1/7: Starting MySQL database..."
+# ==========================================
+# Stage 1/6: MySQL
+# ==========================================
+print_stage "Stage 1/6: Starting MySQL database..."
 docker compose -f docker-compose-centraloffice.yml up -d mysql
 wait_for_healthy "mysql" 60
 echo ""
 
-print_stage "Stage 2/7: Starting 5G Core Network Functions..."
+# ==========================================
+# Stage 2/6: 5G Core Network Functions
+# ==========================================
+print_stage "Stage 2/6: Starting 5G Core Network Functions..."
 docker compose -f docker-compose-centraloffice.yml up -d nrf smf pcf nssf amf udm udr ausf
 wait_for_service "nrf" 30
 wait_for_service "amf" 30
@@ -465,7 +401,10 @@ print_info "Waiting for services to initialize..."
 sleep 5
 echo ""
 
-print_stage "Stage 3/7: Starting Primary UPF and External DN..."
+# ==========================================
+# Stage 3/6: Primary UPF and External DN
+# ==========================================
+print_stage "Stage 3/6: Starting Primary UPF and External DN..."
 docker compose -f docker-compose-centraloffice.yml up -d upf ext_dn
 wait_for_service "upf" 30
 wait_for_service "ext_dn" 30
@@ -473,30 +412,34 @@ print_info "Waiting for UPF initialization..."
 sleep 5
 echo ""
 
-print_stage "Stage 4/7: Starting CU-CP (Central Unit Control Plane)..."
-docker compose -f docker-compose-centraloffice.yml up -d cucp
-wait_for_service "cucp" 30
-print_info "Waiting for CU-CP to initialize SCTP sockets..."
+# ==========================================
+# Stage 4/6: Unified CU (replaces CU-CP + CU-UP)
+# ==========================================
+print_stage "Stage 4/6: Starting Unified CU (Central Unit)..."
+docker compose -f docker-compose-centraloffice.yml up -d cu
+wait_for_service "cu" 30
+print_info "Waiting for CU to initialize SCTP sockets (NGAP + F1-C)..."
 sleep 15
+
+# Verify CU is listening
+print_info "CU SCTP listening sockets:"
+docker exec cu ss -Slnp 2>/dev/null | grep -E "38472|38412" || print_warn "  CU SCTP sockets not yet ready"
 echo ""
 
-print_stage "Stage 5/7: Starting CU-UP (Central Unit User Plane)..."
-docker compose -f docker-compose-centraloffice.yml up -d cuup
-wait_for_service "cuup" 30
-sleep 5
-echo ""
-
-# Stage 5: FlexRIC
-print_stage "Stage 6/7: Starting FlexRIC (Near-RT RIC)..."
+# ==========================================
+# Stage 5/6: FlexRIC (Near-RT RIC)
+# ==========================================
+print_stage "Stage 5/6: Starting FlexRIC (Near-RT RIC)..."
 docker compose -f docker-compose-centraloffice.yml up -d flexric
 wait_for_service "flexric" 30
+print_info "Waiting for FlexRIC to initialize..."
 sleep 10
 echo ""
 
 # ==========================================
-# Stage 6: SCTP Routing Fix (THE KEY FIX)
+# Stage 6/6: SCTP Routing Fix (THE KEY FIX)
 # ==========================================
-print_stage "Stage 7/7: Configuring SCTP routing for cross-machine access..."
+print_stage "Stage 6/6: Configuring SCTP routing for cross-machine access..."
 echo ""
 setup_sctp_routing
 echo ""
@@ -516,33 +459,37 @@ print_info "Machine 1 Deployment Complete!"
 print_info "================================================"
 echo ""
 
+# --- Service reachability checks ---
 if timeout 3 bash -c "echo > /dev/tcp/${MACHINE1_IP}/9090" 2>/dev/null; then
     print_info "✓ NRF is reachable on ${MACHINE1_IP}:9090"
 else
     print_warn "✗ NRF is NOT reachable on ${MACHINE1_IP}:9090"
 fi
 
-print_info "CU-CP SCTP listening sockets:"
-docker exec cucp ss -Slnp 2>/dev/null | grep -E "38472|38462" || print_warn "  CU-CP SCTP sockets not found"
+print_info ""
+print_info "CU SCTP listening sockets:"
+docker exec cu ss -Slnp 2>/dev/null | grep -E "38472|38462|38412" || print_warn "  CU SCTP sockets not found"
 
+print_info ""
 print_info "AMF SCTP listening sockets:"
 docker exec amf ss -Slnp 2>/dev/null | grep "38412" || print_warn "  AMF SCTP socket not found"
 
-print_info "Flexric SCTP listening sockets:"
-docker exec flexric ss -Slnp 2>/dev/null | grep -E "36422|36421" || print_warn "  Flexric SCTP socket not found"
+print_info ""
+print_info "FlexRIC SCTP listening sockets:"
+docker exec flexric ss -Slnp 2>/dev/null | grep -E "36422|36421" || print_warn "  FlexRIC SCTP socket not found"
 
 echo ""
 print_info "Next Steps:"
 echo "  1. From Machine 2, test SCTP connectivity:"
-echo "     ncat -v --sctp ${MACHINE1_IP} 38472    # F1-C to CU-CP"
-echo "     ncat -v --sctp ${MACHINE1_IP} 38462    # E1 to CU-CP"
+echo "     ncat -v --sctp ${MACHINE1_IP} 38472    # F1-C to CU"
+echo "     ncat -v --sctp ${MACHINE1_IP} 38412    # NGAP to AMF"
 echo "     ncat -v --sctp ${MACHINE1_IP} 36421    # E2AP to FlexRIC"
 echo "     ncat -v --sctp ${MACHINE1_IP} 36422    # E2AP to FlexRIC"
 echo ""
 echo "  2. Deploy Machine 2 (Edge RAN) on $MACHINE2_IP:"
 echo "     ./deploy-edge.sh"
 echo ""
-echo "  To stop: ./stop.sh"
+echo "  To stop: docker compose -f docker-compose-centraloffice.yml down"
 echo ""
 
 read -p "Show live logs? (y/N): " -n 1 -r

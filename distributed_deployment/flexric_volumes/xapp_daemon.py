@@ -121,14 +121,34 @@ def discover_onos_topology():
 # ============================================================
 # Phase 2: E2 Node Discovery + Subscription
 # ============================================================
+import ctypes
+
 def get_node_key(nid):
     """Create a hashable key from a node ID for deduplication."""
     try:
-        return (nid.plmn.mcc, nid.plmn.mnc,
-                int(nid.nb_id) if hasattr(nid, 'nb_id') else 0,
-                int(nid.cu_du_id) if hasattr(nid, 'cu_du_id') else 0)
-    except Exception:
-        return id(nid)
+        # Use the same ctypes approach as classify_e2node
+        type_obj = getattr(nid, "type", None)
+        if type_obj is not None:
+            type_obj.disown()
+            raw_ptr = int(type_obj)
+            ctype_int_ptr = ctypes.POINTER(ctypes.c_int)
+            enum_val = ctypes.cast(raw_ptr, ctype_int_ptr).contents.value
+        else:
+            enum_val = 0
+
+        mcc = nid.plmn.mcc
+        mnc = nid.plmn.mnc
+
+        # nb_id is a SWIG pointer — use its integer representation
+        try:
+            nb_id_val = int(nid.nb_id)
+        except:
+            nb_id_val = 0
+
+        return (mcc, mnc, nb_id_val, enum_val)
+    except Exception as e:
+        print(f"[WARN] get_node_key failed: {e}, using node type only")
+        return (0, 0, 0, id(nid))  # last resort
 
 
 def subscribe_node(node_idx, nid, node_type):

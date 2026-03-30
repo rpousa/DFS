@@ -15,7 +15,6 @@ echo "Machine 1 (Core PC): $MACHINE1_IP"
 echo "Machine 2 (This PC): $MACHINE2_IP"
 echo ""
 echo "Components on this machine:"
-echo "  - CU-UP (Edge - for local processing)"
 echo "  - DU (Distributed Unit with RFSimulator)"
 echo "  - 10 UEs (User Equipment)"
 echo ""
@@ -179,17 +178,17 @@ setup_edge_sctp_routing() {
     local PROJECT_PREFIX="distributed_deployment_"
 
     local DU_F1C_IP=$(docker inspect -f "{{.NetworkSettings.Networks.${PROJECT_PREFIX}f1c_net.IPAddress}}" du_1 2>/dev/null || echo "")
-    local CUUP1_CORE_IP=$(docker inspect -f "{{.NetworkSettings.Networks.${PROJECT_PREFIX}core_net.IPAddress}}" cuup_1 2>/dev/null || echo "")
-    local CUUP1_E1_IP=$(docker inspect -f "{{.NetworkSettings.Networks.${PROJECT_PREFIX}e1_net.IPAddress}}" cuup_1 2>/dev/null || echo "")
+    #local CUUP1_CORE_IP=$(docker inspect -f "{{.NetworkSettings.Networks.${PROJECT_PREFIX}core_net.IPAddress}}" cuup_1 2>/dev/null || echo "")
+    #local CUUP1_E1_IP=$(docker inspect -f "{{.NetworkSettings.Networks.${PROJECT_PREFIX}e1_net.IPAddress}}" cuup_1 2>/dev/null || echo "")
 
     # Fallback without prefix
     [ -z "$DU_F1C_IP" ] && DU_F1C_IP=$(docker inspect -f '{{.NetworkSettings.Networks.f1c_net.IPAddress}}' du_1 2>/dev/null || echo "")
-    [ -z "$CUUP1_CORE_IP" ] && CUUP1_CORE_IP=$(docker inspect -f '{{.NetworkSettings.Networks.core_net.IPAddress}}' cuup_1 2>/dev/null || echo "")
-    [ -z "$CUUP1_E1_IP" ] && CUUP1_E1_IP=$(docker inspect -f '{{.NetworkSettings.Networks.e1_net.IPAddress}}' cuup_1 2>/dev/null || echo "")
+    #[ -z "$CUUP1_CORE_IP" ] && CUUP1_CORE_IP=$(docker inspect -f '{{.NetworkSettings.Networks.core_net.IPAddress}}' cuup_1 2>/dev/null || echo "")
+    #[ -z "$CUUP1_E1_IP" ] && CUUP1_E1_IP=$(docker inspect -f '{{.NetworkSettings.Networks.e1_net.IPAddress}}' cuup_1 2>/dev/null || echo "")
 
     # Last resort: parse from docker inspect JSON
     [ -z "$DU_F1C_IP" ] && DU_F1C_IP=$(docker inspect du_1 2>/dev/null | grep -A5 'f1c_net' | grep 'IPAddress' | head -1 | grep -oP '"\K[0-9.]+' || echo "")
-    [ -z "$CUUP1_E1_IP" ] && CUUP1_E1_IP=$(docker inspect cuup_1 2>/dev/null | grep -A5 'e1_net' | grep 'IPAddress' | head -1 | grep -oP '"\K[0-9.]+' || echo "")
+    #[ -z "$CUUP1_E1_IP" ] && CUUP1_E1_IP=$(docker inspect cuup_1 2>/dev/null | grep -A5 'e1_net' | grep 'IPAddress' | head -1 | grep -oP '"\K[0-9.]+' || echo "")
 
     # Auto-detect actual DU F1-C listening port
     local DU_F1C_PORT=""
@@ -200,8 +199,8 @@ setup_edge_sctp_routing() {
 
     print_info "Container IPs and ports detected:"
     print_info "  DU     (f1c_net):  ${DU_F1C_IP:-NOT FOUND}:${DU_F1C_PORT}"
-    print_info "  CU-UP  (core_net): ${CUUP1_CORE_IP:-NOT FOUND}"
-    print_info "  CU-UP  (e1_net):   ${CUUP1_E1_IP:-NOT FOUND}"
+    #print_info "  CU-UP  (core_net): ${CUUP1_CORE_IP:-NOT FOUND}"
+    #print_info "  CU-UP  (e1_net):   ${CUUP1_E1_IP:-NOT FOUND}"
 
     # -------------------------------------------------------
     # 1. DU F1-C: Machine2:500/sctp → DU on f1c_net
@@ -246,50 +245,51 @@ setup_edge_sctp_routing() {
     # -------------------------------------------------------
     # 2. Edge CU-UP E1: Outbound SCTP to Machine 1 (192.168.0.193:38462)
     # -------------------------------------------------------
-    if [ -n "$CUUP1_E1_IP" ]; then
-        print_info ""
-        print_info "--- Edge CU-UP E1AP SCTP (outbound to Machine 1) [3GPP TS 38.463] ---"
+    # if [ -n "$CUUP1_E1_IP" ]; then
+    #     print_info ""
+    #     print_info "--- Edge CU-UP E1AP SCTP (outbound to Machine 1) [3GPP TS 38.463] ---"
 
-        # Verify the CU-UP can reach Machine 1
-        if docker exec cuup_1 ping -c 1 -W 2 ${MACHINE1_IP} > /dev/null 2>&1; then
-            print_info "  ✓ Edge CU-UP can reach Machine 1 (${MACHINE1_IP})"
-        else
-            print_warn "  ✗ Edge CU-UP cannot ping Machine 1 — checking routing..."
-            local CUUP_GW=$(docker exec cuup_1 ip route show default 2>/dev/null | awk '{print $3}' | head -1)
-            if [ -n "$CUUP_GW" ]; then
-                print_info "  CU-UP default gateway: $CUUP_GW"
-            else
-                print_warn "  CU-UP has no default route — adding one via e1_net gateway..."
-                docker exec cuup_1 ip route add default via 192.168.75.129 2>/dev/null || true
-            fi
-        fi
+    #     # Verify the CU-UP can reach Machine 1
+    #     if docker exec cuup_1 ping -c 1 -W 2 ${MACHINE1_IP} > /dev/null 2>&1; then
+    #         print_info "  ✓ Edge CU-UP can reach Machine 1 (${MACHINE1_IP})"
+    #     else
+    #         print_warn "  ✗ Edge CU-UP cannot ping Machine 1 — checking routing..."
+    #         local CUUP_GW=$(docker exec cuup_1 ip route show default 2>/dev/null | awk '{print $3}' | head -1)
+    #         if [ -n "$CUUP_GW" ]; then
+    #             print_info "  CU-UP default gateway: $CUUP_GW"
+    #         else
+    #             print_warn "  CU-UP has no default route — adding one via e1_net gateway..."
+    #             docker exec cuup_1 ip route add default via 192.168.75.129 2>/dev/null || true
+    #         fi
+    #     fi
 
-        # Ensure MASQUERADE exists for e1_net outbound traffic
-        # Check both field orderings Docker might use
-        if sudo nft list chain ip nat POSTROUTING 2>/dev/null | grep -q '192.168.75.128/26.*masquerade'; then
-            print_info "  ✓ MASQUERADE rule exists for e1_net outbound traffic"
-        else
-            print_warn "  Adding MASQUERADE for e1_net outbound traffic..."
-            sudo nft add rule ip nat POSTROUTING oifname != "br-e1" ip saddr 192.168.75.128/26 counter masquerade
-        fi
+    #     # Ensure MASQUERADE exists for e1_net outbound traffic
+    #     # Check both field orderings Docker might use
+    #     if sudo nft list chain ip nat POSTROUTING 2>/dev/null | grep -q '192.168.75.128/26.*masquerade'; then
+    #         print_info "  ✓ MASQUERADE rule exists for e1_net outbound traffic"
+    #     else
+    #         print_warn "  Adding MASQUERADE for e1_net outbound traffic..."
+    #         sudo nft add rule ip nat POSTROUTING oifname != "br-e1" ip saddr 192.168.75.128/26 counter masquerade
+    #     fi
 
-        print_info "  ✓ Edge CU-UP E1: ${CUUP1_E1_IP} → ${MACHINE1_IP}:38462/sctp (outbound)"
-    else
-        print_warn "  Edge CU-UP e1_net IP not found — skipping E1 routing check"
-    fi
+    #     print_info "  ✓ Edge CU-UP E1: ${CUUP1_E1_IP} → ${MACHINE1_IP}:38462/sctp (outbound)"
+    # else
+    #     print_warn "  Edge CU-UP e1_net IP not found — skipping E1 routing check"
+    # fi
 
     # -------------------------------------------------------
     # 3. DU + CU-UP E2AP: Outbound SCTP to FlexRIC on Machine 1 (192.168.0.193:36421)
     # -------------------------------------------------------
     print_info ""
-    print_info "--- DU + Edge CU-UP E2AP SCTP (outbound to FlexRIC on Machine 1) [O-RAN E2AP] ---"
+    #print_info "--- DU + Edge CU-UP E2AP SCTP (outbound to FlexRIC on Machine 1) [O-RAN E2AP] ---"
+    print_info "--- DU (outbound to FlexRIC on Machine 1) [O-RAN E2AP] ---"
 
     # Get DU's core_net IP (used for E2 agent outbound)
     local DU_CORE_IP=$(docker inspect -f "{{.NetworkSettings.Networks.${PROJECT_PREFIX}core_net.IPAddress}}" du_1 2>/dev/null || echo "")
     [ -z "$DU_CORE_IP" ] && DU_CORE_IP=$(docker inspect -f '{{.NetworkSettings.Networks.core_net.IPAddress}}' du_1 2>/dev/null || echo "")
 
     print_info "  DU     (core_net): ${DU_CORE_IP:-NOT FOUND}"
-    print_info "  CU-UP  (core_net): ${CUUP1_CORE_IP:-NOT FOUND}"
+    #print_info "  CU-UP  (core_net): ${CUUP1_CORE_IP:-NOT FOUND}"
 
     # --- Ensure DU can reach Machine 1 for E2AP ---
     if [ -n "$DU_CORE_IP" ]; then
@@ -308,19 +308,19 @@ setup_edge_sctp_routing() {
     fi
 
     # --- Ensure CU-UP can reach Machine 1 for E2AP ---
-    if [ -n "$CUUP1_CORE_IP" ]; then
-        if docker exec cuup_1 ping -c 1 -W 2 ${MACHINE1_IP} > /dev/null 2>&1; then
-            print_info "  ✓ CU-UP can reach Machine 1 (${MACHINE1_IP}) for E2AP"
-        else
-            print_warn "  ✗ CU-UP cannot ping Machine 1 — adding default route via core_net gateway..."
-            docker exec cuup_1 ip route add default via 192.168.61.129 2>/dev/null || true
-            if docker exec cuup_1 ping -c 1 -W 2 ${MACHINE1_IP} > /dev/null 2>&1; then
-                print_info "  ✓ CU-UP can now reach Machine 1 after route fix"
-            else
-                print_warn "  ✗ CU-UP still cannot reach Machine 1 — check routing"
-            fi
-        fi
-    fi
+    # if [ -n "$CUUP1_CORE_IP" ]; then
+    #     if docker exec cuup_1 ping -c 1 -W 2 ${MACHINE1_IP} > /dev/null 2>&1; then
+    #         print_info "  ✓ CU-UP can reach Machine 1 (${MACHINE1_IP}) for E2AP"
+    #     else
+    #         print_warn "  ✗ CU-UP cannot ping Machine 1 — adding default route via core_net gateway..."
+    #         docker exec cuup_1 ip route add default via 192.168.61.129 2>/dev/null || true
+    #         if docker exec cuup_1 ping -c 1 -W 2 ${MACHINE1_IP} > /dev/null 2>&1; then
+    #             print_info "  ✓ CU-UP can now reach Machine 1 after route fix"
+    #         else
+    #             print_warn "  ✗ CU-UP still cannot reach Machine 1 — check routing"
+    #         fi
+    #     fi
+    # fi
 
     # --- Ensure MASQUERADE exists for core_net outbound traffic ---
     # DU and CU-UP on Machine 2 use core_net (192.168.61.128/26) to reach Machine 1
@@ -333,7 +333,7 @@ setup_edge_sctp_routing() {
     fi
 
     print_info "  ✓ DU E2AP:    ${DU_CORE_IP:-?} → ${MACHINE1_IP}:36421/sctp (outbound)"
-    print_info "  ✓ CU-UP E2AP: ${CUUP1_CORE_IP:-?} → ${MACHINE1_IP}:36421/sctp (outbound)"
+    #print_info "  ✓ CU-UP E2AP: ${CUUP1_CORE_IP:-?} → ${MACHINE1_IP}:36421/sctp (outbound)"
 
     # -------------------------------------------------------
     # 4. Handle Docker inter-network isolation (DOCKER-ISOLATION-STAGE-1/2)
@@ -398,10 +398,10 @@ setup_edge_sctp_routing() {
     print_info ""
     print_info "SCTP connection summary:"
     print_info "  DU F1-C (inbound):        ${MACHINE2_IP}:500/sctp → ${DU_F1C_IP:-?}:${DU_F1C_PORT} (br-f1c) [TS 38.472]"
-    print_info "  CU-UP E1 (outbound):      ${CUUP1_E1_IP:-?} → ${MACHINE1_IP}:38462/sctp [TS 38.463]"
+    #print_info "  CU-UP E1 (outbound):      ${CUUP1_E1_IP:-?} → ${MACHINE1_IP}:38462/sctp [TS 38.463]"
     print_info "  DU F1-C (outbound to M1): ${DU_F1C_IP:-?} → ${MACHINE1_IP}:38472/sctp [TS 38.472]"
     print_info "  DU E2AP (outbound):       ${DU_CORE_IP:-?} → ${MACHINE1_IP}:36421/sctp [O-RAN E2AP]"
-    print_info "  CU-UP E2AP (outbound):    ${CUUP1_CORE_IP:-?} → ${MACHINE1_IP}:36421/sctp [O-RAN E2AP]"
+    #print_info "  CU-UP E2AP (outbound):    ${CUUP1_CORE_IP:-?} → ${MACHINE1_IP}:36421/sctp [O-RAN E2AP]"
 }
 
 verify_edge_sctp_routing() {
@@ -419,9 +419,9 @@ verify_edge_sctp_routing() {
     print_info "=== DU SCTP listening sockets ==="
     docker exec du_1 ss -Slnp 2>/dev/null || print_warn "  Could not check DU sockets (DU may still be starting)"
 
-    echo ""
-    print_info "=== Edge CU-UP SCTP sockets ==="
-    docker exec cuup_1 ss -Slnp 2>/dev/null || print_warn "  Could not check CU-UP sockets"
+    #echo ""
+    #print_info "=== Edge CU-UP SCTP sockets ==="
+    #docker exec cuup_1 ss -Slnp 2>/dev/null || print_warn "  Could not check CU-UP sockets"
 
     echo ""
     print_info "=== Testing SCTP connectivity to Machine 1 ==="
@@ -434,11 +434,11 @@ verify_edge_sctp_routing() {
             print_warn "    Ensure deploy-centraloffice.sh ran setup_sctp_routing on Machine 1"
         fi
 
-        if timeout 3 ncat --sctp ${MACHINE1_IP} 38462 < /dev/null 2>/dev/null; then
-            print_info "  ✓ E1 SCTP to Machine 1 CU-CP (${MACHINE1_IP}:38462) — REACHABLE"
-        else
-            print_warn "  ✗ E1 SCTP to Machine 1 CU-CP (${MACHINE1_IP}:38462) — NOT REACHABLE"
-            print_warn "    Ensure deploy-centraloffice.sh ran setup_sctp_routing on Machine 1"
+        # if timeout 3 ncat --sctp ${MACHINE1_IP} 38462 < /dev/null 2>/dev/null; then
+        #     print_info "  ✓ E1 SCTP to Machine 1 CU-CP (${MACHINE1_IP}:38462) — REACHABLE"
+        # else
+        #     print_warn "  ✗ E1 SCTP to Machine 1 CU-CP (${MACHINE1_IP}:38462) — NOT REACHABLE"
+        #     print_warn "    Ensure deploy-centraloffice.sh ran setup_sctp_routing on Machine 1"
         fi
     else
         print_warn "  ncat not installed — skipping SCTP connectivity test"
@@ -460,10 +460,10 @@ verify_edge_sctp_routing() {
     print_info "=== DU E2 Agent SCTP sockets ==="
     docker exec du_1 ss -Slnp 2>/dev/null | grep -i sctp || print_warn "  No DU SCTP sockets found"
 
-    echo ""
-    print_info "=== Edge CU-UP E2 Agent SCTP sockets ==="
-    docker exec cuup_1 ss -Slnp 2>/dev/null | grep -i sctp || print_warn "  No CU-UP SCTP sockets found"
-
+    # echo ""
+    # print_info "=== Edge CU-UP E2 Agent SCTP sockets ==="
+    # docker exec cuup_1 ss -Slnp 2>/dev/null | grep -i sctp || print_warn "  No CU-UP SCTP sockets found"
+     
     echo ""
 }
 
@@ -579,15 +579,15 @@ docker compose -f docker-compose-edge.yml up --no-start
 echo ""
 
 
-# Stage 1: Edge CU-UP
-print_stage "Stage 1/7: Starting Edge CU-UP..."
-docker compose -f docker-compose-edge.yml up -d cuup_1
-wait_for_service "cuup_1" 30
-sleep 10
-echo ""
+# # Stage 1: Edge CU-UP
+# print_stage "Stage 1/7: Starting Edge CU-UP..."
+# docker compose -f docker-compose-edge.yml up -d cuup_1
+# wait_for_service "cuup_1" 30
+# sleep 10
+# echo ""
 
 # Stage 2: DU with RFSimulator
-print_stage "Stage 2/7: Starting DU with RFSimulator..."
+print_stage "Stage 1/5: Starting DU with RFSimulator..."
 docker compose -f docker-compose-edge.yml up -d du_1
 wait_for_service "du_1" 30
 print_info "Waiting for DU to initialize SCTP sockets..."
@@ -604,7 +604,7 @@ echo ""
 # ==========================================
 # Stage 3: SCTP Routing Fix (THE KEY FIX)
 # ==========================================
-print_stage "Stage 3/7: Configuring SCTP routing for Edge components..."
+print_stage "Stage 2/5: Configuring SCTP routing for Edge components..."
 echo ""
 setup_edge_sctp_routing
 echo ""
@@ -615,19 +615,19 @@ echo ""
 
 
 # Stage 5: User Equipment (10 UEs)
-print_stage "Stage 5/7: Starting 10 User Equipment instances..."
+print_stage "Stage 3/5: Starting 10 User Equipment instances..."
 docker compose -f docker-compose-edge.yml up -d ue_1
 wait_for_service "ue_1" 30
 echo ""
 
 # Stage 6: Wait for UE connections
-print_stage "Stage 6/7: Waiting for UE connections..."
+print_stage "Stage 4/5: Waiting for UE connections..."
 print_info "Waiting 30 seconds for UEs to connect and register..."
 sleep 30
 echo ""
 
 # Stage 7: Check UE connections
-print_stage "Stage 7/7: Verifying UE connections..."
+print_stage "Stage 5/5: Verifying UE connections..."
 if check_ue_connections; then
     print_info "✓ All 10 UEs successfully connected!"
     echo ""
