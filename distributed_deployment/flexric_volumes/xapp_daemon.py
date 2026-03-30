@@ -4,6 +4,7 @@ import time
 import signal
 import threading
 import traceback
+import ctypes
 import xapp_sdk
 import xapp_functs
 from topology import (
@@ -23,7 +24,14 @@ ONOS_REFRESH_INTERVAL = 60   # seconds between ONOS topology refreshes
 RIC_CONNECT_RETRY = 5        # seconds between RIC connection retries
 MAX_RIC_RETRIES = 60         # max retries before giving up
 
-TYPES_ACCEPTED = ["ngran_gNB_CUUP", "ngran_gNB_DU", "ngran_gNB_CUCP","ngran_gNB_CU"]  # node types we care about for subscription
+# Node types we care about for subscription
+# ngran_gNB_CU (5) = unified CU that handles PDCP + GTP internally
+TYPES_ACCEPTED = [
+    "ngran_gNB_CUUP",   # type 10 - separate CU-UP (old architecture)
+    "ngran_gNB_DU",      # type 7  - DU
+    "ngran_gNB_CUCP",    # type 9  - separate CU-CP (old architecture)
+    "ngran_gNB_CU",      # type 5  - unified CU (NEW architecture)
+]
 
 # ============================================================
 # Global State
@@ -31,10 +39,21 @@ TYPES_ACCEPTED = ["ngran_gNB_CUUP", "ngran_gNB_DU", "ngran_gNB_CUCP","ngran_gNB_
 shutdown_event = threading.Event()
 devices = {}                    # ONOS switch topology
 node_handlers = {}              # node_idx -> {handler_key: handler}
-subscribed_nodes = set()        # set of node IDs already subscribed
+subscribed_nodes = set()        # set of node keys already subscribed
 installed_flows = set()         # set of (dev_id, teid, qfi) already installed
 storage = xapp_functs.Xapp_Metric_Storage()
 state_lock = threading.Lock()   # protects shared state
+
+# Monotonic subscription index to avoid node_idx collisions across polls
+_next_sub_idx = 0
+_sub_idx_lock = threading.Lock()
+
+def _alloc_sub_idx():
+    global _next_sub_idx
+    with _sub_idx_lock:
+        idx = _next_sub_idx
+        _next_sub_idx += 1
+        return idx
 
 def log(level, msg):
     ts = time.strftime("%Y-%m-%d %H:%M:%S")
@@ -117,78 +136,123 @@ def discover_onos_topology():
     except Exception as e:
         log("ERROR", f"ONOS topology discovery failed: {e}")
         return False
-    
+
 # ============================================================
 # Phase 2: E2 Node Discovery + Subscription
 # ============================================================
-import ctypes
 
 def get_node_key(nid):
-    """Create a hashable key from a node ID for deduplication."""
+    """
+    Create a stable, hashable key from a node ID for deduplication.
+    Uses the ctypes trick to read the enum value from the SWIG pointer,
+    plus PLMN MCC/MNC and the raw nb_id pointer value.
+    """
     try:
-        # Use the same ctypes approach as classify_e2node
+        # --- Extract node type enum via ctypes ---
         type_obj = getattr(nid, "type", None)
         if type_obj is not None:
+            # disown so Python doesn't free the C memory
             type_obj.disown()
             raw_ptr = int(type_obj)
             ctype_int_ptr = ctypes.POINTER(ctypes.c_int)
             enum_val = ctypes.cast(raw_ptr, ctype_int_ptr).contents.value
         else:
-            enum_val = 0
+            enum_val = -1
 
-        mcc = nid.plmn.mcc
-        mnc = nid.plmn.mnc
+        # --- Extract PLMN ---
+        mcc = int(nid.plmn.mcc)
+        mnc = int(nid.plmn.mnc)
 
-        # nb_id is a SWIG pointer — use its integer representation
-        try:
-            nb_id_val = int(nid.nb_id)
-        except:
+        # --- Extract nb_id as raw pointer value (stable across polls) ---
+        nb_id_obj = getattr(nid, "nb_id", None)
+        if nb_id_obj is not None:
+            try:
+                nb_id_obj.disown()
+                nb_id_val = int(nb_id_obj)
+            except Exception:
+                nb_id_val = 0
+        else:
             nb_id_val = 0
 
-        return (mcc, mnc, nb_id_val, enum_val)
+        # --- Extract cu_du_id if present ---
+        cu_du_id_obj = getattr(nid, "cu_du_id", None)
+        cu_du_val = 0
+        if cu_du_id_obj is not None:
+            try:
+                cu_du_id_obj.disown()
+                cu_du_val = int(cu_du_id_obj)
+            except Exception:
+                cu_du_val = 0
+
+        key = (mcc, mnc, nb_id_val, enum_val, cu_du_val)
+        return key
+
     except Exception as e:
-        print(f"[WARN] get_node_key failed: {e}, using node type only")
-        return (0, 0, 0, id(nid))  # last resort
+        log("WARN", f"get_node_key failed: {e}")
+        # Fallback: use enum_val only (still better than id(nid))
+        try:
+            return (0, 0, 0, enum_val, 0)
+        except Exception:
+            return (0, 0, 0, -999, 0)
 
 
-def subscribe_node(node_idx, nid, node_type):
+def subscribe_node(sub_idx, nid, node_type):
     """Subscribe to the appropriate SMs for a single E2 node."""
     global node_handlers
 
     with state_lock:
-        node_handlers[node_idx] = {'nid': nid}
+        node_handlers[sub_idx] = {'nid': nid}
 
     try:
         if node_type == "ngran_gNB_DU":
-            log("INFO", f"  Node [{node_idx}] DU: subscribing MAC + RLC")
-            storage.add_node(node_idx, node_type, ['mac', 'rlc'])
-            mac_cb = xapp_functs.MACCallback(storage, node_idx)
-            rlc_cb = xapp_functs.RLCCallback(storage, node_idx)
+            log("INFO", f"  Node [sub={sub_idx}] DU: subscribing MAC + RLC")
+            storage.add_node(sub_idx, node_type, ['mac', 'rlc'])
+            mac_cb = xapp_functs.MACCallback(storage, sub_idx)
+            rlc_cb = xapp_functs.RLCCallback(storage, sub_idx)
             with state_lock:
-                node_handlers[node_idx]['mac_hndlr'] = xapp_sdk.report_mac_sm(
+                node_handlers[sub_idx]['mac_hndlr'] = xapp_sdk.report_mac_sm(
                     nid, xapp_sdk.Interval_ms_10, mac_cb)
-                node_handlers[node_idx]['rlc_hndlr'] = xapp_sdk.report_rlc_sm(
+                node_handlers[sub_idx]['rlc_hndlr'] = xapp_sdk.report_rlc_sm(
                     nid, xapp_sdk.Interval_ms_10, rlc_cb)
 
         elif node_type == "ngran_gNB_CUUP":
-            log("INFO", f"  Node [{node_idx}] CU-UP: subscribing PDCP + GTP (TEID source)")
-            storage.add_node(node_idx, node_type, ['pdcp', 'gtp'])
-            pdcp_cb = xapp_functs.PDCPCallback(storage, node_idx)
-            gtp_cb = xapp_functs.GTPCallback(storage, node_idx)
+            log("INFO", f"  Node [sub={sub_idx}] CU-UP: subscribing PDCP + GTP (TEID source)")
+            storage.add_node(sub_idx, node_type, ['pdcp', 'gtp'])
+            pdcp_cb = xapp_functs.PDCPCallback(storage, sub_idx)
+            gtp_cb = xapp_functs.GTPCallback(storage, sub_idx)
             with state_lock:
-                node_handlers[node_idx]['pdcp_hndlr'] = xapp_sdk.report_pdcp_sm(
+                node_handlers[sub_idx]['pdcp_hndlr'] = xapp_sdk.report_pdcp_sm(
                     nid, xapp_sdk.Interval_ms_10, pdcp_cb)
-                node_handlers[node_idx]['gtp_hndlr'] = xapp_sdk.report_gtp_sm(
+                node_handlers[sub_idx]['gtp_hndlr'] = xapp_sdk.report_gtp_sm(
+                    nid, xapp_sdk.Interval_ms_10, gtp_cb)
+
+        elif node_type == "ngran_gNB_CU":
+            # ============================================================
+            # UNIFIED CU: handles both control and user plane
+            # Subscribe to PDCP + GTP (same as CU-UP) to get TEIDs
+            # ============================================================
+            log("INFO", f"  Node [sub={sub_idx}] Unified CU: subscribing PDCP + GTP (TEID source)")
+            storage.add_node(sub_idx, node_type, ['pdcp', 'gtp'])
+            pdcp_cb = xapp_functs.PDCPCallback(storage, sub_idx)
+            gtp_cb = xapp_functs.GTPCallback(storage, sub_idx)
+            with state_lock:
+                node_handlers[sub_idx]['pdcp_hndlr'] = xapp_sdk.report_pdcp_sm(
+                    nid, xapp_sdk.Interval_ms_10, pdcp_cb)
+                node_handlers[sub_idx]['gtp_hndlr'] = xapp_sdk.report_gtp_sm(
                     nid, xapp_sdk.Interval_ms_10, gtp_cb)
 
         elif node_type == "ngran_gNB_CUCP":
-            log("INFO", f"  Node [{node_idx}] CU-CP: no user-plane subscriptions")
-            storage.add_node(node_idx, node_type, [])
+            log("INFO", f"  Node [sub={sub_idx}] CU-CP: no user-plane subscriptions")
+            storage.add_node(sub_idx, node_type, [])
+
+        else:
+            log("WARN", f"  Node [sub={sub_idx}] Unknown type '{node_type}': no subscriptions")
+            storage.add_node(sub_idx, node_type, [])
 
         return True
 
     except Exception as e:
-        log("ERROR", f"  Failed to subscribe node [{node_idx}]: {e}")
+        log("ERROR", f"  Failed to subscribe node [sub={sub_idx}]: {e}")
         traceback.print_exc()
         return False
 
@@ -203,7 +267,7 @@ def poll_e2_nodes():
             return 0
 
         new_count = 0
-        for node_idx, con in enumerate(conn):
+        for raw_idx, con in enumerate(conn):
             nid = con.id
             node_key = get_node_key(nid)
 
@@ -211,22 +275,25 @@ def poll_e2_nodes():
                 continue
 
             node_type = xapp_functs.classify_e2node(nid)
-            log("INFO", f"New E2 Node [{node_idx}]: {node_type}")
+            log("INFO", f"New E2 Node [raw={raw_idx}]: {node_type} key={node_key}")
 
             if node_type in TYPES_ACCEPTED:
-                if subscribe_node(node_idx, nid, node_type):
+                sub_idx = _alloc_sub_idx()
+                if subscribe_node(sub_idx, nid, node_type):
                     subscribed_nodes.add(node_key)
                     new_count += 1
+                    log("INFO", f"  -> Subscribed as sub_idx={sub_idx}")
             else:
                 log("WARN", f"  Skipping unsupported node type: {node_type}")
-                subscribed_nodes.add(node_key)
+                subscribed_nodes.add(node_key)  # mark as seen so we don't retry
 
         return new_count
 
     except Exception as e:
         log("ERROR", f"E2 node polling failed: {e}")
+        traceback.print_exc()
         return 0
-    
+
 # ============================================================
 # Phase 3: Reactive TEID Flow Installation
 # ============================================================
@@ -292,22 +359,20 @@ def cleanup():
     with state_lock:
         handlers_copy = dict(node_handlers)
 
-    for node_idx, handlers in handlers_copy.items():
+    for sub_idx, handlers in handlers_copy.items():
         for hdlr_key, hdlr_val in handlers.items():
             if hdlr_key != 'nid':
                 try:
                     xapp_functs.handler_cleanup(hdlr_val, hdlr_key)
-                    log("INFO", f"  Removed {hdlr_key} for node {node_idx}")
+                    log("INFO", f"  Removed {hdlr_key} for node sub={sub_idx}")
                 except Exception as e:
-                    log("WARN", f"  Failed to remove {hdlr_key} for node {node_idx}: {e}")
+                    log("WARN", f"  Failed to remove {hdlr_key} for node sub={sub_idx}: {e}")
 
     try:
         xapp_sdk.try_stop()
         log("INFO", "xApp SDK stopped")
     except Exception as e:
         log("WARN", f"SDK stop failed: {e}")
-
-
 
 # ============================================================
 # Main Event Loop
@@ -369,7 +434,8 @@ def main():
 
     # ---- Initial subscription ----
     log("INFO", "Phase 4: Subscribing to initial E2 nodes...")
-    poll_e2_nodes()
+    initial = poll_e2_nodes()
+    log("INFO", f"  Initial subscription: {initial} node(s)")
 
     # ---- Main event loop ----
     log("INFO", "Phase 5: Entering main event loop")
@@ -383,7 +449,6 @@ def main():
     last_onos_refresh = time.time()
     loop_count = 0
 
-
     while not shutdown_event.is_set():
         try:
             now = time.time()
@@ -394,7 +459,7 @@ def main():
                 new_nodes = poll_e2_nodes()
                 if new_nodes > 0:
                     log("INFO", f"Subscribed to {new_nodes} new E2 node(s) "
-                                f"(total subscribed: {len(subscribed_nodes)})")
+                                f"(total unique: {len(subscribed_nodes)})")
                 last_e2_poll = now
 
             # ---- Check for new TEIDs and install flows ----
@@ -410,13 +475,26 @@ def main():
                 discover_onos_topology()
                 last_onos_refresh = now
 
-            # ---- Periodic status log ----
+            # ---- Periodic status log (every ~60s) ----
             if loop_count % 60 == 0:
                 ue_count = len(xapp_functs.GTPCallback.ue_gtp_map)
+                gtp_ind_count = xapp_functs.GTPCallback._indication_count
+                gtp_empty = xapp_functs.GTPCallback._empty_count
                 log("INFO", f"[STATUS] E2 nodes: {len(subscribed_nodes)} | "
                             f"UEs with TEIDs: {ue_count} | "
                             f"Installed flows: {len(installed_flows)} | "
-                            f"Switches: {len(devices)}")
+                            f"Switches: {len(devices)} | "
+                            f"GTP indications: {gtp_ind_count} (empty: {gtp_empty})")
+
+                # Print current TEID map
+                if xapp_functs.GTPCallback.ue_gtp_map:
+                    log("INFO", "[TEID MAP]")
+                    for rnti, tunnels in sorted(xapp_functs.GTPCallback.ue_gtp_map.items()):
+                        for t in tunnels:
+                            log("INFO", f"  RNTI={rnti:#06x} QFI={t['qfi']} "
+                                        f"TEID_gNB={t['teidgnb']:#010x} "
+                                        f"TEID_UPF={t['teidupf']:#010x} "
+                                        f"node={t['node_idx']}")
 
             # Sleep in small increments so we can respond to shutdown quickly
             shutdown_event.wait(timeout=1.0)
@@ -437,6 +515,8 @@ def main():
     log("INFO", f"  UEs discovered:      {len(xapp_functs.GTPCallback.ue_gtp_map)}")
     log("INFO", f"  Flows installed:     {len(installed_flows)}")
     log("INFO", f"  Switches:            {len(devices)}")
+    log("INFO", f"  GTP indications:     {xapp_functs.GTPCallback._indication_count}")
+    log("INFO", f"  GTP empty:           {xapp_functs.GTPCallback._empty_count}")
 
     if xapp_functs.GTPCallback.ue_gtp_map:
         log("INFO", "  UE GTP Map:")
@@ -451,5 +531,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
