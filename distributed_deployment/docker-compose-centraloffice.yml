@@ -348,8 +348,9 @@ services:
       - amf
       - upf
     command: >
-        sh -c "sleep 15 &&
-              /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem"
+          sh -c "sleep 15 &&
+             exec /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem 2>&1 | 
+             stdbuf -oL tee /opt/oai-gnb/logs/cu_stdout.log"
 
  
 # ==========================================
@@ -371,6 +372,7 @@ services:
     volumes:
       - ./configs/flexric:/usr/local/etc/flexric
       - ./logs/flexric:/usr/local/logs
+      - ./logs/cu:/usr/local/flexric/cu_logs:ro 
       - ./flexric_volumes/event_ric_watchdog.sh:/usr/local/bin/ric_watchdog.sh
       - ./flexric_volumes/xapp_daemon.py:/usr/local/flexric/xApp/python3/xapp_daemon.py
       - ./flexric_volumes/topology.py:/usr/local/flexric/xApp/python3/topology.py
