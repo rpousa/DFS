@@ -108,8 +108,8 @@ services:
                                 --log_config.phy_log_level info
                                 --log_config.mac_log_level info
 #--gNBs.[0].servingCellConfigCommon.[0].initialUplinkBWP.rach_ConfigCommon.rach_ConfigGeneric.ra_ResponseWindow 20
-    depends_on:
-      - cuup_1
+    # depends_on:
+    #   - cu 
     command: >
       sh -c "sleep 25 &&
              /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem"
