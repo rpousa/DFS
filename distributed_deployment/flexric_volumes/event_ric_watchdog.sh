@@ -72,7 +72,7 @@ while true; do
     # Also check if xApp died while RIC is still running
     if pgrep -x "nearRT-RIC" > /dev/null; then
         if [ -f "$XAPP_PID_FILE" ]; then
-            local xapp_pid=$(cat "$XAPP_PID_FILE")
+            xapp_pid=$(cat "$XAPP_PID_FILE")
             if ! kill -0 "$xapp_pid" 2>/dev/null; then
                 echo "$(date '+%Y-%m-%d %H:%M:%S') - xApp died, restarting..." >> "$WATCHDOG_LOG"
                 start_xapp
