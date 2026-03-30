@@ -340,7 +340,7 @@ services:
                                --gNBs.[0].tr_s_preference f1
                                --gNBs.[0].local_s_address 192.168.71.140
                                --gNBs.[0].local_s_portd 2153 
-                               --log_config.global_log_level info
+                               --log_config.global_log_level debug
                                --log_config.ngap_log_level debug
                                --log_config.f1u_log_level debug
 
