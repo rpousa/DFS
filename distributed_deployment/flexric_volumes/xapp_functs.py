@@ -129,56 +129,96 @@ class GTPCallback(xapp_sdk.gtp_cb):
     internal_storage = None
     internal_node_id = None
     
-    # Shared map: rnti -> [{'teidgnb': ..., 'teidupf': ..., 'qfi': ...}, ...]
     ue_gtp_map = {}
+    _indication_count = 0
+    _empty_count = 0
 
     def __init__(self, storage, node_id):
         xapp_sdk.gtp_cb.__init__(self)
         self.internal_storage = storage
         self.internal_node_id = node_id
+        self._instance_ind_count = 0
 
     def handle(self, ind):
-        if len(ind.gtp_stats) > 0:
-            t_now = time.time_ns() / 1000.0
-            t_gtp = ind.tstamp / 1.0
-            t_diff = t_now - t_gtp
+        GTPCallback._indication_count += 1
+        self._instance_ind_count += 1
 
-            # Store raw stats
-            self.internal_storage.metrics[self.internal_node_id]['gtp'].append(ind.gtp_stats)
+        try:
+            stats_len = len(ind.gtp_stats)
+        except Exception as e:
+            print(f"[GTP ERROR] node={self.internal_node_id} "
+                  f"Cannot read gtp_stats: {e}")
+            return
 
-            # Extract per-UE TEID information
-            for i in range(len(ind.gtp_stats)):
+        # Log EVERY indication for first 5, then every 100th
+        if self._instance_ind_count <= 5 or self._instance_ind_count % 100 == 0:
+            print(f"[GTP DEBUG] node={self.internal_node_id} "
+                  f"ind#{self._instance_ind_count} "
+                  f"gtp_stats_len={stats_len} "
+                  f"tstamp={ind.tstamp} "
+                  f"global_ind={GTPCallback._indication_count} "
+                  f"empty_count={GTPCallback._empty_count} "
+                  f"ue_map_size={len(GTPCallback.ue_gtp_map)}")
+
+        if stats_len == 0:
+            GTPCallback._empty_count += 1
+            # First time only: introspect the indication object
+            if GTPCallback._empty_count == 1:
+                print(f"[GTP DEBUG] FIRST EMPTY indication object:")
+                print(f"  type(ind) = {type(ind).__name__}")
+                print(f"  dir(ind) = {[x for x in dir(ind) if not x.startswith('__')]}")
+                print(f"  type(gtp_stats) = {type(ind.gtp_stats).__name__}")
+                try:
+                    print(f"  dir(gtp_stats) = {[x for x in dir(ind.gtp_stats) if not x.startswith('__')]}")
+                except:
+                    pass
+            return
+
+        t_now = time.time_ns() / 1000.0
+        t_gtp = ind.tstamp / 1.0
+        t_diff = t_now - t_gtp
+
+        # Store raw stats
+        self.internal_storage.metrics[self.internal_node_id]['gtp'].append(ind.gtp_stats)
+
+        # Extract per-UE TEID information
+        for i in range(stats_len):
+            try:
                 stat = ind.gtp_stats[i]
                 rnti = stat.rnti
                 teidgnb = stat.teidgnb
                 teidupf = stat.teidupf
                 qfi = stat.qfi
+            except Exception as e:
+                print(f"[GTP ERROR] node={self.internal_node_id} "
+                      f"Cannot read gtp_stats[{i}]: {e}")
+                continue
 
-                if rnti not in GTPCallback.ue_gtp_map:
-                    GTPCallback.ue_gtp_map[rnti] = []
+            if rnti not in GTPCallback.ue_gtp_map:
+                GTPCallback.ue_gtp_map[rnti] = []
+                print(f"[GTP] NEW UE discovered: RNTI={rnti:#06x} "
+                      f"(total UEs: {len(GTPCallback.ue_gtp_map)})")
 
-                # Update or add tunnel entry for this UE
-                tunnel_entry = {
-                    'teidgnb': teidgnb,
-                    'teidupf': teidupf,
-                    'qfi': qfi,
-                    'node_idx': self.internal_node_id,
-                    'last_seen': t_now
-                }
+            tunnel_entry = {
+                'teidgnb': teidgnb,
+                'teidupf': teidupf,
+                'qfi': qfi,
+                'node_idx': self.internal_node_id,
+                'last_seen': t_now
+            }
 
-                # Check if this tunnel already exists (same QFI)
-                found = False
-                for existing in GTPCallback.ue_gtp_map[rnti]:
-                    if existing['qfi'] == qfi:
-                        existing.update(tunnel_entry)
-                        found = True
-                        break
-                if not found:
-                    GTPCallback.ue_gtp_map[rnti].append(tunnel_entry)
+            found = False
+            for existing in GTPCallback.ue_gtp_map[rnti]:
+                if existing['qfi'] == qfi and existing['node_idx'] == self.internal_node_id:
+                    existing.update(tunnel_entry)
+                    found = True
+                    break
+            if not found:
+                GTPCallback.ue_gtp_map[rnti].append(tunnel_entry)
 
-                print(f"[GTP] RNTI={rnti:#06x} QFI={qfi} "
-                      f"TEID_gNB={teidgnb:#010x} TEID_UPF={teidupf:#010x} "
-                      f"node={self.internal_node_id}")
+            print(f"[GTP] RNTI={rnti:#06x} QFI={qfi} "
+                  f"TEID_gNB={teidgnb:#010x} TEID_UPF={teidupf:#010x} "
+                  f"node={self.internal_node_id}")
 
 ##########################
 #### Handler Handler #####

@@ -100,7 +100,7 @@ if __name__ == "__main__":
 
     print("All callbacks registered, waiting for indications...")
 
-    time.sleep(10)  # wait/run for 10 seconds
+    time.sleep(300)  # wait/run for 10 seconds
 
     #print(storage)
     # print("===================================SET UDP FLOW===================================")
