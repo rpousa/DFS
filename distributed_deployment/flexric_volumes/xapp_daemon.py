@@ -144,43 +144,52 @@ def discover_onos_topology():
 def get_node_key(nid):
     """
     Create a stable, hashable key from a node ID for deduplication.
-    Uses the ctypes trick to read the enum value from the SWIG pointer,
-    plus PLMN MCC/MNC and the raw nb_id pointer value.
+    
+    The SWIG wrappers return heap-allocated proxy objects for nb_id, type,
+    and cu_du_id. Their raw pointer addresses change every call to
+    conn_e2_nodes(). We must dereference them to get the actual values.
     """
     try:
-        # --- Extract node type enum via ctypes ---
+        # --- Extract node type enum (works, already proven) ---
+        enum_val = -1
         type_obj = getattr(nid, "type", None)
         if type_obj is not None:
-            # disown so Python doesn't free the C memory
             type_obj.disown()
             raw_ptr = int(type_obj)
             ctype_int_ptr = ctypes.POINTER(ctypes.c_int)
             enum_val = ctypes.cast(raw_ptr, ctype_int_ptr).contents.value
-        else:
-            enum_val = -1
 
-        # --- Extract PLMN ---
+        # --- Extract PLMN (these are plain integers, no pointer issue) ---
         mcc = int(nid.plmn.mcc)
         mnc = int(nid.plmn.mnc)
 
-        # --- Extract nb_id as raw pointer value (stable across polls) ---
+        # --- Extract nb_id by dereferencing the pointer ---
+        # nb_id is e2ap_gnb_id_t* which contains a uint32_t (or similar)
+        # The struct layout is: { uint32_t nb_id; ... } or just a plain int
+        # We dereference it as a uint32_t to get the actual gNB ID value
+        nb_id_val = 0
         nb_id_obj = getattr(nid, "nb_id", None)
         if nb_id_obj is not None:
             try:
                 nb_id_obj.disown()
-                nb_id_val = int(nb_id_obj)
+                raw_ptr = int(nb_id_obj)
+                if raw_ptr != 0:
+                    # e2ap_gnb_id_t first field is the nb_id value (uint32_t)
+                    ctype_uint32_ptr = ctypes.POINTER(ctypes.c_uint32)
+                    nb_id_val = ctypes.cast(raw_ptr, ctype_uint32_ptr).contents.value
             except Exception:
                 nb_id_val = 0
-        else:
-            nb_id_val = 0
 
-        # --- Extract cu_du_id if present ---
-        cu_du_id_obj = getattr(nid, "cu_du_id", None)
+        # --- Extract cu_du_id similarly ---
         cu_du_val = 0
+        cu_du_id_obj = getattr(nid, "cu_du_id", None)
         if cu_du_id_obj is not None:
             try:
                 cu_du_id_obj.disown()
-                cu_du_val = int(cu_du_id_obj)
+                raw_ptr = int(cu_du_id_obj)
+                if raw_ptr != 0:
+                    ctype_uint32_ptr = ctypes.POINTER(ctypes.c_uint32)
+                    cu_du_val = ctypes.cast(raw_ptr, ctype_uint32_ptr).contents.value
             except Exception:
                 cu_du_val = 0
 
@@ -189,70 +198,52 @@ def get_node_key(nid):
 
     except Exception as e:
         log("WARN", f"get_node_key failed: {e}")
-        # Fallback: use enum_val only (still better than id(nid))
-        try:
-            return (0, 0, 0, enum_val, 0)
-        except Exception:
-            return (0, 0, 0, -999, 0)
+        return (0, 0, 0, -999, 0)
 
 
-def subscribe_node(sub_idx, nid, node_type):
+def subscribe_node(node_idx, nid, node_type):
     """Subscribe to the appropriate SMs for a single E2 node."""
     global node_handlers
 
     with state_lock:
-        node_handlers[sub_idx] = {'nid': nid}
+        node_handlers[node_idx] = {'nid': nid}
 
     try:
         if node_type == "ngran_gNB_DU":
-            log("INFO", f"  Node [sub={sub_idx}] DU: subscribing MAC + RLC")
-            storage.add_node(sub_idx, node_type, ['mac', 'rlc'])
-            mac_cb = xapp_functs.MACCallback(storage, sub_idx)
-            rlc_cb = xapp_functs.RLCCallback(storage, sub_idx)
+            log("INFO", f"  Node [{node_idx}] DU: subscribing MAC + RLC")
+            storage.add_node(node_idx, node_type, ['mac', 'rlc'])
+            mac_cb = xapp_functs.MACCallback(storage, node_idx)
+            rlc_cb = xapp_functs.RLCCallback(storage, node_idx)
             with state_lock:
-                node_handlers[sub_idx]['mac_hndlr'] = xapp_sdk.report_mac_sm(
+                node_handlers[node_idx]['mac_hndlr'] = xapp_sdk.report_mac_sm(
                     nid, xapp_sdk.Interval_ms_10, mac_cb)
-                node_handlers[sub_idx]['rlc_hndlr'] = xapp_sdk.report_rlc_sm(
+                node_handlers[node_idx]['rlc_hndlr'] = xapp_sdk.report_rlc_sm(
                     nid, xapp_sdk.Interval_ms_10, rlc_cb)
 
-        elif node_type == "ngran_gNB_CUUP":
-            log("INFO", f"  Node [sub={sub_idx}] CU-UP: subscribing PDCP + GTP (TEID source)")
-            storage.add_node(sub_idx, node_type, ['pdcp', 'gtp'])
-            pdcp_cb = xapp_functs.PDCPCallback(storage, sub_idx)
-            gtp_cb = xapp_functs.GTPCallback(storage, sub_idx)
+        elif node_type in ("ngran_gNB_CUUP", "ngran_gNB_CU"):
+            label = "CU-UP" if node_type == "ngran_gNB_CUUP" else "Unified CU"
+            log("INFO", f"  Node [{node_idx}] {label}: subscribing PDCP + GTP (TEID source)")
+            storage.add_node(node_idx, node_type, ['pdcp', 'gtp'])
+            pdcp_cb = xapp_functs.PDCPCallback(storage, node_idx)
+            gtp_cb = xapp_functs.GTPCallback(storage, node_idx)
             with state_lock:
-                node_handlers[sub_idx]['pdcp_hndlr'] = xapp_sdk.report_pdcp_sm(
+                node_handlers[node_idx]['pdcp_hndlr'] = xapp_sdk.report_pdcp_sm(
                     nid, xapp_sdk.Interval_ms_10, pdcp_cb)
-                node_handlers[sub_idx]['gtp_hndlr'] = xapp_sdk.report_gtp_sm(
-                    nid, xapp_sdk.Interval_ms_10, gtp_cb)
-
-        elif node_type == "ngran_gNB_CU":
-            # ============================================================
-            # UNIFIED CU: handles both control and user plane
-            # Subscribe to PDCP + GTP (same as CU-UP) to get TEIDs
-            # ============================================================
-            log("INFO", f"  Node [sub={sub_idx}] Unified CU: subscribing PDCP + GTP (TEID source)")
-            storage.add_node(sub_idx, node_type, ['pdcp', 'gtp'])
-            pdcp_cb = xapp_functs.PDCPCallback(storage, sub_idx)
-            gtp_cb = xapp_functs.GTPCallback(storage, sub_idx)
-            with state_lock:
-                node_handlers[sub_idx]['pdcp_hndlr'] = xapp_sdk.report_pdcp_sm(
-                    nid, xapp_sdk.Interval_ms_10, pdcp_cb)
-                node_handlers[sub_idx]['gtp_hndlr'] = xapp_sdk.report_gtp_sm(
+                node_handlers[node_idx]['gtp_hndlr'] = xapp_sdk.report_gtp_sm(
                     nid, xapp_sdk.Interval_ms_10, gtp_cb)
 
         elif node_type == "ngran_gNB_CUCP":
-            log("INFO", f"  Node [sub={sub_idx}] CU-CP: no user-plane subscriptions")
-            storage.add_node(sub_idx, node_type, [])
+            log("INFO", f"  Node [{node_idx}] CU-CP: no user-plane subscriptions")
+            storage.add_node(node_idx, node_type, [])
 
         else:
-            log("WARN", f"  Node [sub={sub_idx}] Unknown type '{node_type}': no subscriptions")
-            storage.add_node(sub_idx, node_type, [])
+            log("WARN", f"  Node [{node_idx}] Unknown type '{node_type}': skipping")
+            storage.add_node(node_idx, node_type, [])
 
         return True
 
     except Exception as e:
-        log("ERROR", f"  Failed to subscribe node [sub={sub_idx}]: {e}")
+        log("ERROR", f"  Failed to subscribe node [{node_idx}]: {e}")
         traceback.print_exc()
         return False
 
