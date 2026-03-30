@@ -439,7 +439,7 @@ verify_edge_sctp_routing() {
         # else
         #     print_warn "  ✗ E1 SCTP to Machine 1 CU-CP (${MACHINE1_IP}:38462) — NOT REACHABLE"
         #     print_warn "    Ensure deploy-centraloffice.sh ran setup_sctp_routing on Machine 1"
-        fi
+        #fi
     else
         print_warn "  ncat not installed — skipping SCTP connectivity test"
         print_warn "  Install with: sudo apt install ncat"
