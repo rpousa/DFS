@@ -185,6 +185,8 @@ def subscribe_node(node_idx, nid, node_type):
             mac_cb = xapp_functs.MACCallback(storage, node_idx)
             rlc_cb = xapp_functs.RLCCallback(storage, node_idx)
             with state_lock:
+                node_handlers[node_idx]['mac_cb_ref'] = mac_cb      # PREVENT GC
+                node_handlers[node_idx]['rlc_cb_ref'] = rlc_cb      # PREVENT GC
                 node_handlers[node_idx]['mac_hndlr'] = xapp_sdk.report_mac_sm(
                     nid, xapp_sdk.Interval_ms_10, mac_cb)
                 node_handlers[node_idx]['rlc_hndlr'] = xapp_sdk.report_rlc_sm(
@@ -200,6 +202,8 @@ def subscribe_node(node_idx, nid, node_type):
             pdcp_cb = xapp_functs.PDCPCallback(storage, node_idx)
             gtp_cb = xapp_functs.GTPCallback(storage, node_idx)
             with state_lock:
+                node_handlers[node_idx]['pdcp_cb_ref'] = pdcp_cb    # PREVENT GC
+                node_handlers[node_idx]['gtp_cb_ref'] = gtp_cb      # PREVENT GC
                 node_handlers[node_idx]['pdcp_hndlr'] = xapp_sdk.report_pdcp_sm(
                     nid, xapp_sdk.Interval_ms_10, pdcp_cb)
                 node_handlers[node_idx]['gtp_hndlr'] = xapp_sdk.report_gtp_sm(
