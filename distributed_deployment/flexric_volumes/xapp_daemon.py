@@ -413,27 +413,53 @@ def main():
                 last_onos_refresh = now
 
             # Status log every ~10s
+                        # Status log every ~30s
             if loop_count % 10 == 0:
-                ue_count = len(xapp_functs.GTPCallback.ue_gtp_map)
+                mac_ue_count = len(xapp_functs.MACCallback.ue_mac_map)
+                mac_ind = xapp_functs.MACCallback._indication_count
+                pdcp_ue_count = len(xapp_functs.PDCPCallback.ue_pdcp_map)
+                pdcp_ind = xapp_functs.PDCPCallback._indication_count
+                gtp_ue_count = len(xapp_functs.GTPCallback.ue_gtp_map)
                 gtp_ind = xapp_functs.GTPCallback._indication_count
                 gtp_empty = xapp_functs.GTPCallback._empty_count
-                log("INFO", f"[STATUS] E2 nodes: {len(subscribed_nodes)} | "
-                            f"UEs with TEIDs: {ue_count} | "
-                            f"Installed flows: {len(installed_flows)} | "
-                            f"Switches: {len(devices)} | "
-                            f"GTP indications: {gtp_ind} (empty: {gtp_empty})")
 
-                # Print TEID map
+                log("INFO", f"[STATUS] E2 nodes: {len(subscribed_nodes)} | "
+                            f"MAC UEs: {mac_ue_count} (ind: {mac_ind}) | "
+                            f"PDCP UEs: {pdcp_ue_count} (ind: {pdcp_ind}) | "
+                            f"GTP UEs: {gtp_ue_count} (ind: {gtp_ind}, empty: {gtp_empty}) | "
+                            f"Flows: {len(installed_flows)} | "
+                            f"Switches: {len(devices)}")
+
+                # Print MAC UE map
+                if xapp_functs.MACCallback.ue_mac_map:
+                    log("INFO", "[MAC UE MAP]")
+                    for rnti, s in sorted(xapp_functs.MACCallback.ue_mac_map.items()):
+                        log("INFO", f"  RNTI={rnti:#06x} "
+                                    f"DL_TBS={s['dl_curr_tbs']} UL_TBS={s['ul_curr_tbs']} "
+                                    f"DL_RB={s['dl_sched_rb']} UL_RB={s['ul_sched_rb']} "
+                                    f"SNR={s['pusch_snr']:.1f} "
+                                    f"DL_MCS={s['dl_mcs1']} UL_MCS={s['ul_mcs1']} "
+                                    f"CQI={s['wb_cqi']} BSR={s['bsr']}")
+
+                # Print PDCP UE map
+                if xapp_functs.PDCPCallback.ue_pdcp_map:
+                    log("INFO", "[PDCP UE MAP]")
+                    for rnti, bearers in sorted(xapp_functs.PDCPCallback.ue_pdcp_map.items()):
+                        for b in bearers:
+                            log("INFO", f"  RNTI={rnti:#06x} RBID={b['rbid']} "
+                                        f"TX={b['txpdu_bytes']}B RX={b['rxpdu_bytes']}B "
+                                        f"TX_SDU={b['txsdu_bytes']}B RX_SDU={b['rxsdu_bytes']}B")
+
+                # Print GTP/TEID map (will be empty with unified CU)
                 if xapp_functs.GTPCallback.ue_gtp_map:
                     log("INFO", "[TEID MAP]")
                     for rnti, tunnels in sorted(xapp_functs.GTPCallback.ue_gtp_map.items()):
                         for t in tunnels:
                             log("INFO", f"  RNTI={rnti:#06x} QFI={t['qfi']} "
                                         f"TEID_gNB={t['teidgnb']:#010x} "
-                                        f"TEID_UPF={t['teidupf']:#010x} "
-                                        f"node={t['node_idx']}")
-                else:
-                    log("INFO", "[TEID MAP] (empty — no UEs with GTP tunnels yet)")
+                                        f"TEID_UPF={t['teidupf']:#010x}")
+                elif gtp_ind == 0:
+                    log("INFO", "[TEID MAP] GTP SM not delivering data (unified CU limitation)")
 
             shutdown_event.wait(timeout=1.0)
 

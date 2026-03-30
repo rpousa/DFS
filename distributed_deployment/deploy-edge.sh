@@ -344,14 +344,14 @@ setup_edge_sctp_routing() {
     if sudo nft list chain ip filter DOCKER-ISOLATION-STAGE-1 2>/dev/null | grep -q "jump DOCKER-ISOLATION-STAGE-2"; then
         print_info "  Docker isolation chains detected"
 
-        # Allow E1 SCTP from br-e1 to leave (outbound to Machine 1 CU-CP)
-        if ! sudo nft list chain ip filter DOCKER-ISOLATION-STAGE-1 2>/dev/null | grep -q 'iifname "br-e1" meta l4proto sctp.*accept'; then
-            print_info "  Adding SCTP bypass for br-e1 (E1AP outbound)..."
-            sudo nft insert rule ip filter DOCKER-ISOLATION-STAGE-1 \
-                iifname "br-e1" meta l4proto sctp counter accept
-        else
-            print_info "  ✓ SCTP bypass for br-e1 already exists"
-        fi
+        # # Allow E1 SCTP from br-e1 to leave (outbound to Machine 1 CU-CP)
+        # if ! sudo nft list chain ip filter DOCKER-ISOLATION-STAGE-1 2>/dev/null | grep -q 'iifname "br-e1" meta l4proto sctp.*accept'; then
+        #     print_info "  Adding SCTP bypass for br-e1 (E1AP outbound)..."
+        #     sudo nft insert rule ip filter DOCKER-ISOLATION-STAGE-1 \
+        #         iifname "br-e1" meta l4proto sctp counter accept
+        # else
+        #     print_info "  ✓ SCTP bypass for br-e1 already exists"
+        # fi
 
         # Allow F1-C SCTP from br-f1c to leave (outbound to Machine 1 CU-CP)
         if ! sudo nft list chain ip filter DOCKER-ISOLATION-STAGE-1 2>/dev/null | grep -q 'iifname "br-f1c" meta l4proto sctp.*accept'; then
