@@ -33,35 +33,6 @@ class Xapp_Metric_Storage:
 #### CALLBACKS #####
 ####################
 
-#  MACCallback class is defined and derived from C++ class mac_cb
-class MACCallback(xapp_sdk.mac_cb):
-    internal_storage = None
-    internal_node_id = None
-    # Define Python class 'constructor'
-    def __init__(self, storage, node_id):
-        # Call C++ base class constructor
-        xapp_sdk.mac_cb.__init__(self)
-        self.internal_storage = storage
-        self.internal_node_id = node_id
-
-    # Override C++ method: virtual void handle(swig_mac_ind_msg_t a) = 0;
-    def handle(self, ind):
-        #print("MAC handle called")
-        # dir(ind) = ['__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__',
-        #            '__format__', '__ge__', '__getattribute__', '__gt__', '__hash__', '__init__',
-        #            '__init_subclass__', '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__',
-        #            '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__',
-        #            '__swig_destroy__', '__weakref__', 'this', 'thisown', 'tstamp', 'ue_stats']
-        #print(dir(ind.ue_stats))
-        if len(ind.ue_stats) > 0:
-            t_now = time.time_ns() / 1000.0
-            t_mac = ind.tstamp / 1.0
-            t_diff = t_now - t_mac
-            self.internal_storage.metrics[self.internal_node_id]['mac'].append(ind.ue_stats)
-            # print('MAC Indication tstamp = ' + str(t_mac) + ' latency = ' + str(t_diff) + ' μs')
-            # print('MAC rnti = ' + str(ind.ue_stats[0].rnti))
-
-
 
 #  RLCCallback class is defined and derived from C++ class mac_cb
 class RLCCallback(xapp_sdk.rlc_cb):
@@ -94,34 +65,152 @@ class RLCCallback(xapp_sdk.rlc_cb):
 
 
 
-# PDCPCallback class is defined and derived from C++ class pdcp_cb
+class MACCallback(xapp_sdk.mac_cb):
+    # Class-level UE tracking
+    ue_mac_map = {}        # rnti -> latest mac stats dict
+    _indication_count = 0
+    _empty_count = 0
+
+    def __init__(self, storage, node_id):
+        xapp_sdk.mac_cb.__init__(self)
+        self.internal_storage = storage
+        self.internal_node_id = node_id
+        self._instance_ind_count = 0
+
+    def handle(self, ind):
+        MACCallback._indication_count += 1
+        self._instance_ind_count += 1
+
+        if len(ind.ue_stats) > 0:
+            t_now = time.time_ns() / 1000.0
+            t_mac = ind.tstamp / 1.0
+            self.internal_storage.metrics[self.internal_node_id]['mac'].append(ind.ue_stats)
+
+            for i in range(len(ind.ue_stats)):
+                try:
+                    ue = ind.ue_stats[i]
+                    rnti = ue.rnti
+
+                    stats = {
+                        'rnti': rnti,
+                        'dl_aggr_tbs': ue.dl_aggr_tbs,
+                        'ul_aggr_tbs': ue.ul_aggr_tbs,
+                        'dl_curr_tbs': ue.dl_curr_tbs,
+                        'ul_curr_tbs': ue.ul_curr_tbs,
+                        'dl_sched_rb': ue.dl_sched_rb,
+                        'ul_sched_rb': ue.ul_sched_rb,
+                        'pusch_snr': ue.pusch_snr,
+                        'pucch_snr': ue.pucch_snr,
+                        'dl_mcs1': ue.dl_mcs1,
+                        'ul_mcs1': ue.ul_mcs1,
+                        'dl_bler': ue.dl_bler,
+                        'ul_bler': ue.ul_bler,
+                        'bsr': ue.bsr,
+                        'phr': ue.phr,
+                        'wb_cqi': ue.wb_cqi,
+                        'frame': ue.frame,
+                        'slot': ue.slot,
+                        'node_idx': self.internal_node_id,
+                        'last_seen': t_now,
+                    }
+
+                    is_new = rnti not in MACCallback.ue_mac_map
+                    MACCallback.ue_mac_map[rnti] = stats
+
+                    if is_new:
+                        print(f"[MAC] NEW UE: RNTI={rnti:#06x} "
+                              f"DL_TBS={ue.dl_curr_tbs} UL_TBS={ue.ul_curr_tbs} "
+                              f"PUSCH_SNR={ue.pusch_snr:.1f} "
+                              f"DL_MCS={ue.dl_mcs1} UL_MCS={ue.ul_mcs1} "
+                              f"(total UEs: {len(MACCallback.ue_mac_map)})",
+                              flush=True)
+
+                except Exception as e:
+                    print(f"[MAC ERROR] node={self.internal_node_id} ue[{i}]: {e}",
+                          flush=True)
+
+            # Log first few + periodic
+            if self._instance_ind_count <= 3 or self._instance_ind_count % 500 == 0:
+                print(f"[MAC DEBUG] node={self.internal_node_id} "
+                      f"ind#{self._instance_ind_count} "
+                      f"ue_count={len(ind.ue_stats)} "
+                      f"total_ues_seen={len(MACCallback.ue_mac_map)}",
+                      flush=True)
+        else:
+            MACCallback._empty_count += 1
+
+
 class PDCPCallback(xapp_sdk.pdcp_cb):
-    internal_storage = None
-    internal_node_id = None
-    
+    # Class-level UE tracking
+    ue_pdcp_map = {}       # rnti -> list of bearer stats
+    _indication_count = 0
+    _empty_count = 0
+
     def __init__(self, storage, node_id):
         xapp_sdk.pdcp_cb.__init__(self)
         self.internal_storage = storage
         self.internal_node_id = node_id
+        self._instance_ind_count = 0
 
-   
     def handle(self, ind):
-        #print("PDCP handle called")
-        #dir(ind) = ['__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', 
-        #           '__format__', '__ge__', '__getattribute__', '__gt__', '__hash__', '__init__', 
-        #           '__init_subclass__', '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', 
-        #           '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__',
-        #            '__swig_destroy__', '__weakref__', 'rb_stats', 'this', 'thisown', 'tstamp']
-        #print(dir(ind.rb_stats))
+        PDCPCallback._indication_count += 1
+        self._instance_ind_count += 1
 
         if len(ind.rb_stats) > 0:
             t_now = time.time_ns() / 1000.0
-            t_pdcp = ind.tstamp / 1.0
-            t_diff = t_now - t_pdcp
-            #print(ind)
             self.internal_storage.metrics[self.internal_node_id]['pdcp'].append(ind.rb_stats)
-            #print('PDCP Indication tstamp = ' + str(ind.tstamp) + ' latency = ' + str(t_diff) + ' μs')
-            #print('PDCP rnti = '+ str(ind.rb_stats[0].rnti))
+
+            for i in range(len(ind.rb_stats)):
+                try:
+                    rb = ind.rb_stats[i]
+                    rnti = rb.rnti
+
+                    bearer = {
+                        'rnti': rnti,
+                        'rbid': rb.rbid,
+                        'mode': rb.mode,
+                        'txpdu_pkts': rb.txpdu_pkts,
+                        'txpdu_bytes': rb.txpdu_bytes,
+                        'rxpdu_pkts': rb.rxpdu_pkts,
+                        'rxpdu_bytes': rb.rxpdu_bytes,
+                        'txsdu_pkts': rb.txsdu_pkts,
+                        'txsdu_bytes': rb.txsdu_bytes,
+                        'rxsdu_pkts': rb.rxsdu_pkts,
+                        'rxsdu_bytes': rb.rxsdu_bytes,
+                        'node_idx': self.internal_node_id,
+                        'last_seen': t_now,
+                    }
+
+                    if rnti not in PDCPCallback.ue_pdcp_map:
+                        PDCPCallback.ue_pdcp_map[rnti] = []
+                        print(f"[PDCP] NEW UE: RNTI={rnti:#06x} "
+                              f"RBID={rb.rbid} mode={rb.mode} "
+                              f"TX={rb.txpdu_bytes}B RX={rb.rxpdu_bytes}B "
+                              f"(total UEs: {len(PDCPCallback.ue_pdcp_map)})",
+                              flush=True)
+
+                    # Update or add bearer
+                    found = False
+                    for existing in PDCPCallback.ue_pdcp_map[rnti]:
+                        if existing['rbid'] == rb.rbid:
+                            existing.update(bearer)
+                            found = True
+                            break
+                    if not found:
+                        PDCPCallback.ue_pdcp_map[rnti].append(bearer)
+
+                except Exception as e:
+                    print(f"[PDCP ERROR] node={self.internal_node_id} rb[{i}]: {e}",
+                          flush=True)
+
+            if self._instance_ind_count <= 3 or self._instance_ind_count % 500 == 0:
+                print(f"[PDCP DEBUG] node={self.internal_node_id} "
+                      f"ind#{self._instance_ind_count} "
+                      f"rb_count={len(ind.rb_stats)} "
+                      f"total_ues_seen={len(PDCPCallback.ue_pdcp_map)}",
+                      flush=True)
+        else:
+            PDCPCallback._empty_count += 1
 
 
 # GTPCallback class is defined and derived from C++ class gtp_cb
