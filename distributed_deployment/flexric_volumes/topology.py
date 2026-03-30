@@ -145,6 +145,7 @@ def set_udp_flow_queue(onos_url, interface, device_id, tunnelID=0x1234, queue_id
         f"{onos_url}/flows/{device_id}"
     ]
 
+
     result_flow_setup = subprocess.run(cmd, capture_output=True, text=True)
     return result_flow_setup
 

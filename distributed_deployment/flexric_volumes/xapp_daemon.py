@@ -363,6 +363,7 @@ def main():
     last_onos_refresh = time.time()
     loop_count = 0
 
+
     while not shutdown_event.is_set():
         try:
             now = time.time()
