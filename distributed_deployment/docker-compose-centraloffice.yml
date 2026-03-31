@@ -342,6 +342,7 @@ services:
                                --gNBs.[0].local_s_portd 2153 
                                --log_config.global_log_level debug
                                --log_config.ngap_log_level debug
+                               --log_config.gtpu_log_level debug
                                --log_config.f1u_log_level debug
 
     depends_on:
