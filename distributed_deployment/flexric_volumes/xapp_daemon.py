@@ -1,24 +1,14 @@
 #!/usr/bin/env python3
 """
-xapp_daemon.py - FlexRIC xApp with TEID parsing from CU log files.
+xapp_daemon.py - FlexRIC xApp with F1-U TEID parsing from CU log files.
 
-This xApp:
-1. Connects to nearRT-RIC and subscribes to E2 nodes (DU, CU)
-2. Discovers ONOS SDN topology
-3. Parses CU log files for GTP-U TEID information (NO Docker socket needed)
-4. Installs OpenFlow rules in ONOS based on discovered TEIDs
-
-TEID Parsing Method:
-- CU writes stdout to /opt/oai-gnb/logs/cu_stdout.log (via tee)
-- FlexRIC mounts ./logs/cu:/usr/local/flexric/cu_logs:ro
-- We parse cu_stdout.log for [GTPU] tunnel Create/Update messages
-- We parse nrRRC_stats.log for UE RNTI mapping
-- NO Docker socket required!
+This version ONLY captures F1-U TEIDs (CU ↔ DU), NOT N3 TEIDs (CU ↔ UPF).
 """
 
 import os
 import sys
 import re
+import json
 import subprocess
 import time
 import signal
@@ -49,9 +39,20 @@ CU_LOGS_DIR = "/usr/local/flexric/cu_logs"
 CU_STDOUT_LOG = f"{CU_LOGS_DIR}/cu_stdout.log"
 CU_RRC_STATS_LOG = f"{CU_LOGS_DIR}/nrRRC_stats.log"
 
-# DU and UPF IPs for tunnel type identification
+# ============================================================
+# F1-U IDENTIFICATION
+# ============================================================
+# DU's F1-U IP address - tunnels to this address are F1-U
 DU_F1U_IP = "192.168.74.151"
+
+# UPF's N3 IP address - tunnels to this address are N3 (IGNORE)
 UPF_N3_IP = "192.168.71.134"
+
+# F1-U instance ID (port 2153) - alternative filter method
+F1U_INSTANCE_ID = "93"
+
+# N3 instance ID (port 2152) - we ignore these
+N3_INSTANCE_ID = "92"
 
 TYPES_ACCEPTED = [
     "ngran_gNB_CUUP",
@@ -71,10 +72,12 @@ installed_flows = set()
 storage = xapp_functs.Xapp_Metric_Storage()
 state_lock = threading.Lock()
 
-# TEID state parsed from CU logs
-parsed_tunnels = {}     # cu_ue_id -> list of tunnel dicts
+# TEID state - F1-U ONLY
+f1u_tunnels = {}        # cu_ue_id -> list of F1-U tunnel dicts
 parsed_ue_rnti = {}     # cu_ue_id -> {rnti, du_ue_id, ...}
-_log_file_position = 0  # Track position in log file for incremental reading
+_log_file_position = 0
+_log_file_inode = None
+_last_file_size = 0
 
 
 def log(level, msg):
@@ -95,45 +98,94 @@ signal.signal(signal.SIGTERM, signal_handler)
 
 
 # ============================================================
-# CU Log TEID Parser (FILE-BASED - NO DOCKER SOCKET)
+# F1-U TEID Parser (ONLY F1-U, NOT N3)
 # ============================================================
 
-# Regex patterns for CU log lines
+# Regex patterns - now capture instance ID [XX]
+# [GTPU] [93] UE ID 1: Create tunnel TEID incoming 0xf949d61a outgoing 0xffff to remote IPv4 0.0.0.0
 TUNNEL_CREATE_RE = re.compile(
+    r'\[GTPU\]\s+(?:I\s+)?\[(\d+)\]\s+UE ID (\d+): Create tunnel '
+    r'TEID incoming (0x[0-9a-fA-F]+) outgoing (0x[0-9a-fA-F]+) '
+    r'to remote IPv4 ([\d.]+)',
+    re.IGNORECASE
+)
+
+# [GTPU] [93] UE ID 1: Update tunnel TEID incoming 0xf949d61a outgoing 0xae95307b to remote IPv4 192.168.74.151
+TUNNEL_UPDATE_RE = re.compile(
+    r'\[GTPU\]\s+(?:I\s+)?\[(\d+)\]\s+UE ID (\d+): Update tunnel '
+    r'TEID incoming (0x[0-9a-fA-F]+) outgoing (0x[0-9a-fA-F]+) '
+    r'to remote IPv4 ([\d.]+)',
+    re.IGNORECASE
+)
+
+# Fallback patterns without instance ID (for different log formats)
+TUNNEL_CREATE_FALLBACK_RE = re.compile(
     r'\[GTPU\].*UE ID (\d+): Create tunnel '
     r'TEID incoming (0x[0-9a-fA-F]+) outgoing (0x[0-9a-fA-F]+) '
     r'to remote IPv4 ([\d.]+)',
     re.IGNORECASE
 )
-TUNNEL_UPDATE_RE = re.compile(
+
+TUNNEL_UPDATE_FALLBACK_RE = re.compile(
     r'\[GTPU\].*UE ID (\d+): Update tunnel '
     r'TEID incoming (0x[0-9a-fA-F]+) outgoing (0x[0-9a-fA-F]+) '
     r'to remote IPv4 ([\d.]+)',
     re.IGNORECASE
 )
+
+# RRC stats for RNTI mapping
 RRC_STATS_RE = re.compile(
     r'UE (\d+) CU UE ID (\d+) DU UE ID (\d+) RNTI ([0-9a-fA-F]+)',
     re.IGNORECASE
 )
-BEARER_SETUP_RE = re.compile(
-    r'\[NR_RRC\].*Bearer Context Setup: PDU Session ID=(\d+), '
-    r'incoming TEID=(0x[0-9a-fA-F]+), Addr=([\d.]+)',
-    re.IGNORECASE
-)
+
+
+def is_f1u_tunnel(instance_id, remote_addr):
+    """
+    Determine if a tunnel is F1-U (to DU) based on instance ID or remote address.
+    
+    Returns True for F1-U tunnels, False for N3 tunnels.
+    """
+    # Method 1: Check instance ID (93 = F1-U, 92 = N3)
+    if instance_id:
+        if instance_id == F1U_INSTANCE_ID:
+            return True
+        if instance_id == N3_INSTANCE_ID:
+            return False
+    
+    # Method 2: Check remote address
+    if remote_addr == DU_F1U_IP:
+        return True
+    if remote_addr == UPF_N3_IP:
+        return False
+    
+    # Method 3: Pending F1-U tunnels have remote 0.0.0.0 and outgoing 0xffff
+    if remote_addr == "0.0.0.0":
+        return True  # Likely F1-U pending
+    
+    return False
+
+
+def reset_teid_state():
+    """Reset F1-U TEID parsing state (called on file truncation/restart)."""
+    global f1u_tunnels, parsed_ue_rnti, _log_file_position, _last_file_size
+    log("WARN", "[TEID] Resetting F1-U TEID state (file truncated or CU restarted)")
+    f1u_tunnels = {}
+    parsed_ue_rnti = {}
+    _log_file_position = 0
+    _last_file_size = 0
 
 
 def parse_rrc_stats():
-    """
-    Parse nrRRC_stats.log for UE RNTI mapping.
-    This file is written by the CU and contains UE ID -> RNTI mappings.
-    """
+    """Parse nrRRC_stats.log for UE RNTI mapping."""
     global parsed_ue_rnti
     
     try:
+        if not os.path.exists(CU_RRC_STATS_LOG):
+            return 0
         with open(CU_RRC_STATS_LOG, 'r') as f:
             content = f.read()
     except FileNotFoundError:
-        # File doesn't exist yet - CU hasn't written it
         return 0
     except Exception as e:
         log("WARN", f"[RRC_STATS] Read error: {e}")
@@ -164,22 +216,47 @@ def parse_rrc_stats():
 
 def parse_cu_stdout_log():
     """
-    Parse CU stdout log for TEID information.
-    Reads incrementally from last position to avoid re-processing.
+    Parse CU stdout log for F1-U TEID information ONLY.
+    Ignores N3 tunnels (to UPF).
     """
-    global parsed_tunnels, _log_file_position
+    global f1u_tunnels, _log_file_position, _log_file_inode, _last_file_size
 
     try:
+        if not os.path.exists(CU_STDOUT_LOG):
+            return 0
+        
+        stat_info = os.stat(CU_STDOUT_LOG)
+        current_size = stat_info.st_size
+        current_inode = stat_info.st_ino
+        
+        # Truncation detection
+        if current_size < _log_file_position:
+            log("WARN", f"[F1U_LOG] File truncated: size={current_size} < position={_log_file_position}")
+            reset_teid_state()
+        
+        if _log_file_inode is not None and current_inode != _log_file_inode:
+            log("WARN", f"[F1U_LOG] File replaced: inode {_log_file_inode} -> {current_inode}")
+            reset_teid_state()
+        
+        if current_size < _last_file_size:
+            log("WARN", f"[F1U_LOG] File shrank: {_last_file_size} -> {current_size}")
+            reset_teid_state()
+        
+        _log_file_inode = current_inode
+        _last_file_size = current_size
+        
+        if current_size == _log_file_position:
+            return 0
+
         with open(CU_STDOUT_LOG, 'r') as f:
-            # Seek to last read position
             f.seek(_log_file_position)
             new_lines = f.readlines()
             _log_file_position = f.tell()
+            
     except FileNotFoundError:
-        # File doesn't exist yet - CU hasn't started writing
         return 0
     except Exception as e:
-        log("WARN", f"[GTPU_LOG] Read error: {e}")
+        log("WARN", f"[F1U_LOG] Read error: {e}")
         return 0
 
     if not new_lines:
@@ -188,157 +265,184 @@ def parse_cu_stdout_log():
     new_tunnels = 0
 
     for line in new_lines:
-        # --- Create tunnel ---
+        # --- Try Create tunnel with instance ID ---
         m = TUNNEL_CREATE_RE.search(line)
         if m:
-            ue_id = int(m.group(1))
-            teid_incoming = int(m.group(2), 16)  # gNB/CU TEID
-            teid_outgoing = int(m.group(3), 16)  # Remote TEID (UPF or placeholder)
-            remote_addr = m.group(4)
-
-            if ue_id not in parsed_tunnels:
-                parsed_tunnels[ue_id] = []
-
-            # Determine tunnel type based on remote address
-            if remote_addr == UPF_N3_IP:
-                tunnel_type = "n3_upf"
-            elif remote_addr == DU_F1U_IP:
-                tunnel_type = "f1u_du"
-            elif remote_addr == "0.0.0.0" and teid_outgoing == 0xffff:
-                tunnel_type = "f1u_pending"
-            else:
-                tunnel_type = "unknown"
-
+            instance_id = m.group(1)
+            ue_id = int(m.group(2))
+            teid_incoming = int(m.group(3), 16)
+            teid_outgoing = int(m.group(4), 16)
+            remote_addr = m.group(5)
+            
+            # *** ONLY PROCESS F1-U TUNNELS ***
+            if not is_f1u_tunnel(instance_id, remote_addr):
+                # Skip N3 tunnels
+                continue
+            
+            if ue_id not in f1u_tunnels:
+                f1u_tunnels[ue_id] = []
+            
             # Check for duplicates
-            exists = any(
-                t['teid_local'] == teid_incoming and t['tunnel_type'] == tunnel_type
-                for t in parsed_tunnels[ue_id]
-            )
+            exists = any(t['teid_cu'] == teid_incoming for t in f1u_tunnels[ue_id])
             if not exists:
                 tunnel = {
-                    'teid_local': teid_incoming,      # CU-side TEID
-                    'teid_remote': teid_outgoing,     # Remote TEID
-                    'remote_addr': remote_addr,
-                    'tunnel_type': tunnel_type,
-                    'teid_du': 0,
+                    'teid_cu': teid_incoming,       # CU-side F1-U TEID
+                    'teid_du': 0,                   # Will be filled on Update
                     'du_addr': '',
-                    'established': (tunnel_type == "n3_upf"),
+                    'established': False,
+                    'instance_id': instance_id,
                 }
-                parsed_tunnels[ue_id].append(tunnel)
+                f1u_tunnels[ue_id].append(tunnel)
                 new_tunnels += 1
 
                 rnti_info = parsed_ue_rnti.get(ue_id, {})
                 rnti = rnti_info.get('rnti', 0)
-                log("INFO", f"[GTPU] CREATE {tunnel_type}: UE_ID={ue_id} "
-                            f"RNTI={rnti:#06x} TEID_local={teid_incoming:#010x} "
-                            f"TEID_remote={teid_outgoing:#010x} remote={remote_addr}")
+                log("INFO", f"[F1U] CREATE: UE_ID={ue_id} RNTI={rnti:#06x} "
+                            f"TEID_CU={teid_incoming:#010x} (instance={instance_id})")
             continue
-
-        # --- Update tunnel (F1-U establishment from DU) ---
-        m = TUNNEL_UPDATE_RE.search(line)
+        
+        # --- Try Create tunnel fallback (no instance ID) ---
+        m = TUNNEL_CREATE_FALLBACK_RE.search(line)
         if m:
             ue_id = int(m.group(1))
             teid_incoming = int(m.group(2), 16)
-            teid_outgoing = int(m.group(3), 16)  # This is the DU TEID!
+            teid_outgoing = int(m.group(3), 16)
             remote_addr = m.group(4)
+            
+            # *** ONLY PROCESS F1-U TUNNELS ***
+            # Without instance ID, rely on remote address and teid pattern
+            if remote_addr == UPF_N3_IP:
+                continue  # Skip N3
+            if remote_addr not in (DU_F1U_IP, "0.0.0.0"):
+                continue  # Unknown, skip
+            
+            if ue_id not in f1u_tunnels:
+                f1u_tunnels[ue_id] = []
+            
+            exists = any(t['teid_cu'] == teid_incoming for t in f1u_tunnels[ue_id])
+            if not exists:
+                tunnel = {
+                    'teid_cu': teid_incoming,
+                    'teid_du': 0,
+                    'du_addr': '',
+                    'established': False,
+                    'instance_id': None,
+                }
+                f1u_tunnels[ue_id].append(tunnel)
+                new_tunnels += 1
 
-            if ue_id in parsed_tunnels:
-                for t in parsed_tunnels[ue_id]:
-                    # Match by local TEID and update with DU info
-                    if t['teid_local'] == teid_incoming and not t['established']:
-                        t['teid_du'] = teid_outgoing
-                        t['teid_remote'] = teid_outgoing
+                rnti_info = parsed_ue_rnti.get(ue_id, {})
+                rnti = rnti_info.get('rnti', 0)
+                log("INFO", f"[F1U] CREATE: UE_ID={ue_id} RNTI={rnti:#06x} "
+                            f"TEID_CU={teid_incoming:#010x}")
+            continue
+
+        # --- Try Update tunnel with instance ID ---
+        m = TUNNEL_UPDATE_RE.search(line)
+        if m:
+            instance_id = m.group(1)
+            ue_id = int(m.group(2))
+            teid_incoming = int(m.group(3), 16)
+            teid_outgoing = int(m.group(4), 16)  # This is the DU TEID!
+            remote_addr = m.group(5)
+            
+            # *** ONLY PROCESS F1-U TUNNELS ***
+            if not is_f1u_tunnel(instance_id, remote_addr):
+                continue
+            
+            if ue_id in f1u_tunnels:
+                for t in f1u_tunnels[ue_id]:
+                    if t['teid_cu'] == teid_incoming and not t['established']:
+                        t['teid_du'] = teid_outgoing  # *** THE DU TEID ***
                         t['du_addr'] = remote_addr
-                        t['remote_addr'] = remote_addr
                         t['established'] = True
-                        t['tunnel_type'] = "f1u_du"
                         new_tunnels += 1
 
                         rnti_info = parsed_ue_rnti.get(ue_id, {})
                         rnti = rnti_info.get('rnti', 0)
-                        log("INFO", f"[GTPU] UPDATE F1-U: UE_ID={ue_id} "
-                                    f"RNTI={rnti:#06x} TEID_CU={teid_incoming:#010x} "
-                                    f"TEID_DU={teid_outgoing:#010x} DU={remote_addr}")
+                        log("INFO", f"[F1U] ESTABLISHED: UE_ID={ue_id} RNTI={rnti:#06x} "
+                                    f"TEID_CU={teid_incoming:#010x} TEID_DU={teid_outgoing:#010x} "
+                                    f"DU={remote_addr}")
+                        break
+            continue
+
+        # --- Try Update tunnel fallback ---
+        m = TUNNEL_UPDATE_FALLBACK_RE.search(line)
+        if m:
+            ue_id = int(m.group(1))
+            teid_incoming = int(m.group(2), 16)
+            teid_outgoing = int(m.group(3), 16)
+            remote_addr = m.group(4)
+            
+            # *** ONLY PROCESS F1-U TUNNELS ***
+            if remote_addr != DU_F1U_IP:
+                continue
+            
+            if ue_id in f1u_tunnels:
+                for t in f1u_tunnels[ue_id]:
+                    if t['teid_cu'] == teid_incoming and not t['established']:
+                        t['teid_du'] = teid_outgoing
+                        t['du_addr'] = remote_addr
+                        t['established'] = True
+                        new_tunnels += 1
+
+                        rnti_info = parsed_ue_rnti.get(ue_id, {})
+                        rnti = rnti_info.get('rnti', 0)
+                        log("INFO", f"[F1U] ESTABLISHED: UE_ID={ue_id} RNTI={rnti:#06x} "
+                                    f"TEID_CU={teid_incoming:#010x} TEID_DU={teid_outgoing:#010x} "
+                                    f"DU={remote_addr}")
                         break
             continue
 
     return new_tunnels
 
 
-def get_teid_map_by_rnti():
+def get_f1u_teid_map_by_rnti():
     """
-    Return RNTI -> list of tunnel info from parsed CU logs.
-    Merges RRC stats (RNTI) with GTPU tunnel info (TEIDs).
+    Return RNTI -> list of F1-U tunnel info.
+    ONLY returns established F1-U tunnels (to DU).
     """
     result = {}
 
-    for ue_id, tunnels in parsed_tunnels.items():
+    for ue_id, tunnels in f1u_tunnels.items():
         rnti_info = parsed_ue_rnti.get(ue_id, {})
         rnti = rnti_info.get('rnti', 0)
 
         if rnti == 0:
-            # No RNTI mapping yet - skip
             continue
 
+        established_tunnels = []
         for t in tunnels:
-            if rnti not in result:
-                result[rnti] = []
+            if t['established'] and t['teid_du'] != 0 and t['teid_du'] != 0xffff:
+                established_tunnels.append({
+                    'ue_id': ue_id,
+                    'cu_ue_id': rnti_info.get('cu_ue_id', ue_id),
+                    'du_ue_id': rnti_info.get('du_ue_id', 0),
+                    'rnti': rnti,
+                    'rnti_hex': rnti_info.get('rnti_hex', f'{rnti:#06x}'),
+                    'teid_cu': t['teid_cu'],    # CU F1-U TEID
+                    'teid_du': t['teid_du'],    # DU TEID (for flow matching)
+                    'du_addr': t['du_addr'],
+                })
 
-            result[rnti].append({
-                'ue_id': ue_id,
-                'cu_ue_id': rnti_info.get('cu_ue_id', ue_id),
-                'du_ue_id': rnti_info.get('du_ue_id', 0),
-                'rnti': rnti,
-                'rnti_hex': rnti_info.get('rnti_hex', f'{rnti:#06x}'),
-                'teid_local': t.get('teid_local', 0),
-                'teid_remote': t.get('teid_remote', 0),
-                'teid_du': t.get('teid_du', 0),
-                'remote_addr': t.get('remote_addr', ''),
-                'du_addr': t.get('du_addr', ''),
-                'tunnel_type': t.get('tunnel_type', 'unknown'),
-                'established': t.get('established', False),
-            })
+        if established_tunnels:
+            result[rnti] = established_tunnels
 
     return result
 
 
 def get_du_teids_for_flows():
     """
-    Get DU TEIDs suitable for OpenFlow rule installation.
-    Returns dict: RNTI -> list of DU TEIDs (for F1-U traffic matching)
+    Get DU TEIDs for OpenFlow rule installation.
+    Returns dict: RNTI -> list of DU TEIDs
     """
-    teid_map = get_teid_map_by_rnti()
+    teid_map = get_f1u_teid_map_by_rnti()
     result = {}
 
     for rnti, tunnels in teid_map.items():
-        du_teids = []
-        for t in tunnels:
-            if t['tunnel_type'] == 'f1u_du' and t['established']:
-                du_teids.append(t['teid_du'])
+        du_teids = [t['teid_du'] for t in tunnels]
         if du_teids:
             result[rnti] = du_teids
-
-    return result
-
-
-def get_n3_teids_for_flows():
-    """
-    Get N3 (UPF) TEIDs suitable for OpenFlow rule installation.
-    Returns dict: RNTI -> list of (teid_gnb, teid_upf) tuples
-    """
-    teid_map = get_teid_map_by_rnti()
-    result = {}
-
-    for rnti, tunnels in teid_map.items():
-        n3_teids = []
-        for t in tunnels:
-            if t['tunnel_type'] == 'n3_upf':
-                n3_teids.append({
-                    'teid_gnb': t['teid_local'],
-                    'teid_upf': t['teid_remote'],
-                })
-        if n3_teids:
-            result[rnti] = n3_teids
 
     return result
 
@@ -530,99 +634,101 @@ def poll_e2_nodes():
 
 
 # ============================================================
-# Phase 3: TEID Flow Installation
+# Phase 3: F1-U Flow Installation (IP-BASED for Aruba)
 # ============================================================
+
+# CU and DU IPs for flow matching
+CU_IP = "192.168.71.140"
+DU_IP = "192.168.74.151"
+
+
+def set_f1u_flow_by_ip(device_id, src_ip, dst_ip, udp_port=2152, queue_id="7"):
+    """Install F1-U flow based on IP addresses (works on Aruba 2930F)."""
+    flow_data = {
+        "priority": 50000,
+        "timeout": 0,
+        "isPermanent": True,
+        "deviceId": device_id,
+        "treatment": {
+            "instructions": [{"type": "QUEUE", "queueId": queue_id, "port": "1"}]
+        },
+        "selector": {
+            "criteria": [
+                {"type": "ETH_TYPE", "ethType": "0x0800"},
+                {"type": "IP_PROTO", "protocol": 17},
+                {"type": "UDP_DST", "udpPort": udp_port},
+                {"type": "IPV4_SRC", "ip": f"{src_ip}/32"},
+                {"type": "IPV4_DST", "ip": f"{dst_ip}/32"},
+            ]
+        }
+    }
+    
+    cmd = [
+        "curl",
+        "--interface", INTERFACE,
+        "-X", "POST",
+        "-H", "Content-Type: application/json",
+        "-u", "karaf:karaf",
+        "-d", json.dumps(flow_data),
+        f"{ONOS_URL}/flows/{device_id}"
+    ]
+    return subprocess.run(cmd, capture_output=True, text=True)
+
+
 def check_and_install_teid_flows():
-    """Install OpenFlow rules based on TEIDs parsed from CU logs."""
+    """
+    Install F1-U flows using IP-based matching.
+    
+    Since Aruba 2930F doesn't support GTP TEID matching, we match on:
+    - IP src/dst (CU ↔ DU)
+    - UDP port 2152/2153 (GTP-U)
+    """
     global installed_flows
-
-    # First try GTP SM (works with separate CU-UP architecture)
-    gtp_map = xapp_functs.GTPCallback.ue_gtp_map
-    if gtp_map:
-        return _install_from_gtp_sm(gtp_map)
-
-    # Fallback: use parsed CU logs (unified CU architecture)
-    # Get N3 TEIDs (UPF direction) for flow installation
-    n3_map = get_n3_teids_for_flows()
-    if not n3_map:
-        return 0
 
     with state_lock:
         current_devices = dict(devices)
     if not current_devices:
         return 0
 
+    # Get F1-U TEID map (for logging, even if we can't match on TEID)
+    f1u_map = get_f1u_teid_map_by_rnti()
+    
+    if f1u_map:
+        log("INFO", f"[F1U] {len(f1u_map)} UEs with established F1-U tunnels:")
+        for rnti, tunnels in sorted(f1u_map.items()):
+            for t in tunnels:
+                log("INFO", f"    RNTI={rnti:#06x} TEID_CU={t['teid_cu']:#010x} "
+                            f"TEID_DU={t['teid_du']:#010x} DU={t['du_addr']}")
+
     new_flows = 0
-    for rnti, n3_tunnels in n3_map.items():
-        for t in n3_tunnels:
-            teid_upf = t['teid_upf']
-            teid_gnb = t['teid_gnb']
 
-            if teid_upf == 0 or teid_upf == 0xffff:
-                continue
+    for dev_id in current_devices:
+        # F1-U Downlink: CU (192.168.71.140) → DU (192.168.74.151)
+        for udp_port in [2152, 2153]:
+            flow_key = (dev_id, "f1u_dl", udp_port)
+            if flow_key not in installed_flows:
+                log("INFO", f"  Installing F1-U DL flow: {CU_IP} → {DU_IP}:{udp_port} on {dev_id}")
+                result = set_f1u_flow_by_ip(dev_id, CU_IP, DU_IP, udp_port)
+                if result.returncode == 0:
+                    installed_flows.add(flow_key)
+                    new_flows += 1
+                    log("INFO", f"    -> OK")
+                else:
+                    log("WARN", f"    -> FAILED: {result.stderr}")
 
-            for dev_id in current_devices:
-                flow_key = (dev_id, teid_upf, "n3")
-                if flow_key in installed_flows:
-                    continue
+        # F1-U Uplink: DU (192.168.74.151) → CU (192.168.71.140)
+        for udp_port in [2152, 2153]:
+            flow_key = (dev_id, "f1u_ul", udp_port)
+            if flow_key not in installed_flows:
+                log("INFO", f"  Installing F1-U UL flow: {DU_IP} → {CU_IP}:{udp_port} on {dev_id}")
+                result = set_f1u_flow_by_ip(dev_id, DU_IP, CU_IP, udp_port)
+                if result.returncode == 0:
+                    installed_flows.add(flow_key)
+                    new_flows += 1
+                    log("INFO", f"    -> OK")
+                else:
+                    log("WARN", f"    -> FAILED: {result.stderr}")
 
-                log("INFO", f"  Installing N3 flow: RNTI={rnti:#06x} "
-                            f"TEID_gNB={teid_gnb:#010x} TEID_UPF={teid_upf:#010x} "
-                            f"on {dev_id} (from CU log)")
-                try:
-                    result = set_udp_flow_queue(
-                        ONOS_URL, INTERFACE,
-                        device_id=dev_id,
-                        tunnelID=teid_upf,
-                        queue_id="9",
-                        port="1",
-                    )
-                    if result.returncode == 0:
-                        installed_flows.add(flow_key)
-                        new_flows += 1
-                        log("INFO", f"    -> {dev_id}: OK")
-                    else:
-                        log("WARN", f"    -> {dev_id}: FAILED (rc={result.returncode})")
-                except Exception as e:
-                    log("ERROR", f"    -> {dev_id}: {e}")
-
-    return new_flows
-
-
-def _install_from_gtp_sm(gtp_map):
-    """Install flows from GTP SM indications (separate CU-UP architecture)."""
-    global installed_flows
-    with state_lock:
-        current_devices = dict(devices)
-    if not current_devices:
-        return 0
-    new_flows = 0
-    for rnti, tunnels in gtp_map.items():
-        for tunnel in tunnels:
-            teid_upf = tunnel['teidupf']
-            teid_gnb = tunnel['teidgnb']
-            qfi = tunnel['qfi']
-            for dev_id in current_devices:
-                flow_key = (dev_id, teid_upf, qfi)
-                if flow_key in installed_flows:
-                    continue
-                log("INFO", f"  Installing flow: RNTI={rnti:#06x} "
-                            f"TEID_UPF={teid_upf:#010x} TEID_gNB={teid_gnb:#010x} "
-                            f"QFI={qfi} on {dev_id} (from GTP SM)")
-                try:
-                    result = set_udp_flow_queue(
-                        ONOS_URL, INTERFACE,
-                        device_id=dev_id,
-                        tunnelID=teid_upf,
-                        queue_id=str(qfi),
-                        port="1",
-                    )
-                    if result.returncode == 0:
-                        log("INFO", f" Flow accepted   -> {dev_id}: OK")
-                        installed_flows.add(flow_key)
-                        new_flows += 1
-                except Exception as e:
-                    log("ERROR", f"    -> {dev_id}: {e}")
     return new_flows
 
 
@@ -653,11 +759,17 @@ def cleanup():
 # ============================================================
 def main():
     log("INFO", "=" * 70)
-    log("INFO", "xApp Daemon Starting (File-based TEID parsing)")
+    log("INFO", "xApp Daemon Starting (F1-U TEID parsing ONLY)")
     log("INFO", "=" * 70)
     log("INFO", f"CU logs directory: {CU_LOGS_DIR}")
     log("INFO", f"CU stdout log: {CU_STDOUT_LOG}")
     log("INFO", f"CU RRC stats: {CU_RRC_STATS_LOG}")
+    log("INFO", f"")
+    log("INFO", f"F1-U Filter Configuration:")
+    log("INFO", f"  DU F1-U IP: {DU_F1U_IP} (CAPTURE)")
+    log("INFO", f"  UPF N3 IP:  {UPF_N3_IP} (IGNORE)")
+    log("INFO", f"  F1-U Instance: [{F1U_INSTANCE_ID}] (CAPTURE)")
+    log("INFO", f"  N3 Instance:   [{N3_INSTANCE_ID}] (IGNORE)")
 
     # Check if logs directory is mounted
     if os.path.isdir(CU_LOGS_DIR):
@@ -666,7 +778,6 @@ def main():
         log("INFO", f"  Contents: {files if files else '(empty)'}")
     else:
         log("WARN", f"✗ CU logs directory not found at {CU_LOGS_DIR}")
-        log("WARN", "  TEID parsing from files will not work!")
 
     # ---- Phase 1: Wait for RIC ----
     log("INFO", "Phase 1: Waiting for nearRT-RIC to be ready...")
@@ -720,23 +831,21 @@ def main():
     log("INFO", f"  Initial subscription: {initial} node(s)")
 
     # ---- Phase 5: Initial CU log parse ----
-    log("INFO", "Phase 5: Initial CU log parsing...")
+    log("INFO", "Phase 5: Initial F1-U TEID parsing...")
     rrc_count = parse_rrc_stats()
-    gtpu_count = parse_cu_stdout_log()
-    teid_map = get_teid_map_by_rnti()
+    f1u_count = parse_cu_stdout_log()
+    f1u_map = get_f1u_teid_map_by_rnti()
     log("INFO", f"  RRC stats: {len(parsed_ue_rnti)} UEs")
-    log("INFO", f"  GTPU tunnels: {sum(len(t) for t in parsed_tunnels.values())} total")
-    log("INFO", f"  Mapped (RNTI->TEID): {len(teid_map)} UEs")
+    log("INFO", f"  F1-U tunnels: {sum(len(t) for t in f1u_tunnels.values())} total")
+    log("INFO", f"  Established F1-U (RNTI->TEID): {len(f1u_map)} UEs")
 
-    # Print current TEID map
-    if teid_map:
-        log("INFO", "  Current TEID map:")
-        for rnti, tunnels in sorted(teid_map.items()):
+    # Print current F1-U TEID map
+    if f1u_map:
+        log("INFO", "  Current F1-U TEID map:")
+        for rnti, tunnels in sorted(f1u_map.items()):
             for t in tunnels:
-                status = "✓" if t['established'] else "…"
-                log("INFO", f"    RNTI={rnti:#06x} {t['tunnel_type']:12s} "
-                            f"TEID_local={t['teid_local']:#010x} "
-                            f"TEID_remote={t['teid_remote']:#010x} {status}")
+                log("INFO", f"    RNTI={rnti:#06x} TEID_CU={t['teid_cu']:#010x} "
+                            f"TEID_DU={t['teid_du']:#010x}")
 
     # ---- Main loop ----
     log("INFO", "Phase 6: Entering main event loop")
@@ -759,18 +868,16 @@ def main():
             if now - last_e2_poll >= E2_POLL_INTERVAL:
                 new_nodes = poll_e2_nodes()
                 if new_nodes > 0:
-                    log("INFO", f"Subscribed to {new_nodes} new E2 node(s) "
-                                f"(total unique: {len(subscribed_nodes)})")
+                    log("INFO", f"Subscribed to {new_nodes} new E2 node(s)")
                 last_e2_poll = now
 
-            # Parse CU logs + check TEIDs + install flows
+            # Parse CU logs + install flows
             if now - last_teid_check >= TEID_POLL_INTERVAL:
                 parse_rrc_stats()
                 parse_cu_stdout_log()
                 new_flows = check_and_install_teid_flows()
                 if new_flows > 0:
-                    log("INFO", f"Installed {new_flows} new flow(s) "
-                                f"(total: {len(installed_flows)})")
+                    log("INFO", f"Installed {new_flows} new F1-U flow(s)")
                 last_teid_check = now
 
             # Refresh ONOS
@@ -780,24 +887,14 @@ def main():
 
             # Status log every ~30s
             if loop_count % 30 == 0:
+                f1u_map = get_f1u_teid_map_by_rnti()
                 mac_ue_count = len(xapp_functs.MACCallback.ue_mac_map)
-                mac_ind = xapp_functs.MACCallback._indication_count
-                pdcp_ue_count = len(xapp_functs.PDCPCallback.ue_pdcp_map)
-                pdcp_ind = xapp_functs.PDCPCallback._indication_count
-                gtp_ue_count = len(xapp_functs.GTPCallback.ue_gtp_map)
-                gtp_ind = xapp_functs.GTPCallback._indication_count
-                gtp_empty = xapp_functs.GTPCallback._empty_count
-                teid_map = get_teid_map_by_rnti()
-                n3_map = get_n3_teids_for_flows()
-                f1u_map = get_du_teids_for_flows()
-
-                log("INFO", f"[STATUS] E2: {len(subscribed_nodes)} | "
-                            f"MAC: {mac_ue_count} UEs ({mac_ind} ind) | "
-                            f"PDCP: {pdcp_ue_count} UEs ({pdcp_ind} ind) | "
-                            f"GTP_SM: {gtp_ue_count} UEs ({gtp_ind} ind, {gtp_empty} empty) | "
-                            f"CU_LOG: {len(teid_map)} UEs (N3:{len(n3_map)} F1U:{len(f1u_map)}) | "
-                            f"Flows: {len(installed_flows)} | "
-                            f"Switches: {len(devices)}")
+                
+                log("INFO", f"[STATUS] E2:{len(subscribed_nodes)} | "
+                            f"MAC:{mac_ue_count} UEs | "
+                            f"F1U:{len(f1u_map)} UEs | "
+                            f"Flows:{len(installed_flows)} | "
+                            f"Switches:{len(devices)}")
 
             time.sleep(1)
 
