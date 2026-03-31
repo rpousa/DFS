@@ -8,13 +8,7 @@ from typing import Dict, List, Any
 
 @dataclass
 class Xapp_Metric_Storage:
-    # def __init__(self):
-    #     self.nodes = {} # Node:idx : ngran_node_type
-    #     self.metrics = {} # Node_idx : { metric_name : [values] }
-    
-    # node_idx : node_type
     nodes: Dict[int, Any] = field(default_factory=dict)
-    # node_idx : { metric_name : [values] }
     metrics: Dict[int, Dict[str, List[Any]]] = field(default_factory=dict)
 
     def add_node(self, node_idx: int, node_type: Any, metric_list: List[str]):
@@ -29,47 +23,32 @@ class Xapp_Metric_Storage:
                 output.append(f"  Metric {metric}: {values}")
         return "\n".join(output)
 
+
 ####################
 #### CALLBACKS #####
 ####################
 
-
-#  RLCCallback class is defined and derived from C++ class mac_cb
 class RLCCallback(xapp_sdk.rlc_cb):
     internal_storage = None
     internal_node_id = None
-    # Define Python class 'constructor'
+
     def __init__(self, storage, node_id):
-        # Call C++ base class constructor
         xapp_sdk.rlc_cb.__init__(self)
         self.internal_storage = storage
         self.internal_node_id = node_id
 
-    # Override C++ method: virtual void handle(swig_rlc_ind_msg_t a) = 0;
     def handle(self, ind):
-    #    print("RLC handle called")
-    # dir(ind) = ['__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__',
-    #            '__format__', '__ge__', '__getattribute__', '__gt__', '__hash__', '__init__', 
-    #            '__init_subclass__', '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__',
-    #            '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__',
-    #            '__swig_destroy__', '__weakref__', 'rb_stats', 'this', 'thisown', 'tstamp']
-    #    print(dir(ind.rb_stats))
-        # Print swig_rlc_ind_msg_t
         if len(ind.rb_stats) > 0:
             t_now = time.time_ns() / 1000.0
-            t_rlc = ind.tstamp / 1.0
-            t_diff = t_now - t_rlc
             self.internal_storage.metrics[self.internal_node_id]['rlc'].append(ind.rb_stats)
-            #print('RLC Indication tstamp = ' + str(ind.tstamp) + ' latency = ' + str(t_diff) + ' μs')
-            #print('RLC rnti = '+ str(ind.rb_stats[0].rnti))
-
 
 
 class MACCallback(xapp_sdk.mac_cb):
     # Class-level UE tracking
-    ue_mac_map = {}        # rnti -> latest mac stats dict
+    ue_mac_map = {}
     _indication_count = 0
     _empty_count = 0
+    _logged_ues = set()  # Track which UEs we've already logged
 
     def __init__(self, storage, node_id):
         xapp_sdk.mac_cb.__init__(self)
@@ -83,7 +62,6 @@ class MACCallback(xapp_sdk.mac_cb):
 
         if len(ind.ue_stats) > 0:
             t_now = time.time_ns() / 1000.0
-            t_mac = ind.tstamp / 1.0
             self.internal_storage.metrics[self.internal_node_id]['mac'].append(ind.ue_stats)
 
             for i in range(len(ind.ue_stats)):
@@ -117,6 +95,7 @@ class MACCallback(xapp_sdk.mac_cb):
                     is_new = rnti not in MACCallback.ue_mac_map
                     MACCallback.ue_mac_map[rnti] = stats
 
+                    # Only log NEW UEs
                     if is_new:
                         print(f"[MAC] NEW UE: RNTI={rnti:#06x} "
                               f"DL_TBS={ue.dl_curr_tbs} UL_TBS={ue.ul_curr_tbs} "
@@ -128,23 +107,15 @@ class MACCallback(xapp_sdk.mac_cb):
                 except Exception as e:
                     print(f"[MAC ERROR] node={self.internal_node_id} ue[{i}]: {e}",
                           flush=True)
-
-            # Log first few + periodic
-            if self._instance_ind_count <= 3 or self._instance_ind_count % 500 == 0:
-                print(f"[MAC DEBUG] node={self.internal_node_id} "
-                      f"ind#{self._instance_ind_count} "
-                      f"ue_count={len(ind.ue_stats)} "
-                      f"total_ues_seen={len(MACCallback.ue_mac_map)}",
-                      flush=True)
         else:
             MACCallback._empty_count += 1
 
 
 class PDCPCallback(xapp_sdk.pdcp_cb):
-    # Class-level UE tracking
-    ue_pdcp_map = {}       # rnti -> list of bearer stats
+    ue_pdcp_map = {}
     _indication_count = 0
     _empty_count = 0
+    _logged_bearers = set()  # Track (rnti, rbid) we've logged
 
     def __init__(self, storage, node_id):
         xapp_sdk.pdcp_cb.__init__(self)
@@ -164,10 +135,11 @@ class PDCPCallback(xapp_sdk.pdcp_cb):
                 try:
                     rb = ind.rb_stats[i]
                     rnti = rb.rnti
+                    rbid = rb.rbid
 
                     bearer = {
                         'rnti': rnti,
-                        'rbid': rb.rbid,
+                        'rbid': rbid,
                         'mode': rb.mode,
                         'txpdu_pkts': rb.txpdu_pkts,
                         'txpdu_bytes': rb.txpdu_bytes,
@@ -181,10 +153,18 @@ class PDCPCallback(xapp_sdk.pdcp_cb):
                         'last_seen': t_now,
                     }
 
+                    bearer_key = (rnti, rbid)
+                    is_new_ue = rnti not in PDCPCallback.ue_pdcp_map
+                    is_new_bearer = bearer_key not in PDCPCallback._logged_bearers
+
                     if rnti not in PDCPCallback.ue_pdcp_map:
                         PDCPCallback.ue_pdcp_map[rnti] = []
-                        print(f"[PDCP] NEW UE: RNTI={rnti:#06x} "
-                              f"RBID={rb.rbid} mode={rb.mode} "
+
+                    # Only log NEW bearers
+                    if is_new_bearer:
+                        PDCPCallback._logged_bearers.add(bearer_key)
+                        print(f"[PDCP] NEW bearer: RNTI={rnti:#06x} "
+                              f"RBID={rbid} mode={rb.mode} "
                               f"TX={rb.txpdu_bytes}B RX={rb.rxpdu_bytes}B "
                               f"(total UEs: {len(PDCPCallback.ue_pdcp_map)})",
                               flush=True)
@@ -192,7 +172,7 @@ class PDCPCallback(xapp_sdk.pdcp_cb):
                     # Update or add bearer
                     found = False
                     for existing in PDCPCallback.ue_pdcp_map[rnti]:
-                        if existing['rbid'] == rb.rbid:
+                        if existing['rbid'] == rbid:
                             existing.update(bearer)
                             found = True
                             break
@@ -202,25 +182,24 @@ class PDCPCallback(xapp_sdk.pdcp_cb):
                 except Exception as e:
                     print(f"[PDCP ERROR] node={self.internal_node_id} rb[{i}]: {e}",
                           flush=True)
-
-            if self._instance_ind_count <= 3 or self._instance_ind_count % 500 == 0:
-                print(f"[PDCP DEBUG] node={self.internal_node_id} "
-                      f"ind#{self._instance_ind_count} "
-                      f"rb_count={len(ind.rb_stats)} "
-                      f"total_ues_seen={len(PDCPCallback.ue_pdcp_map)}",
-                      flush=True)
         else:
             PDCPCallback._empty_count += 1
 
 
-# GTPCallback class is defined and derived from C++ class gtp_cb
 class GTPCallback(xapp_sdk.gtp_cb):
+    """
+    GTP SM Callback - Receives N3 tunnel information from E2 interface.
+    
+    NOTE: This provides N3 TEIDs (CU ↔ UPF), NOT F1-U TEIDs (CU ↔ DU).
+    For F1-U TEIDs, use teid_parser.py with CU log files.
+    """
     internal_storage = None
     internal_node_id = None
     
     ue_gtp_map = {}
     _indication_count = 0
     _empty_count = 0
+    _logged_tunnels: set = set()  # Track (rnti, qfi, teidgnb, teidupf)
 
     def __init__(self, storage, node_id):
         xapp_sdk.gtp_cb.__init__(self)
@@ -234,43 +213,18 @@ class GTPCallback(xapp_sdk.gtp_cb):
 
         try:
             stats_len = len(ind.gtp_stats)
-        except Exception as e:
-            print(f"[GTP ERROR] node={self.internal_node_id} "
-                  f"Cannot read gtp_stats: {e}")
+        except Exception:
             return
-
-        # Log EVERY indication for first 5, then every 100th
-        if self._instance_ind_count <= 5 or self._instance_ind_count % 100 == 0:
-            print(f"[GTP DEBUG] node={self.internal_node_id} "
-                  f"ind#{self._instance_ind_count} "
-                  f"gtp_stats_len={stats_len} "
-                  f"tstamp={ind.tstamp} "
-                  f"global_ind={GTPCallback._indication_count} "
-                  f"empty_count={GTPCallback._empty_count} "
-                  f"ue_map_size={len(GTPCallback.ue_gtp_map)}")
 
         if stats_len == 0:
             GTPCallback._empty_count += 1
-            # First time only: introspect the indication object
-            if GTPCallback._empty_count == 1:
-                print(f"[GTP DEBUG] FIRST EMPTY indication object:")
-                print(f"  type(ind) = {type(ind).__name__}")
-                print(f"  dir(ind) = {[x for x in dir(ind) if not x.startswith('__')]}")
-                print(f"  type(gtp_stats) = {type(ind.gtp_stats).__name__}")
-                try:
-                    print(f"  dir(gtp_stats) = {[x for x in dir(ind.gtp_stats) if not x.startswith('__')]}")
-                except:
-                    pass
             return
 
         t_now = time.time_ns() / 1000.0
-        t_gtp = ind.tstamp / 1.0
-        t_diff = t_now - t_gtp
 
-        # Store raw stats
+        # Store raw stats (silently)
         self.internal_storage.metrics[self.internal_node_id]['gtp'].append(ind.gtp_stats)
 
-        # Extract per-UE TEID information
         for i in range(stats_len):
             try:
                 stat = ind.gtp_stats[i]
@@ -278,15 +232,21 @@ class GTPCallback(xapp_sdk.gtp_cb):
                 teidgnb = stat.teidgnb
                 teidupf = stat.teidupf
                 qfi = stat.qfi
-            except Exception as e:
-                print(f"[GTP ERROR] node={self.internal_node_id} "
-                      f"Cannot read gtp_stats[{i}]: {e}")
+            except Exception:
                 continue
+
+            # Skip entries with no valid TEID
+            if teidgnb == 0 and teidupf == 0:
+                continue
+
+            # Create unique key for deduplication
+            tunnel_key = (rnti, qfi, teidgnb, teidupf, self.internal_node_id)
+            
+            is_new_ue = rnti not in GTPCallback.ue_gtp_map
+            is_new_tunnel = tunnel_key not in GTPCallback._logged_tunnels
 
             if rnti not in GTPCallback.ue_gtp_map:
                 GTPCallback.ue_gtp_map[rnti] = []
-                print(f"[GTP] NEW UE discovered: RNTI={rnti:#06x} "
-                      f"(total UEs: {len(GTPCallback.ue_gtp_map)})")
 
             tunnel_entry = {
                 'teidgnb': teidgnb,
@@ -296,152 +256,62 @@ class GTPCallback(xapp_sdk.gtp_cb):
                 'last_seen': t_now
             }
 
+            # Update or add tunnel
             found = False
             for existing in GTPCallback.ue_gtp_map[rnti]:
                 if existing['qfi'] == qfi and existing['node_idx'] == self.internal_node_id:
+                    # Check if TEID changed
+                    if existing['teidgnb'] != teidgnb or existing['teidupf'] != teidupf:
+                        is_new_tunnel = True
                     existing.update(tunnel_entry)
                     found = True
                     break
             if not found:
                 GTPCallback.ue_gtp_map[rnti].append(tunnel_entry)
 
-            print(f"[GTP] RNTI={rnti:#06x} QFI={qfi} "
-                  f"TEID_gNB={teidgnb:#010x} TEID_UPF={teidupf:#010x} "
-                  f"node={self.internal_node_id}")
+            # *** ONLY LOG NEW OR CHANGED TUNNELS ***
+            if is_new_tunnel:
+                GTPCallback._logged_tunnels.add(tunnel_key)
+                # Don't log zero TEIDs
+                if teidgnb != 0 or teidupf != 0:
+                    print(f"[GTP-N3] {'NEW UE' if is_new_ue else 'Tunnel'}: "
+                          f"RNTI={rnti:#06x} QFI={qfi} "
+                          f"TEID_gNB={teidgnb:#010x} TEID_UPF={teidupf:#010x}",
+                          flush=True)
+
 
 ##########################
-#### Handler Handler #####
+#### Handler Cleanup #####
 ##########################
 
 def handler_cleanup(node_handler, hndlr_key):
-    if hndlr_key == 'nid': return
+    if hndlr_key == 'nid':
+        return
 
     Handler_TYPES = {
         'mac_hndlr': xapp_sdk.rm_report_mac_sm,
         'rlc_hndlr': xapp_sdk.rm_report_rlc_sm,
         'pdcp_hndlr': xapp_sdk.rm_report_pdcp_sm,
-        'gtp_hndlr': xapp_sdk.rm_report_gtp_sm, 
+        'gtp_hndlr': xapp_sdk.rm_report_gtp_sm,
     }
-    handler_func =  Handler_TYPES.get(hndlr_key)
+    handler_func = Handler_TYPES.get(hndlr_key)
     if handler_func:
         return handler_func(node_handler)
     else:
-        print("Unknown handler key:", hndlr_key)        
+        print("Unknown handler key:", hndlr_key)
+
 
 #######################
 #### Helper Functs ####
 #######################
-def print_swig_members(obj, max_items=1000, show_values=True, show_methods=True):
-    try:
-        print("obj repr:", safe_repr(obj))
-    except Exception:
-        print("obj repr: <failed>")
-    try:
-        print("type:", type(obj).__name__)
-    except Exception:
-        pass
-    try:
-        # common SWIG internals
-        print("this:", safe_get(obj, "this"))
-        print("thisown:", safe_get(obj, "thisown"))
-    except Exception:
-        pass
 
-    # Collect names (dir may raise on some proxies)
-    try:
-        names = [n for n in dir(obj) if not n.startswith("__")]
-    except Exception as e:
-        print("dir(obj) failed:", e)
-        names = []
-
-    print(f"Total members (non-dunder): {len(names)}")
-    if not names:
-        return
-
-    # Show attributes (non-callable) and methods (callable) separately
-    attrs = []
-    methods = []
-    for n in names[:max_items]:
-        val = safe_get(obj, n)
-        if callable(val) or isinstance(val, (types.MethodType, types.FunctionType)):
-            methods.append((n, val))
-        else:
-            attrs.append((n, val))
-
-    print("\n--- ATTRIBUTES ---")
-    for name, val in attrs:
-        try:
-            if show_values:
-                # show small preview for sequences
-                if hasattr(val, "__len__") and not isinstance(val, (str, bytes)):
-                    try:
-                        ln = len(val)
-                    except Exception:
-                        try:
-                            ln = val.size()
-                        except Exception:
-                            ln = None
-                    preview = None
-                    if ln is not None and ln > 0:
-                        try:
-                            take = min(3, ln)
-                            preview = [safe_repr(val[i]) for i in range(take)]
-                        except Exception:
-                            preview = safe_repr(val)
-                    print(f"{name} -> type:{type(val).__name__} len={ln} preview={preview}")
-                else:
-                    print(f"{name} -> type:{type(val).__name__} value={safe_repr(val)}")
-            else:
-                print(name)
-        except Exception as e:
-            print(f"{name} -> <error printing: {e}>")
-
-    if not show_methods: return
-    print("\n--- METHODS / CALLABLES ---")
-    for name, val in methods:
-        try:
-            sig = None
-            try:
-                sig = inspect.signature(val)
-            except Exception:
-                try:
-                    # some SWIG methods present as descriptors; try __call__ signature
-                    if hasattr(val, "__call__"):
-                        sig = inspect.signature(val.__call__)
-                except Exception:
-                    sig = None
-            doc = None
-            try:
-                doc = val.__doc__[:200] if val.__doc__ else None
-            except Exception:
-                doc = None
-            print(f"{name}() -> type:{type(val).__name__} signature:{sig} doc:{doc}")
-        except Exception as e:
-            print(f"{name} -> <error inspecting callable: {e}>")
-    return
-    # print("\n--- help(obj) preview ---")
-    # try:
-    #     import io, sys
-    #     buf = io.StringIO()
-    #     try:
-    #         help(obj)
-    #     except Exception as e:
-    #         print(f"help() raised: {e}")
-    # except Exception:
-    #     print("help() not available for this object")
-    
-
-def classify_e2node(node,debug=True):
-    """
-    Classify E2 node as DU, CU-UP, CU-CP based on type and attributes
-    Returns: str ('DU', 'CU-UP', 'CU-CP', 'UNKNOWN')
-    """
-
+def classify_e2node(node, debug=True):
+    """Classify E2 node as DU, CU-UP, CU-CP based on type."""
     NGRAN_NODE_TYPES = {
         0: "ngran_eNB",
         1: "ngran_ng_eNB",
         2: "ngran_gNB",
-        3: "ngran_eNB_CU", 
+        3: "ngran_eNB_CU",
         4: "ngran_ng_eNB_CU",
         5: "ngran_gNB_CU",
         6: "ngran_eNB_DU",
@@ -451,46 +321,16 @@ def classify_e2node(node,debug=True):
         10: "ngran_gNB_CUUP"
     }
 
-    type_obj= safe_get(node, "type")
-    type_obj.disown() 
-
-    #print(node.type.__repr__())
-    #print(dir(node.type))
-    #print(node.type.__doc__)
+    type_obj = getattr(node, "type", None)
+    if type_obj is None:
+        return "Unknown"
     
-    raw_ptr = int(type_obj)  # SWIG pointer → raw address
+    type_obj.disown()
+    raw_ptr = int(type_obj)
     ctype_int_ptr = ctypes.POINTER(ctypes.c_int)
     enum_val = ctypes.cast(raw_ptr, ctype_int_ptr).contents.value
     return NGRAN_NODE_TYPES.get(enum_val, "Unknown")
-    
 
-def is_swig(obj):
-    try:
-        if obj is None:
-            return False
-
-        # Fast path: SWIG usually exposes "this" and "thisown"
-        if hasattr(obj, "this") and hasattr(obj, "thisown"):
-            return True
-
-        # SWIG exposes a few internal hooks on some builds
-        if hasattr(obj, "__swig_getmethods__") or hasattr(obj, "_swig_repr"):
-            return True
-
-        # Type-name heuristic (e.g. "SwigPyObject" or generated wrapper classes)
-        tname = type(obj).__name__
-        if "swig" in tname.lower():
-            return True
-        # Repr heuristic: "<Swig Object of type '...'>"
-        try:
-            r = repr(obj)
-            if r.startswith("<Swig Object") or "Swig Object of type" in r:
-                return True
-        except Exception:
-            pass
-    except Exception:
-        return False
-    return False
 
 def safe_get(obj, name):
     try:
@@ -498,21 +338,3 @@ def safe_get(obj, name):
         return getattr(obj, name)
     except Exception as e:
         return "<err: %s>" % e
-    
-def safe_repr(v, maxlen=200):
-        try:
-            r = repr(v)
-            return r if len(r) <= maxlen else r[:maxlen] + "..."
-        except Exception:
-            return "<unreprable>"
-        
-def supports_gtp(ran_func):
-    try:
-        return "gtp" in ran_func.defn.lower() or "gtp" in str(ran_func.id).lower()
-    except Exception:
-        return False
-    
-def on_gtp_ind(node_id, interval, msg):
-    # msg is a gtp_ind_msg_t; read fields via properties (e.g. msg.ngut, msg.len, msg.tstamp)
-    print("GTP indication from", node_id)
-    print("ngut:", getattr(msg, "ngut", None), "len:", getattr(msg, "len", None))
