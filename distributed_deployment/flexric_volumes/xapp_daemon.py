@@ -618,6 +618,7 @@ def _install_from_gtp_sm(gtp_map):
                         port="1",
                     )
                     if result.returncode == 0:
+                        log("INFO", f" Flow accepted   -> {dev_id}: OK")
                         installed_flows.add(flow_key)
                         new_flows += 1
                 except Exception as e:
