@@ -1,253 +1,48 @@
 #!/bin/bash
 
-# stop.sh - Stop 5G network and clean ALL custom nftables rules (SCTP + UDP)
-# Works on both Machine 1 (centraloffice) and Machine 2 (edge)
+# stop.sh - Stop 5G deployment and clean ALL custom nftables rules
+# Works on ALL THREE machines: Core (200), Centraloffice (193), Edge (243)
+# Fully dynamic — parses compose files for subnets, bridges, and port mappings.
+
+set -u
 
 echo "================================================"
-echo "5G Network Emulation - Shutdown Script"
+echo "5G Network Emulation - Shutdown Script (3-machine)"
 echo "================================================"
 echo ""
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
-
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC='\033[0m'
 print_stage() { echo -e "${BLUE}[STAGE]${NC} $1"; }
 print_info()  { echo -e "${GREEN}[INFO]${NC} $1"; }
 print_warn()  { echo -e "${YELLOW}[WARN]${NC} $1"; }
 print_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
-# Parse arguments
+# ==========================================
+# Parse args
+# ==========================================
 REMOVE_VOLUMES=false
 FORCE=false
+COMPOSE_FILE_ARG=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --volumes|-v) REMOVE_VOLUMES=true; shift ;;
-        --force|-f)   FORCE=true; shift ;;
-        --all|-a)     REMOVE_VOLUMES=true; shift ;;
+        --volumes|-v)  REMOVE_VOLUMES=true; shift ;;
+        --force|-f)    FORCE=true; shift ;;
+        --all|-a)      REMOVE_VOLUMES=true; shift ;;
+        --file|-c)     COMPOSE_FILE_ARG="$2"; shift 2 ;;
         --help|-h)
-            echo "Usage: $0 [OPTIONS]"
-            echo "  --volumes, -v   Remove volumes"
-            echo "  --all, -a       Remove everything"
-            echo "  --force, -f     No confirmation"
-            echo "  --help, -h      Show help"
+            cat <<EOF
+Usage: $0 [OPTIONS]
+  --file, -c FILE   Specific compose file (otherwise auto-detects)
+  --volumes, -v     Remove volumes (DB data loss)
+  --all, -a         Same as --volumes
+  --force, -f       Skip confirmation prompts
+  --help, -h        Show this help
+EOF
             exit 0 ;;
         *) print_error "Unknown option: $1"; exit 1 ;;
     esac
 done
-
-# ==========================================
-# Bulletproof SCTP and UDP rule cleanup
-# ==========================================
-cleanup_custom_nft_rules() {
-    print_stage "Cleaning up ALL custom nftables rules (SCTP + UDP)..."
-
-    local cleaned=0
-
-    # -------------------------------------------------------
-    # 1. Clean NAT DOCKER chain — ALL SCTP DNAT rules
-    # -------------------------------------------------------
-    if sudo nft list chain ip nat DOCKER > /dev/null 2>&1; then
-        print_info "  Cleaning NAT DOCKER chain (SCTP DNAT rules)..."
-
-        local i=0
-        while [ $i -lt 50 ]; do
-            local line=$(sudo nft -a list chain ip nat DOCKER 2>/dev/null | grep "sctp" | head -1)
-            if [ -z "$line" ]; then
-                break
-            fi
-            local handle=$(echo "$line" | sed -n 's/.*# handle \([0-9]*\)/\1/p')
-            [ -z "$handle" ] && handle=$(echo "$line" | grep -o 'handle [0-9]*' | grep -o '[0-9]*')
-            if [ -z "$handle" ]; then
-                break
-            fi
-            sudo nft delete rule ip nat DOCKER handle $handle 2>/dev/null && cleaned=$((cleaned + 1))
-            i=$((i + 1))
-        done
-        print_info "    Removed $cleaned SCTP DNAT rule(s) from NAT DOCKER"
-    else
-        print_info "  NAT DOCKER chain not found (networks already removed)"
-    fi
-
-    # -------------------------------------------------------
-    # 2. Clean NAT PREROUTING chain — UDP DNAT rules (PFCP, GTP-U)
-    # -------------------------------------------------------
-    local cleaned_udp=0
-    if sudo nft list chain ip nat PREROUTING > /dev/null 2>&1; then
-        print_info "  Cleaning NAT PREROUTING chain (UDP DNAT rules)..."
-
-        local i=0
-        while [ $i -lt 50 ]; do
-            local line=$(sudo nft -a list chain ip nat PREROUTING 2>/dev/null | grep -E "udp dport (8805|2152)" | head -1)
-            if [ -z "$line" ]; then
-                break
-            fi
-            local handle=$(echo "$line" | sed -n 's/.*# handle \([0-9]*\)/\1/p')
-            [ -z "$handle" ] && handle=$(echo "$line" | grep -o 'handle [0-9]*' | grep -o '[0-9]*')
-            if [ -z "$handle" ]; then
-                break
-            fi
-            sudo nft delete rule ip nat PREROUTING handle $handle 2>/dev/null && cleaned_udp=$((cleaned_udp + 1))
-            i=$((i + 1))
-        done
-        print_info "    Removed $cleaned_udp UDP DNAT rule(s) from NAT PREROUTING"
-    fi
-
-    # -------------------------------------------------------
-    # 3. Clean NAT POSTROUTING — MASQUERADE rules we added
-    # -------------------------------------------------------
-    local cleaned_masq=0
-    if sudo nft list chain ip nat POSTROUTING > /dev/null 2>&1; then
-        print_info "  Cleaning NAT POSTROUTING chain (custom MASQUERADE rules)..."
-
-        for pattern in "192.168.0.243.*8805" "192.168.0.243.*2152" "192.168.0.193.*8805" "192.168.0.193.*2152" "192.168.71.160" "192.168.61.128/26.*masquerade" "192.168.75.128/26.*masquerade"; do
-            local i=0
-            while [ $i -lt 10 ]; do
-                local line=$(sudo nft -a list chain ip nat POSTROUTING 2>/dev/null | grep "$pattern" | head -1)
-                if [ -z "$line" ]; then
-                    break
-                fi
-                local handle=$(echo "$line" | sed -n 's/.*# handle \([0-9]*\)/\1/p')
-                [ -z "$handle" ] && handle=$(echo "$line" | grep -o 'handle [0-9]*' | grep -o '[0-9]*')
-                if [ -n "$handle" ]; then
-                    sudo nft delete rule ip nat POSTROUTING handle $handle 2>/dev/null && cleaned_masq=$((cleaned_masq + 1))
-                fi
-                i=$((i + 1))
-            done
-        done
-        [ $cleaned_masq -gt 0 ] && print_info "    Removed $cleaned_masq custom MASQUERADE rule(s)"
-    fi
-
-    # -------------------------------------------------------
-    # 4. Clean filter DOCKER chain — ALL SCTP FORWARD rules
-    # -------------------------------------------------------
-    local cleaned_fwd=0
-    if sudo nft list chain ip filter DOCKER > /dev/null 2>&1; then
-        print_info "  Cleaning filter DOCKER chain (SCTP FORWARD rules)..."
-
-        local i=0
-        while [ $i -lt 50 ]; do
-            local line=$(sudo nft -a list chain ip filter DOCKER 2>/dev/null | grep "sctp" | head -1)
-            if [ -z "$line" ]; then
-                break
-            fi
-            local handle=$(echo "$line" | sed -n 's/.*# handle \([0-9]*\)/\1/p')
-            [ -z "$handle" ] && handle=$(echo "$line" | grep -o 'handle [0-9]*' | grep -o '[0-9]*')
-            if [ -z "$handle" ]; then
-                break
-            fi
-            sudo nft delete rule ip filter DOCKER handle $handle 2>/dev/null && cleaned_fwd=$((cleaned_fwd + 1))
-            i=$((i + 1))
-        done
-        print_info "    Removed $cleaned_fwd SCTP FORWARD rule(s) from filter DOCKER"
-    fi
-
-    # -------------------------------------------------------
-    # 5. Clean filter FORWARD chain — UDP FORWARD rules (PFCP, GTP-U)
-    # -------------------------------------------------------
-    local cleaned_fwd_udp=0
-    if sudo nft list chain ip filter FORWARD > /dev/null 2>&1; then
-        print_info "  Cleaning filter FORWARD chain (UDP FORWARD rules)..."
-
-        local i=0
-        while [ $i -lt 50 ]; do
-            local line=$(sudo nft -a list chain ip filter FORWARD 2>/dev/null | grep -E "udp.*(8805|2152)" | head -1)
-            if [ -z "$line" ]; then
-                break
-            fi
-            local handle=$(echo "$line" | sed -n 's/.*# handle \([0-9]*\)/\1/p')
-            [ -z "$handle" ] && handle=$(echo "$line" | grep -o 'handle [0-9]*' | grep -o '[0-9]*')
-            if [ -z "$handle" ]; then
-                break
-            fi
-            sudo nft delete rule ip filter FORWARD handle $handle 2>/dev/null && cleaned_fwd_udp=$((cleaned_fwd_udp + 1))
-            i=$((i + 1))
-        done
-        print_info "    Removed $cleaned_fwd_udp UDP FORWARD rule(s) from filter FORWARD"
-    fi
-
-    # -------------------------------------------------------
-    # 6. Clean DOCKER-BRIDGE — remove extra jumps
-    # -------------------------------------------------------
-    if sudo nft list chain ip filter DOCKER-BRIDGE > /dev/null 2>&1; then
-        for bridge in "br-f1c" "br-e1" "br-core" "br-ran" "br-ext" "br-f1u" "br-n3" "br-sgi"; do
-            local count=$(sudo nft -a list chain ip filter DOCKER-BRIDGE 2>/dev/null | grep "oifname \"${bridge}\".*jump DOCKER" | wc -l)
-            while [ "$count" -gt 1 ]; do
-                local line=$(sudo nft -a list chain ip filter DOCKER-BRIDGE 2>/dev/null | grep "oifname \"${bridge}\".*jump DOCKER" | tail -1)
-                local handle=$(echo "$line" | sed -n 's/.*# handle \([0-9]*\)/\1/p')
-                [ -z "$handle" ] && handle=$(echo "$line" | grep -o 'handle [0-9]*' | grep -o '[0-9]*')
-                if [ -n "$handle" ]; then
-                    sudo nft delete rule ip filter DOCKER-BRIDGE handle $handle 2>/dev/null
-                    print_info "    Removed extra DOCKER-BRIDGE jump for $bridge"
-                fi
-                count=$((count - 1))
-            done
-        done
-    fi
-
-    # -------------------------------------------------------
-    # 7. Clean DOCKER-ISOLATION-STAGE-1 — SCTP bypass rules
-    # -------------------------------------------------------
-    if sudo nft list chain ip filter DOCKER-ISOLATION-STAGE-1 > /dev/null 2>&1; then
-        local i=0
-        while [ $i -lt 20 ]; do
-            local line=$(sudo nft -a list chain ip filter DOCKER-ISOLATION-STAGE-1 2>/dev/null | grep "sctp" | head -1)
-            if [ -z "$line" ]; then
-                break
-            fi
-            local handle=$(echo "$line" | sed -n 's/.*# handle \([0-9]*\)/\1/p')
-            [ -z "$handle" ] && handle=$(echo "$line" | grep -o 'handle [0-9]*' | grep -o '[0-9]*')
-            if [ -n "$handle" ]; then
-                sudo nft delete rule ip filter DOCKER-ISOLATION-STAGE-1 handle $handle 2>/dev/null
-                print_info "    Removed SCTP isolation bypass rule"
-            fi
-            i=$((i + 1))
-        done
-    fi
-
-    # -------------------------------------------------------
-    # 8. Remove IP aliases for cross-machine UPF routing
-    # -------------------------------------------------------
-    print_info "  Checking for IP aliases to remove..."
-
-    if ip addr show br-core 2>/dev/null | grep -q "192.168.71.160/32"; then
-        sudo ip addr del 192.168.71.160/32 dev br-core 2>/dev/null || true
-        print_info "    Removed IP alias 192.168.71.160/32 from br-core"
-    fi
-
-    # -------------------------------------------------------
-    # 9. Restore conntrack checksum
-    # -------------------------------------------------------
-    if [ -f /proc/sys/net/netfilter/nf_conntrack_checksum ]; then
-        sudo sysctl -w net.netfilter.nf_conntrack_checksum=1 > /dev/null 2>&1 || true
-    fi
-
-    # -------------------------------------------------------
-    # 10. Verify cleanup
-    # -------------------------------------------------------
-    local remaining_sctp=0
-    local remaining_udp=0
-
-    if sudo nft list chain ip nat DOCKER > /dev/null 2>&1; then
-        remaining_sctp=$(sudo nft list chain ip nat DOCKER 2>/dev/null | grep -c "sctp" || echo "0")
-    fi
-    if sudo nft list chain ip nat PREROUTING > /dev/null 2>&1; then
-        remaining_udp=$(sudo nft list chain ip nat PREROUTING 2>/dev/null | grep -cE "udp dport (8805|2152)" || echo "0")
-    fi
-
-    if sudo nft list chain ip nat POSTROUTING > /dev/null 2>&1; then
-        remaining_masq=$(sudo nft list chain ip nat POSTROUTING 2>/dev/null | grep -cE "192.168\.(61|75)\.128/26.*masquerade" || echo "0")
-    fi
-
-    if [ "$remaining_sctp" -eq 0 ] && [ "$remaining_udp" -eq 0 ] && [ "$remaining_masq" -eq 0 ]; then
-        print_info "✓ ALL custom nftables rules cleaned up successfully"
-    else
-        print_warn "⚠ $remaining_sctp SCTP rules and $remaining_udp UDP rules still remain, and $remaining_masq MASQUERADE rules still remain"
-    fi
-}
 
 # ==========================================
 # Auto-detect compose file
@@ -255,110 +50,369 @@ cleanup_custom_nft_rules() {
 COMPOSE_FILE=""
 print_info "Detecting deployment configuration..."
 
-for container in mysql amf nrf upf upf_1 du_1 ue_1 cucp cuup cuup_1 flexric; do
-    if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q "^${container}$"; then
-        COMPOSE_FILE=$(docker inspect "$container" 2>/dev/null | grep -o '"com.docker.compose.project.config_files": "[^"]*"' | head -1 | cut -d'"' -f4)
-        if [ -n "$COMPOSE_FILE" ]; then
-            print_info "Detected compose file from container '$container': $COMPOSE_FILE"
-            break
+if [ -n "$COMPOSE_FILE_ARG" ]; then
+    COMPOSE_FILE="$COMPOSE_FILE_ARG"
+else
+    # Try detecting from running containers (any of the new names)
+    for container in mysql nrf amf smf cucp \
+                     cuup_co cuup_e \
+                     upf_core upf_co upf_e \
+                     ext_dn_core ext_dn_co ext_dn_e \
+                     du_co du_e1 du_e2 \
+                     ue_1 flexric; do
+        if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q "^${container}$"; then
+            COMPOSE_FILE=$(docker inspect "$container" 2>/dev/null \
+                | grep -o '"com.docker.compose.project.config_files": "[^"]*"' \
+                | head -1 | cut -d'"' -f4)
+            if [ -n "$COMPOSE_FILE" ]; then
+                print_info "Detected via container '$container': $COMPOSE_FILE"
+                break
+            fi
         fi
-    fi
-done
+    done
 
-if [ -z "$COMPOSE_FILE" ]; then
-    if [ -f "docker-compose-centraloffice.yml" ]; then
-        COMPOSE_FILE="docker-compose-centraloffice.yml"
-    elif [ -f "docker-compose-edge.yml" ]; then
-        COMPOSE_FILE="docker-compose-edge.yml"
-    else
-        print_error "No docker-compose file found"
-        exit 1
+    # Fallback: pick whichever compose file is present in CWD
+    if [ -z "$COMPOSE_FILE" ]; then
+        for f in docker-compose-core.yml docker-compose-centraloffice.yml docker-compose-edge.yml; do
+            if [ -f "$f" ]; then
+                COMPOSE_FILE="$f"
+                print_info "Using local file: $COMPOSE_FILE"
+                break
+            fi
+        done
     fi
-    print_info "Using: $COMPOSE_FILE"
 fi
 
+if [ -z "$COMPOSE_FILE" ] || [ ! -f "$COMPOSE_FILE" ]; then
+    print_error "No docker-compose file found or specified"
+    print_error "Use: $0 --file <compose-file>"
+    exit 1
+fi
+
+# Identify which machine this is (for logging)
+MACHINE_ROLE="unknown"
+case "$COMPOSE_FILE" in
+    *core*)          MACHINE_ROLE="CORE (192.168.0.200)" ;;
+    *centraloffice*) MACHINE_ROLE="CENTRALOFFICE (192.168.0.193)" ;;
+    *edge*)          MACHINE_ROLE="EDGE (192.168.0.243)" ;;
+esac
+print_info "Machine role: $MACHINE_ROLE"
 echo ""
 
-# Confirmation
+# ==========================================
+# Confirmations
+# ==========================================
 if [ "$FORCE" = false ]; then
-    read -p "Stop 5G network using $COMPOSE_FILE? (y/N): " -n 1 -r
-    echo
+    read -p "Stop deployment using $COMPOSE_FILE? (y/N): " -n 1 -r; echo
     [[ ! $REPLY =~ ^[Yy]$ ]] && { print_info "Cancelled"; exit 0; }
 fi
 
 if [ "$REMOVE_VOLUMES" = true ] && [ "$FORCE" = false ]; then
-    print_warn "This will DELETE all database data!"
-    read -p "Are you sure? (yes/N): " -r
-    echo
-    [[ ! $REPLY =~ ^[Yy][Ee][Ss]$ ]] && REMOVE_VOLUMES=false
+    print_warn "This will DELETE all persistent volume data (MySQL DB, logs, etc.)"
+    read -p "Type 'yes' to confirm: " -r; echo
+    [[ ! $REPLY =~ ^[Yy][Ee][Ss]$ ]] && REMOVE_VOLUMES=false && print_info "Volumes will be kept"
 fi
 
 # ==========================================
-# Step 1: Clean custom rules FIRST (while chains still exist)
+# Helper: Extract from compose file
+# ==========================================
+_extract_subnets() {
+    grep -oP 'subnet:\s*\K[0-9./]+' "$COMPOSE_FILE" 2>/dev/null | sort -u
+}
+
+_extract_bridges() {
+    grep -oP 'com\.docker\.network\.bridge\.name:\s*\K\S+' "$COMPOSE_FILE" 2>/dev/null | sort -u
+}
+
+_extract_host_ip() {
+    # Extract any IP used as host binding in port mappings
+    grep -oP '"\K[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(?=:\d+:\d+/(sctp|udp|tcp))' "$COMPOSE_FILE" 2>/dev/null \
+        | sort -u | head -1
+}
+
+_extract_sctp_ports() {
+    grep -oP '\d+(?=/sctp)' "$COMPOSE_FILE" 2>/dev/null | sort -u
+}
+
+_extract_udp_ports() {
+    grep -oP '\d+(?=/udp)' "$COMPOSE_FILE" 2>/dev/null | sort -u
+}
+
+_extract_service_names() {
+    # 2-space-indented keys under `services:` (simple heuristic)
+    awk '/^services:/{s=1;next} s==1 && /^  [a-zA-Z_][a-zA-Z0-9_-]*:$/{gsub(/[: ]/,""); print}' "$COMPOSE_FILE"
+}
+
+HOST_IP=$(_extract_host_ip)
+SUBNETS=$(_extract_subnets)
+BRIDGES=$(_extract_bridges)
+SCTP_PORTS=$(_extract_sctp_ports)
+UDP_PORTS=$(_extract_udp_ports)
+SERVICES=$(_extract_service_names)
+
+print_info "Parsed from $COMPOSE_FILE:"
+print_info "  Host IP:    ${HOST_IP:-<none>}"
+print_info "  Subnets:    $(echo $SUBNETS | tr '\n' ' ')"
+print_info "  Bridges:    $(echo $BRIDGES | tr '\n' ' ')"
+print_info "  SCTP ports: $(echo $SCTP_PORTS | tr '\n' ' ')"
+print_info "  UDP ports:  $(echo $UDP_PORTS | tr '\n' ' ')"
+echo ""
+
+# ==========================================
+# nftables cleanup helper
+# ==========================================
+nft_remove_all_matching() {
+    local table=$1 chain=$2 pattern=$3 removed=0
+    sudo nft list chain ${table} ${chain} > /dev/null 2>&1 || return 0
+    while true; do
+        local H
+        H=$(sudo nft -a list chain ${table} ${chain} 2>/dev/null \
+            | grep "${pattern}" | head -1 \
+            | grep -oP 'handle \K\d+' || echo "")
+        [ -z "$H" ] && break
+        sudo nft delete rule ${table} ${chain} handle "$H" 2>/dev/null && removed=$((removed + 1)) || break
+    done
+    echo "$removed"
+}
+
+# ==========================================
+# Bulletproof dynamic cleanup
+# ==========================================
+cleanup_custom_nft_rules() {
+    print_stage "Cleaning dynamic nftables rules (SCTP + UDP + MASQUERADE)..."
+    local total_cleaned=0
+
+    # --- 1. NAT DOCKER: SCTP DNAT rules ---
+    print_info "  [1/7] NAT DOCKER: SCTP DNAT rules"
+    local n
+    n=$(nft_remove_all_matching "ip nat" "DOCKER" "sctp")
+    [ "$n" -gt 0 ] && print_info "    Removed $n SCTP DNAT rule(s)" && total_cleaned=$((total_cleaned + n))
+
+    # --- 2. NAT DOCKER: UDP DNAT rules for ports in compose ---
+    print_info "  [2/7] NAT DOCKER: UDP DNAT rules (compose ports)"
+    for port in $UDP_PORTS; do
+        n=$(nft_remove_all_matching "ip nat" "DOCKER" "udp dport ${port}")
+        [ "$n" -gt 0 ] && print_info "    Removed $n UDP/${port} DNAT rule(s)" && total_cleaned=$((total_cleaned + n))
+    done
+
+    # --- 3. NAT PREROUTING: stray UDP rules (PFCP, GTP-U) ---
+    print_info "  [3/7] NAT PREROUTING: UDP DNAT rules"
+    for port in $UDP_PORTS; do
+        n=$(nft_remove_all_matching "ip nat" "PREROUTING" "udp dport ${port}")
+        [ "$n" -gt 0 ] && print_info "    Removed $n PREROUTING UDP/${port} rule(s)" && total_cleaned=$((total_cleaned + n))
+    done
+
+    # --- 4. NAT POSTROUTING: MASQUERADE for each compose subnet ---
+    print_info "  [4/7] NAT POSTROUTING: MASQUERADE rules for compose subnets"
+    for subnet in $SUBNETS; do
+        # Escape the subnet for regex
+        local esc_subnet
+        esc_subnet=$(echo "$subnet" | sed 's/\./\\./g')
+        n=$(nft_remove_all_matching "ip nat" "POSTROUTING" "${esc_subnet}.*masquerade")
+        [ "$n" -gt 0 ] && print_info "    Removed $n MASQUERADE rule(s) for ${subnet}" && total_cleaned=$((total_cleaned + n))
+    done
+
+    # Also clean any host-IP-scoped MASQUERADE for our SCTP/UDP ports
+    if [ -n "$HOST_IP" ]; then
+        for port in $SCTP_PORTS $UDP_PORTS; do
+            local esc_host
+            esc_host=$(echo "$HOST_IP" | sed 's/\./\\./g')
+            n=$(nft_remove_all_matching "ip nat" "POSTROUTING" "${esc_host}.*${port}")
+            [ "$n" -gt 0 ] && print_info "    Removed $n MASQUERADE rule(s) for ${HOST_IP}:${port}" && total_cleaned=$((total_cleaned + n))
+        done
+    fi
+
+    # --- 5. Filter DOCKER: SCTP FORWARD rules ---
+    print_info "  [5/7] Filter DOCKER: SCTP FORWARD rules"
+    n=$(nft_remove_all_matching "ip filter" "DOCKER" "sctp")
+    [ "$n" -gt 0 ] && print_info "    Removed $n SCTP FORWARD rule(s)" && total_cleaned=$((total_cleaned + n))
+
+    # Also UDP FORWARD rules for our ports
+    for port in $UDP_PORTS; do
+        n=$(nft_remove_all_matching "ip filter" "DOCKER" "udp.*${port}")
+        [ "$n" -gt 0 ] && print_info "    Removed $n UDP/${port} FORWARD rule(s)" && total_cleaned=$((total_cleaned + n))
+    done
+
+    # --- 6. DOCKER-BRIDGE: duplicate jumps per bridge ---
+    print_info "  [6/7] DOCKER-BRIDGE: duplicate jump cleanup"
+    if sudo nft list chain ip filter DOCKER-BRIDGE > /dev/null 2>&1; then
+        for bridge in $BRIDGES; do
+            local count
+            count=$(sudo nft -a list chain ip filter DOCKER-BRIDGE 2>/dev/null \
+                | grep -c "oifname \"${bridge}\".*jump DOCKER" || echo "0")
+            while [ "$count" -gt 1 ]; do
+                local H
+                H=$(sudo nft -a list chain ip filter DOCKER-BRIDGE 2>/dev/null \
+                    | grep "oifname \"${bridge}\".*jump DOCKER" | tail -1 \
+                    | grep -oP 'handle \K\d+' || echo "")
+                [ -z "$H" ] && break
+                sudo nft delete rule ip filter DOCKER-BRIDGE handle "$H" 2>/dev/null \
+                    && print_info "    Removed duplicate DOCKER-BRIDGE jump for ${bridge}" \
+                    && total_cleaned=$((total_cleaned + 1))
+                count=$((count - 1))
+            done
+        done
+    fi
+
+    # --- 7. DOCKER-ISOLATION-STAGE-1: SCTP bypass rules per bridge ---
+    print_info "  [7/7] DOCKER-ISOLATION-STAGE-1: SCTP bypass rules"
+    if sudo nft list chain ip filter DOCKER-ISOLATION-STAGE-1 > /dev/null 2>&1; then
+        n=$(nft_remove_all_matching "ip filter" "DOCKER-ISOLATION-STAGE-1" "sctp.*accept")
+        [ "$n" -gt 0 ] && print_info "    Removed $n SCTP isolation bypass rule(s)" && total_cleaned=$((total_cleaned + n))
+    fi
+
+    # --- IP aliases cleanup (if any added by setup scripts) ---
+    for bridge in $BRIDGES; do
+        # Remove /32 aliases matching any of our subnets on this bridge (rare but possible)
+        local aliases
+        aliases=$(ip addr show "$bridge" 2>/dev/null | grep -oP 'inet \K[0-9.]+/32' || echo "")
+        for a in $aliases; do
+            sudo ip addr del "$a" dev "$bridge" 2>/dev/null \
+                && print_info "    Removed IP alias $a from $bridge"
+        done
+    done
+
+    # --- Restore conntrack checksum ---
+    if [ -f /proc/sys/net/netfilter/nf_conntrack_checksum ]; then
+        sudo sysctl -w net.netfilter.nf_conntrack_checksum=1 > /dev/null 2>&1 || true
+    fi
+
+    print_info ""
+    if [ "$total_cleaned" -gt 0 ]; then
+        print_info "✓ Cleaned $total_cleaned custom nftables rule(s) total"
+    else
+        print_info "✓ No custom rules found to clean"
+    fi
+}
+
+# ==========================================
+# STEP 1: Clean rules FIRST (before Docker tears chains down)
 # ==========================================
 cleanup_custom_nft_rules
 echo ""
 
 # ==========================================
-# Step 2: Stop containers gracefully
+# STEP 2: Graceful stop in dependency-aware order
 # ==========================================
-print_stage "Stopping containers..."
+print_stage "Stopping containers gracefully..."
 
-docker compose -f "$COMPOSE_FILE" stop ue_1 l2_proxy flexric 2>/dev/null || true
-docker compose -f "$COMPOSE_FILE" stop du_1 cuup cuup_1 cucp 2>/dev/null || true
-docker compose -f "$COMPOSE_FILE" stop upf ext_dn upf_1 ext_dn_1 2>/dev/null || true
-docker compose -f "$COMPOSE_FILE" stop amf smf pcf nssf udm udr ausf nrf 2>/dev/null || true
-docker compose -f "$COMPOSE_FILE" stop mysql 2>/dev/null || true
+# Stop in reverse-dependency order, using whichever services exist in this compose file
+# Tier 1: UEs + xApps first (top of stack)
+for svc in ue_1 xapp l2_proxy flexric; do
+    echo "$SERVICES" | grep -q "^${svc}$" && \
+        docker compose -f "$COMPOSE_FILE" stop "$svc" 2>/dev/null || true
+done
+
+# Tier 2: DUs
+for svc in du_co du_e1 du_e2; do
+    echo "$SERVICES" | grep -q "^${svc}$" && \
+        docker compose -f "$COMPOSE_FILE" stop "$svc" 2>/dev/null || true
+done
+
+# Tier 3: CU-UPs
+for svc in cuup_co cuup_e; do
+    echo "$SERVICES" | grep -q "^${svc}$" && \
+        docker compose -f "$COMPOSE_FILE" stop "$svc" 2>/dev/null || true
+done
+
+# Tier 4: CU-CP
+for svc in cucp; do
+    echo "$SERVICES" | grep -q "^${svc}$" && \
+        docker compose -f "$COMPOSE_FILE" stop "$svc" 2>/dev/null || true
+done
+
+# Tier 5: UPFs + ext_dns
+for svc in ext_dn_core ext_dn_co ext_dn_e upf_core upf_co upf_e; do
+    echo "$SERVICES" | grep -q "^${svc}$" && \
+        docker compose -f "$COMPOSE_FILE" stop "$svc" 2>/dev/null || true
+done
+
+# Tier 6: 5G Core NFs
+for svc in amf smf pcf nssf udm udr ausf nrf; do
+    echo "$SERVICES" | grep -q "^${svc}$" && \
+        docker compose -f "$COMPOSE_FILE" stop "$svc" 2>/dev/null || true
+done
+
+# Tier 7: MySQL last
+for svc in mysql; do
+    echo "$SERVICES" | grep -q "^${svc}$" && \
+        docker compose -f "$COMPOSE_FILE" stop "$svc" 2>/dev/null || true
+done
 
 print_info "All services stopped"
 echo ""
 
 # ==========================================
-# Step 3: Remove containers and networks
+# STEP 3: Remove containers, networks, (optionally) volumes
 # ==========================================
 print_stage "Removing containers and networks..."
-
 if [ "$REMOVE_VOLUMES" = true ]; then
     docker compose -f "$COMPOSE_FILE" down -v --remove-orphans 2>/dev/null || true
-    docker volume prune -f 2>/dev/null || true
+    print_info "Volumes removed"
 else
-    docker compose -f "$COMPOSE_FILE" down 2>/dev/null || true
+    docker compose -f "$COMPOSE_FILE" down --remove-orphans 2>/dev/null || true
+fi
+echo ""
+
+# ==========================================
+# STEP 4: Final verification (dynamic)
+# ==========================================
+print_stage "Final rule verification..."
+echo ""
+print_info "=== Remaining custom nftables rules (should be empty) ==="
+
+local_fail=0
+
+# Check NAT DOCKER for SCTP
+remaining=$(sudo nft list chain ip nat DOCKER 2>/dev/null | grep -c sctp || echo "0")
+if [ "$remaining" -gt 0 ]; then
+    print_warn "  ⚠ $remaining SCTP DNAT rule(s) still in NAT DOCKER"
+    local_fail=$((local_fail + 1))
+else
+    print_info "  ✓ NAT DOCKER clean (SCTP)"
+fi
+
+# Check NAT POSTROUTING for each subnet
+for subnet in $SUBNETS; do
+    local esc
+    esc=$(echo "$subnet" | sed 's/\./\\./g')
+    remaining=$(sudo nft list chain ip nat POSTROUTING 2>/dev/null | grep -cE "${esc}.*masquerade" || echo "0")
+    if [ "$remaining" -gt 0 ]; then
+        print_warn "  ⚠ $remaining MASQUERADE rule(s) remain for ${subnet}"
+        local_fail=$((local_fail + 1))
+    fi
+done
+[ "$local_fail" -eq 0 ] && print_info "  ✓ NAT POSTROUTING clean (all compose subnets)"
+
+# Check DOCKER-ISOLATION for SCTP bypass
+remaining=$(sudo nft list chain ip filter DOCKER-ISOLATION-STAGE-1 2>/dev/null | grep -c "sctp.*accept" || echo "0")
+if [ "$remaining" -gt 0 ]; then
+    print_warn "  ⚠ $remaining SCTP isolation bypass rule(s) remain"
+else
+    print_info "  ✓ DOCKER-ISOLATION-STAGE-1 clean (SCTP)"
 fi
 
 echo ""
-
-# ==========================================
-# Step 4: Final cleanup verification
-# ==========================================
-print_stage "Final rule verification..."
-
-echo ""
-print_info "=== Remaining nftables rules (should be 0 custom rules) ==="
-sudo nft list chain ip nat DOCKER 2>/dev/null | grep -E "sctp|udp dport 8805|udp dport 2152" || print_info "  ✓ No custom NAT DOCKER rules"
-sudo nft list chain ip nat PREROUTING 2>/dev/null | grep -E "udp dport (8805|2152)" || print_info "  ✓ No custom NAT PREROUTING rules"
-sudo nft list chain ip nat POSTROUTING 2>/dev/null | grep -E "192.168\.(61|75)\.128/26.*masquerade" || print_info "  ✓ No custom MASQUERADE rules"
-sudo nft list chain ip filter DOCKER 2>/dev/null | grep sctp || print_info "  ✓ No custom SCTP FORWARD rules"
-sudo nft list chain ip filter FORWARD 2>/dev/null | grep -E "udp.*(8805|2152)" || print_info "  ✓ No custom UDP FORWARD rules"
-sudo nft list chain ip filter DOCKER-ISOLATION-STAGE-1 2>/dev/null | grep sctp || print_info "  ✓ No SCTP isolation bypass rules"
-
-echo ""
 print_info "================================================"
-print_info "5G Network shutdown complete!"
+print_info "Shutdown complete for: $MACHINE_ROLE"
 print_info "Compose file: $COMPOSE_FILE"
 print_info "================================================"
 echo ""
 
+# ==========================================
+# Remaining containers summary
+# ==========================================
 REMAINING=$(docker ps -a --format "{{.Names}}" 2>/dev/null | wc -l)
 if [ "$REMAINING" -gt 0 ]; then
-    print_warn "Some containers still exist:"
+    print_warn "Other containers still exist on this host (not from this compose):"
     docker ps -a --format "  {{.Names}} ({{.Status}})" 2>/dev/null
-else
-    print_info "All containers removed"
 fi
 
 echo ""
-if [[ "$COMPOSE_FILE" == *"centraloffice"* ]]; then
-    print_info "To restart: ./deploy-centraloffice.sh"
-elif [[ "$COMPOSE_FILE" == *"edge"* ]]; then
-    print_info "To restart: ./deploy-edge.sh"
-fi
+# Machine-specific restart hint
+case "$COMPOSE_FILE" in
+    *core*)          print_info "To restart: ./deploy-core.sh" ;;
+    *centraloffice*) print_info "To restart: ./deploy-centraloffice.sh" ;;
+    *edge*)          print_info "To restart: ./deploy-edge.sh" ;;
+esac
+echo ""

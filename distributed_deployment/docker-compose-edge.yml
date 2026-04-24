@@ -1,239 +1,267 @@
-#version: '3.8'
-
-# Docker Compose for Machine 2 (Edge RAN + Edge UPF)
+# Docker Compose for Edge Machine
 # Deploy on PC: 192.168.0.243
-# Components: CU-UP (edge) + UPF (edge) + DU + UEs + FlexRIC
-#
-# CRITICAL: Networks are marked as 'external' to connect to Machine 1
-# Machine 1 must be deployed FIRST to create the shared networks
+# Components: CU-UP_e + UPF_e + ext_dn_e + DU_e1 + DU_e2 + UE_1
 
 services:
-
-  # # ==========================================
-  # # Edge CU-UP
-  # # ==========================================
-
-  # cuup_1:
-  #   image: cuup:comnetsemu
-  #   container_name: cuup_1
-  #   hostname: cuup_1
-  #   cap_add:
-  #     - SYS_NICE
-  #     - NET_ADMIN
-  #   networks:
-  #     core_net:
-  #       ipv4_address: 192.168.61.144
-  #     e1_net:
-  #       ipv4_address: 192.168.75.144
-  #     f1u_net:
-  #       ipv4_address: 192.168.74.144
-  #   ports:
-  #     - "2154:2153/udp"                        # GTP-U F1-U (different port)
-  #   devices:
-  #     - /dev/net/tun:/dev/net/tun
-  #   volumes:
-  #     - ./configs/cuup/gnb-cuup.sa.f1.conf:/opt/oai-gnb/etc/gnb.conf
-  #     - ./logs/cuup:/opt/oai-gnb/logs
-  #   environment:
-  #     USE_ADDITIONAL_OPTIONS: >-
-  #                              --e2_agent.near_ric_ip_addr 192.168.0.193
-  #                              --e2_agent.sm_dir /usr/local/lib/flexric/ 
-  #                              --telnetsrv --telnetsrv.shrmod ci
-  #                              -E --sa --log_config.global_log_options level,nocolor,time
-  #                              --gNBs.[0].gNB_ID  0xe00
-  #                              --gNBs.[0].gNB_CU_UP_ID  0xe01
-  #                              --gNBs.[0].E1_INTERFACE.[0].type up
-  #                              --gNBs.[0].E1_INTERFACE.[0].ipv4_cucp 192.168.0.193
-  #                              --gNBs.[0].E1_INTERFACE.[0].ipv4_cuup 192.168.75.144
-  #                              --gNBs.[0].tr_s_preference f1
-  #                              --gNBs.[0].local_s_portd 2153 
-  #                              --gNBs.[0].local_s_address 192.168.74.144
-  #                              --gNBs.[0].remote_s_address 0.0.0.0
-  #                              --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.71.144/26
-  #                              --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.71.144/26
-    
-  #   command: >
-  #     sh -c "sleep 20 &&
-  #            /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-cuup -O /opt/oai-gnb/etc/gnb.conf"
-
   # ==========================================
-  # Distributed Unit (DU) with RFSimulator
+  # Edge CU-UP (gNB_CU_UP_ID=0xe02)
+  # Serves: DU_e2 (local)
+  # E1 → CU-CP @ Core (192.168.0.200:38462)
   # ==========================================
 
-  du_1:
+  cuup_e:
+    image: cuup:comnetsemu
+    container_name: cuup_e
+    hostname: cuup_e
+    cap_add:
+      - SYS_NICE
+      - NET_ADMIN
+    networks:
+      core_net:
+        ipv4_address: 192.168.61.140
+      f1u_net:
+        ipv4_address: 192.168.84.140
+      n3_net:
+        ipv4_address: 192.168.101.40
+    ports:
+      - "192.168.0.243:2153:2153/udp"       # GTP-U F1-U (inbound from DU_e2 local)
+      - "192.168.0.243:2152:2152/udp"       # GTP-U N3 (towards UPF_e)
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    volumes:
+      - ./configs/cuup_e/gnb-cuup.sa.f1.conf:/opt/oai-gnb/etc/gnb.conf
+      - ./logs/cuup_e:/opt/oai-gnb/logs
+    environment:
+      USE_ADDITIONAL_OPTIONS: >-
+        -E --sa
+        --log_config.global_log_options level,nocolor,time
+        --log_config.global_log_level info
+        --log_config.e1ap_log_level debug
+        --log_config.f1u_log_level debug
+        --log_config.gtpu_log_level debug
+        --e2_agent.near_ric_ip_addr 192.168.0.193
+        --e2_agent.sm_dir /usr/local/lib/flexric/
+        --telnetsrv --telnetsrv.shrmod ci
+        --gNBs.[0].gNB_ID 0xe00
+        --gNBs.[0].gNB_CU_UP_ID 0xe02
+        --gNBs.[0].E1_INTERFACE.[0].type up
+        --gNBs.[0].E1_INTERFACE.[0].ipv4_cucp 192.168.0.200
+        --gNBs.[0].E1_INTERFACE.[0].ipv4_cuup 192.168.61.140
+        --gNBs.[0].tr_s_preference f1
+        --gNBs.[0].local_s_portd 2153
+        --gNBs.[0].local_s_address 192.168.84.140
+        --gNBs.[0].remote_s_address 0.0.0.0
+        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.61.140/26
+        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.101.40/26
+    command: >
+      sh -c "sleep 20 &&
+             /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-cuup -O /opt/oai-gnb/etc/gnb.conf 2>&1 |
+             stdbuf -oL tee /opt/oai-gnb/logs/cuup_e_stdout.log"
+
+  # ==========================================
+  # UPF Edge — Slice 3 (SST=1, SD=3)
+  # ==========================================
+
+  upf_e:
+    image: upf_1:comnetsemu
+    container_name: upf_e
+    hostname: upf_e
+    cap_add:
+      - NET_ADMIN
+      - SYS_NICE
+    networks:
+      core_net:
+        ipv4_address: 192.168.61.134
+        priority: 1000
+      ext_net:
+        ipv4_address: 192.168.82.34
+        priority: 900
+      n3_net:
+        ipv4_address: 192.168.101.34
+        priority: 800
+    ports:
+      - "192.168.0.243:8085:8085/tcp"
+      - "8805/udp"
+      - "192.168.0.243:2155:2152/udp"       # GTP-U N3 (from CU-UP_e)
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    volumes:
+      - ./configs/upf_e:/openair-upf/etc
+      - ./logs/upf_e:/openair-upf/logs
+    depends_on:
+      - cuup_e
+    environment:
+      - ETH0_IP=192.168.61.134
+      - ETH1_IP=192.168.82.34
+    entrypoint: ["/openair-upf/etc/fix_interfaces.sh"]
+    command: >
+      sh -c "sysctl -w net.ipv4.ip_forward=1 &&
+             sleep 2 &&
+             /openair-upf/bin/oai_upf -c /openair-upf/etc/config.yaml -o"
+
+  ext_dn_e:
+    image: ext_dn:comnetsemu
+    container_name: ext_dn_e
+    hostname: ext_dn_e
+    cap_add:
+      - SYS_NICE
+      - NET_ADMIN
+    networks:
+      ext_net:
+        ipv4_address: 192.168.82.35
+      sgi_net:
+        ipv4_address: 172.18.2.9
+    environment:
+      - EBPF_GW_SETUP=yes
+      - EBPF_GW_N6_IP_ADDR=192.168.82.35
+      - N6_IF_NAME=eth0
+      - SGI_IF_NAME=eth1
+      - GW_SGI_IP_ADDR=172.18.2.9
+      - UE_IP_ADDRESS_POOL_1=12.1.1.0
+      - UE_IP_ADDRESS_POOL_2=13.1.1.0
+      - UE_IP_ADDRESS_POOL_3=14.1.1.0
+      - SGI_DEMO_OAI_ADDR=172.18.2.1
+      - N6_UPF_IP_ADDR=192.168.82.34
+    entrypoint: /bin/bash -c \
+              "iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE;"\
+              "ip route add 12.1.1.0/24 via 192.168.82.34 dev eth0;"\
+              "ip route add 13.1.1.0/24 via 192.168.82.34 dev eth0;"\
+              "ip route add 14.1.1.0/24 via 192.168.82.34 dev eth0; sleep infinity"
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    volumes:
+      - ./configs/ext_dn:/tmp
+    depends_on:
+      - upf_e
+    healthcheck:
+      test: /bin/bash -c "ping -c 2 192.168.82.34"
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================
+  # DU_e1 (CellID=22222222, PCI=1)
+  # F1-C → CU-CP @ Core (192.168.0.200:38472)
+  # F1-U → CU-UP_co @ Centraloffice (192.168.0.193:2153) CROSS-MACHINE
+  # ==========================================
+
+  du_e1:
     image: du:comnetsemu
-    container_name: du_1
-    hostname: du_1
+    container_name: du_e1
+    hostname: du_e1
     cap_add:
       - SYS_NICE
       - NET_ADMIN
     networks:
       f1c_net:
-        ipv4_address: 192.168.73.151
+        ipv4_address: 192.168.83.10
       f1u_net:
-        ipv4_address: 192.168.74.151
+        ipv4_address: 192.168.84.10
       ran_net:
         ipv4_address: 192.168.80.151
-      core_net:                          
-        ipv4_address: 192.168.61.151  
+      core_net:
+        ipv4_address: 192.168.61.151
     ports:
-      - "192.168.0.243:500:500/sctp"      # F1-C local SCTP port
-      - "192.168.0.243:2155:2152/udp"     # F1-U local GTP-U port
+      - "192.168.0.243:500:500/sctp"         # F1-C local SCTP port
+      - "192.168.0.243:2156:2152/udp"        # F1-U local GTP-U port
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
-      - ./configs/du_1/gnb-du.sa.band78.106prb.rfsim.conf:/opt/oai-gnb/etc/gnb.conf
-      - ./logs/du_1:/opt/oai-gnb/logs
+      - ./configs/du_e1/gnb-du.sa.band78.106prb.rfsim.conf:/opt/oai-gnb/etc/gnb.conf
+      - ./logs/du_e1:/opt/oai-gnb/logs
     environment:
-      # RFSIMULATOR MODE - DU as server
-      # F1-C and F1-U connect to CU-CP/CU-UP on Machine 1
       USE_ADDITIONAL_OPTIONS: >-
-                                --e2_agent.near_ric_ip_addr 192.168.0.193 --e2_agent.sm_dir /usr/local/lib/flexric/ 
-                                --telnetsrv --telnetsrv.shrmod ci
-                                -E --rfsim --Active_gNBs gNB-OAI
-                                --gNBs.[0].gNB_ID 0xe00 --gNBs.[0].gNB_DU_ID 0xe00  --gNBs.[0].gNB_name gNB-OAI
-                                --gNBs.[0].nr_cellid 11111111 --gNBs.[0].min_rxtxtime 6
-                                --gNBs.[0].servingCellConfigCommon.[0].physCellId 1                                
-                                --MACRLCs.[0].local_n_address 192.168.73.151
-                                --MACRLCs.[0].remote_n_address 192.168.0.193
-                                --MACRLCs.[0].local_n_address_f1u 192.168.74.151
-                                --MACRLCs.[0].remote_n_portd 2153
-                                --MACRLCs.[0].remote_n_portc 38472
-                                --MACRLCs.[0].tr_s_preference local_L1
-                                --MACRLCs.[0].tr_n_preference f1
-                                --MACRLCs.[0].stats_max_ue 11
-                                --gNBs.[0].TIMERS.t300 1000
-                                --rfsimulator.[0].serveraddr server
-                                --rfsimulator.[0].serverport 4043
-                                --log_config.phy_log_level info
-                                --log_config.mac_log_level info
-#--gNBs.[0].servingCellConfigCommon.[0].initialUplinkBWP.rach_ConfigCommon.rach_ConfigGeneric.ra_ResponseWindow 20
-    # depends_on:
-    #   - cu 
+        --e2_agent.near_ric_ip_addr 192.168.0.193
+        --e2_agent.sm_dir /usr/local/lib/flexric/
+        --telnetsrv --telnetsrv.shrmod ci
+        -E --rfsim --Active_gNBs gNB-OAI
+        --gNBs.[0].gNB_ID 0xe00
+        --gNBs.[0].gNB_DU_ID 0xe01
+        --gNBs.[0].gNB_name gNB-OAI
+        --gNBs.[0].nr_cellid 22222222
+        --gNBs.[0].min_rxtxtime 6
+        --gNBs.[0].servingCellConfigCommon.[0].physCellId 1
+        --MACRLCs.[0].local_n_address 192.168.83.10
+        --MACRLCs.[0].remote_n_address 192.168.0.200
+        --MACRLCs.[0].local_n_address_f1u 192.168.84.10
+        --MACRLCs.[0].remote_n_address_f1u 192.168.0.193
+        --MACRLCs.[0].remote_n_portd 2153
+        --MACRLCs.[0].remote_n_portc 38472
+        --MACRLCs.[0].tr_s_preference local_L1
+        --MACRLCs.[0].tr_n_preference f1
+        --MACRLCs.[0].stats_max_ue 11
+        --gNBs.[0].TIMERS.t300 1000
+        --rfsimulator.[0].serveraddr server
+        --rfsimulator.[0].serverport 4043
+        --log_config.phy_log_level info
+        --log_config.mac_log_level info
+    depends_on:
+      - cuup_e
     command: >
       sh -c "sleep 25 &&
-             /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem"
-  
+             /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem 2>&1 |
+             stdbuf -oL tee /opt/oai-gnb/logs/du_e1_stdout.log"
 
   # ==========================================
-  # User Equipment (10 UEs) - RFSimulator Mode
+  # DU_e2 (CellID=33333333, PCI=2)
+  # F1-C → CU-CP @ Core (192.168.0.200:38472)
+  # F1-U → CU-UP_e (local, 192.168.84.140:2153)
   # ==========================================
 
-  ue_1:
-    image: ue:comnetsemu
-    container_name: ue_1
-    hostname: ue_1
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
+  du_e2:
+    image: du:comnetsemu
+    container_name: du_e2
+    hostname: du_e2
     cap_add:
       - SYS_NICE
       - NET_ADMIN
-      - NET_RAW
     networks:
+      f1c_net:
+        ipv4_address: 192.168.83.20
+      f1u_net:
+        ipv4_address: 192.168.84.20
       ran_net:
-        ipv4_address: 192.168.80.170
-    volumes:
-      - ./ue_volumes/nrue.rfsim.conf:/opt/oai-nr-ue/etc/nr-ue.conf
-      - ./ue_volumes/ue_entrypoint.sh:/opt/oai-nr-ue/bin/entrypoint.sh
-      - ./logs/ue_1:/opt/oai-nr-ue/logs
-    environment:
-      OPENAIR_DIR: /opt/oai-nr-ue
-      # Multi-UE RFSimulator - UEs connect to DU as clients
-      USE_ADDITIONAL_OPTIONS: >-
-       --rfsim
-       -r 106
-       --numerology 1
-       --band 78
-       -C 3619200000
-       --ssb 516
-       -E
-       --log_config.global_log_level info
-       --num-ues 10
+        ipv4_address: 192.168.80.161
+      core_net:
+        ipv4_address: 192.168.61.161
+    ports:
+      - "192.168.0.243:501:501/sctp"         # F1-C local SCTP port (different from DU_e1)
+      - "192.168.0.243:2157:2152/udp"        # F1-U local GTP-U port
     devices:
       - /dev/net/tun:/dev/net/tun
+    volumes:
+      - ./configs/du_e2/gnb-du.sa.band78.106prb.rfsim.conf:/opt/oai-gnb/etc/gnb.conf
+      - ./logs/du_e2:/opt/oai-gnb/logs
+    environment:
+      USE_ADDITIONAL_OPTIONS: >-
+        --e2_agent.near_ric_ip_addr 192.168.0.193
+        --e2_agent.sm_dir /usr/local/lib/flexric/
+        --telnetsrv --telnetsrv.shrmod ci
+        -E --rfsim --Active_gNBs gNB-OAI
+        --gNBs.[0].gNB_ID 0xe00
+        --gNBs.[0].gNB_DU_ID 0xe02
+        --gNBs.[0].gNB_name gNB-OAI
+        --gNBs.[0].nr_cellid 33333333
+        --gNBs.[0].min_rxtxtime 6
+        --gNBs.[0].servingCellConfigCommon.[0].physCellId 2
+        --MACRLCs.[0].local_n_address 192.168.83.20
+        --MACRLCs.[0].remote_n_address 192.168.0.200
+        --MACRLCs.[0].local_n_address_f1u 192.168.84.20
+        --MACRLCs.[0].remote_n_address_f1u 192.168.84.140
+        --MACRLCs.[0].remote_n_portd 2153
+        --MACRLCs.[0].remote_n_portc 38472
+        --MACRLCs.[0].tr_s_preference local_L1
+        --MACRLCs.[0].tr_n_preference f1
+        --MACRLCs.[0].stats_max_ue 11
+        --gNBs.[0].TIMERS.t300 1000
+        --rfsimulator.[0].serveraddr server
+        --rfsimulator.[0].serverport 4044
+        --log_config.phy_log_level info
+        --log_config.mac_log_level info
     depends_on:
-      - du_1
+      - cuup_e
     command: >
-      sh -c "sleep 35 &&
-             /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem"
-
-# ==========================================
-# Networks Configuration
-# ==========================================
-# CRITICAL: Most networks are EXTERNAL - created by Machine 1
-# Only ran_net is local to Machine 2
-
-networks:
-  core_net:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 192.168.61.128/26
-          gateway: 192.168.61.129
-    driver_opts:
-      com.docker.network.bridge.name: br-core
-
-  # ext_net:
-  #   driver: bridge
-  #   ipam:
-  #     config:
-  #       - subnet: 192.168.72.128/26
-  #         gateway: 192.168.72.129
-  #   driver_opts:
-  #     com.docker.network.bridge.name: br-ext
-
-  f1c_net:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 192.168.73.128/26
-          gateway: 192.168.73.129
-    driver_opts:
-      com.docker.network.bridge.name: br-f1c
-
-  f1u_net:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 192.168.74.128/26
-          gateway: 192.168.74.129
-    driver_opts:
-      com.docker.network.bridge.name: br-f1u
-
-  # e1_net:
-  #   driver: bridge
-  #   ipam:
-  #     config:
-  #       - subnet: 192.168.75.128/26
-  #         gateway: 192.168.75.129
-  #   driver_opts:
-  #     com.docker.network.bridge.name: br-e1
-  # Local network - only on Machine 2
-  ran_net:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 192.168.80.128/26
-          gateway: 192.168.80.129
-    driver_opts:
-      com.docker.network.bridge.name: br-ran
-  
-  # n3_net:
-  #   driver: bridge
-  #   ipam:
-  #     config:
-  #       - subnet: 192.168.100.128/26
-  #         gateway: 192.168.100.129
-  #   driver_opts:
-  #     com.docker.network.bridge.name: br-n3
-  
-  # sgi_net:
-  #   driver: bridge
-  #   ipam:
-  #     config:
-  #       - subnet: 172.18.0.0/16
-  #         gateway: 172.18.0.1
-  #   driver_opts:
-  #     com.docker.network.bridge.name: br-sgi
+      sh -c "sleep 25 &&
+             /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem 2>&1 |
+             stdbuf -oL t

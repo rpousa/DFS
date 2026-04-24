@@ -1,239 +1,76 @@
-#version: '3.8'
-
-# Docker Compose for Machine 1 (Core Network + Central RAN)
+# Docker Compose for Centraloffice Machine
 # Deploy on PC: 192.168.0.193
-# Components: Core Network + CU-CP + CU-UP (primary)
-# 
-# IMPORTANT: All ports are bound to 192.168.0.193 for cross-machine access
-# This allows Machine 2 (192.168.0.243) to connect to these services
+# Components: CU-UP_co + UPF_co + ext_dn_co + DU_co + FlexRIC
+#
+# The 5G Core has moved to the Core Machine (192.168.0.200)
+# CU-CP has moved to the Core Machine (192.168.0.200)
 
 services:
   # ==========================================
-  # 5G Core Network Functions
+  # CU-UP Centraloffice (gNB_CU_UP_ID=0xe01)
+  # Serves: DU_co (local) + DU_e1 (edge, cross-machine)
   # ==========================================
-  
-  mysql:
-    image: mysql:comnetsemu
-    container_name: mysql
-    hostname: mysql
+
+  cuup_co:
+    image: cuup:comnetsemu
+    container_name: cuup_co
+    hostname: cuup_co
     cap_add:
-      - NET_ADMIN
       - SYS_NICE
+      - NET_ADMIN
     networks:
       core_net:
-        ipv4_address: 192.168.71.131
+        ipv4_address: 192.168.71.140
+      f1u_net:
+        ipv4_address: 192.168.74.140
+      n3_net:
+        ipv4_address: 192.168.100.140
     ports:
-      - "192.168.0.193:3306:3306/tcp"     # MySQL (for external access if needed)
-      - "192.168.0.193:33060:33060/tcp"     # MySQL (for external access if needed)
+      - "192.168.0.193:2153:2153/udp"       # GTP-U F1-U (inbound from DU_co local + DU_e1 cross-machine)
+      - "192.168.0.193:2152:2152/udp"       # GTP-U N3 (towards UPF_co)
+    devices:
+      - /dev/net/tun:/dev/net/tun
     volumes:
-      - ./configs/mysql/oai_db.sql:/docker-entrypoint-initdb.d/oai_db.sql
+      - ./configs/cuup_co/gnb-cuup.sa.f1.conf:/opt/oai-gnb/etc/gnb.conf
+      - ./logs/cuup_co:/opt/oai-gnb/logs
     environment:
-      - MYSQL_ROOT_PASSWORD=linux
-      - MYSQL_DATABASE=oai_db
+      USE_ADDITIONAL_OPTIONS: >-
+        -E --sa
+        --log_config.global_log_options level,nocolor,time
+        --log_config.global_log_level info
+        --log_config.e1ap_log_level debug
+        --log_config.f1u_log_level debug
+        --log_config.gtpu_log_level debug
+        --e2_agent.near_ric_ip_addr 192.168.71.150
+        --e2_agent.sm_dir /usr/local/lib/flexric/
+        --telnetsrv --telnetsrv.shrmod ci
+        --gNBs.[0].gNB_ID 0xe00
+        --gNBs.[0].gNB_CU_UP_ID 0xe01
+        --gNBs.[0].E1_INTERFACE.[0].type up
+        --gNBs.[0].E1_INTERFACE.[0].ipv4_cucp 192.168.0.200
+        --gNBs.[0].E1_INTERFACE.[0].ipv4_cuup 192.168.71.140
+        --gNBs.[0].tr_s_preference f1
+        --gNBs.[0].local_s_portd 2153
+        --gNBs.[0].local_s_address 192.168.74.140
+        --gNBs.[0].remote_s_address 0.0.0.0
+        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.71.140/26
+        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.100.140/26
     command: >
-      sh -c "rm -rf /var/lib/mysql/* &&
-             mysqld -u test --initialize-insecure --init-file=/docker-entrypoint-initdb.d/oai_db.sql &&
-             mysqld -u test "
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  nrf:
-    image: nrf:comnetsemu
-    container_name: nrf
-    hostname: nrf
-    cap_add:
-      - NET_ADMIN
-      - SYS_NICE
-    networks:
-      core_net:
-        ipv4_address: 192.168.71.130
-    ports:
-      - "192.168.0.193:80:80/tcp"
-      - "192.168.0.193:8080:8080/tcp"       # HTTP API (for Machine 2)
-      - "192.168.0.193:9090:9090/tcp"     # HTTP/2 (for Machine 2)
-    volumes:
-      - ./configs/nrf:/openair-nrf/etc
-      - ./logs/nrf:/openair-nrf/logs
-    depends_on:
-      mysql:
-        condition: service_healthy
-    command: >
-      sh -c "sleep 5 &&
-             /openair-nrf/bin/oai_nrf -c /openair-nrf/etc/config.yaml -o"
-
-  smf:
-    image: smf:comnetsemu
-    container_name: smf
-    hostname: smf
-    cap_add:
-      - NET_ADMIN
-      - SYS_NICE
-    networks:
-      core_net:
-        ipv4_address: 192.168.71.133
-    ports:
-      - "192.168.0.193:9091:80/tcp"           # HTTP API (for Machine 2)
-      - "192.168.0.193:9101:8080/tcp"           
-      - "192.168.0.193:8805:8805/udp"     # PFCP (CRITICAL for Machine 2 UPF)
-    volumes:
-      - ./configs/smf:/openair-smf/etc
-      - ./logs/smf:/openair-smf/logs
-    depends_on:
-      - nrf
-    command: >
-      sh -c "sleep 5 &&
-             /openair-smf/bin/oai_smf -c /openair-smf/etc/config.yaml -o"
-
-  pcf:
-    image: pcf:comnetsemu
-    container_name: pcf
-    hostname: pcf
-    cap_add:
-      - NET_ADMIN
-      - SYS_NICE
-    networks:
-      core_net:
-        ipv4_address: 192.168.71.139
-    ports:
-      - "192.168.0.193:9092:80/tcp"       # HTTP API
-      - "192.168.0.193:9102:9090/tcp"
-    volumes:
-      - ./configs/pcf/config.yaml:/openair-pcf/etc/config.yaml
-      - ./configs/pcf/policies:/openair-pcf/policies
-      - ./logs/pcf:/openair-pcf/logs
-    depends_on:
-      - nrf
-    command: >
-      sh -c "sleep 5 &&
-             /openair-pcf/bin/oai_pcf -c /openair-pcf/etc/config.yaml -o"
-
-  nssf:
-    image: nssf:comnetsemu
-    container_name: nssf
-    hostname: nssf
-    cap_add:
-      - NET_ADMIN
-      - SYS_NICE
-    networks:
-      core_net:
-        ipv4_address: 192.168.71.135
-    ports:
-      - "192.168.0.193:9093:80/tcp"       # HTTP API
-      - "192.168.0.193:9103:8080/tcp"       # HTTP API
-    volumes:
-      - ./configs/nssf:/openair-nssf/etc
-      - ./logs/nssf:/openair-nssf/logs
-    depends_on:
-      - nrf
-    command: >
-      sh -c "sleep 5 &&
-             /openair-nssf/bin/oai_nssf -c /openair-nssf/etc/config.yaml -o"
-
-  amf:
-    image: amf:comnetsemu
-    container_name: amf
-    hostname: amf
-    cap_add:
-      - NET_ADMIN
-      - SYS_NICE
-    #network_mode: host 
-    networks:
-     core_net:
-       ipv4_address: 192.168.71.132
-    ports:
-     - "192.168.0.193:9104:8080/tcp"       # NGAP/SCTP (CRITICAL for Machine 2 CU-CP)
-     - "192.168.0.193:38412:38412/sctp"   
-     - "192.168.0.193:9094:80/tcp"           # HTTP API
-    volumes:
-      - ./configs/amf:/openair-amf/etc
-      - ./logs/amf:/openair-amf/logs
-    depends_on:
-      - nrf
-      - smf
-    command: >
-      sh -c "sleep 5 &&
-             /openair-amf/bin/oai_amf -c /openair-amf/etc/config.yaml -o"
-
-  udm:
-    image: udm:comnetsemu
-    container_name: udm
-    hostname: udm
-    cap_add:
-      - NET_ADMIN
-      - SYS_NICE
-    networks:
-      core_net:
-        ipv4_address: 192.168.71.136
-    ports:
-      - "192.168.0.193:9095:80/tcp"       # HTTP API
-      - "192.168.0.193:9105:8080/tcp"       # HTTP API
-
-    volumes:
-      - ./configs/udm:/openair-udm/etc
-      - ./logs/udm:/openair-udm/logs
-    depends_on:
-      - nrf
-    command: >
-      sh -c "sleep 5 &&
-             /openair-udm/bin/oai_udm -c /openair-udm/etc/config.yaml -o"
-  udr:
-    image: udr:comnetsemu
-    container_name: udr
-    hostname: udr
-    cap_add:
-      - NET_ADMIN
-      - SYS_NICE
-    networks:
-      core_net:
-        ipv4_address: 192.168.71.137
-    ports:
-      - "192.168.0.193:9096:80/tcp"       # HTTP API
-    volumes:
-      - ./configs/udr:/openair-udr/etc
-      - ./logs/udr:/openair-udr/logs
-    depends_on:
-      - nrf
-    command: >
-      sh -c "sleep 5 &&
-             /openair-udr/bin/oai_udr -c /openair-udr/etc/config.yaml -o"
-
-  ausf:
-    image: ausf:comnetsemu
-    container_name: ausf
-    hostname: ausf
-    cap_add:
-      - NET_ADMIN
-      - NET_RAW
-      - SYS_NICE
-    networks:
-      core_net:
-        ipv4_address: 192.168.71.138
-    ports:
-      - "192.168.0.193:9097:80/tcp"       # HTTP API
-    volumes:
-      - ./configs/ausf:/openair-ausf/etc
-      - ./logs/ausf:/openair-ausf/logs
-    depends_on:
-      - nrf
-    command: >
-      sh -c "sleep 5 &&
-             /openair-ausf/bin/oai_ausf -c /openair-ausf/etc/config.yaml -o"
+      sh -c "sleep 20 &&
+             /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-cuup -O /opt/oai-gnb/etc/gnb.conf 2>&1 |
+             stdbuf -oL tee /opt/oai-gnb/logs/cuup_co_stdout.log"
 
   # ==========================================
-  # Primary User Plane Function
+  # UPF Centraloffice — Slice 2 (SST=1, SD=2)
   # ==========================================
 
-  upf:
+  upf_co:
     image: upf_1:comnetsemu
-    container_name: upf
-    hostname: upf
+    container_name: upf_co
+    hostname: upf_co
     cap_add:
       - NET_ADMIN
       - SYS_NICE
-    #network_mode: host
     networks:
       core_net:
         ipv4_address: 192.168.71.134
@@ -241,53 +78,51 @@ services:
       ext_net:
         ipv4_address: 192.168.72.134
         priority: 900
+      n3_net:
+        ipv4_address: 192.168.100.134
+        priority: 800
     ports:
       - "192.168.0.193:8085:8085/tcp"
-      - "8805/udp"     # PFCP (different port to avoid conflict with SMF)
-      - "192.168.0.193:2152:2152/udp"     # GTP-U N3 (CRITICAL for Machine 2 CU-UP)
+      - "8805/udp"
+      - "192.168.0.193:2155:2152/udp"       # GTP-U N3 (from CU-UP_co)
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
-      - ./configs/upf:/openair-upf/etc
-      - ./logs/upf:/openair-upf/logs
+      - ./configs/upf_co:/openair-upf/etc
+      - ./logs/upf_co:/openair-upf/logs
     depends_on:
-      - nrf
-      - smf
+      - cuup_co
     environment:
-    - ETH0_IP=192.168.71.134    # core_net → eth0
-    - ETH1_IP=192.168.72.134    # ext_net → eth1
+      - ETH0_IP=192.168.71.134
+      - ETH1_IP=192.168.72.134
     entrypoint: ["/openair-upf/etc/fix_interfaces.sh"]
     command: >
       sh -c "sysctl -w net.ipv4.ip_forward=1 &&
              sleep 2 &&
              /openair-upf/bin/oai_upf -c /openair-upf/etc/config.yaml -o"
 
-  ext_dn:
+  ext_dn_co:
     image: ext_dn:comnetsemu
-    container_name: ext_dn
-    hostname: ext_dn
+    container_name: ext_dn_co
+    hostname: ext_dn_co
     cap_add:
       - SYS_NICE
       - NET_ADMIN
     networks:
       ext_net:
         ipv4_address: 192.168.72.135
-      n3_net:
-        ipv4_address: 192.168.100.135
       sgi_net:
-        ipv4_address: 172.18.0.9
+        ipv4_address: 172.18.1.9
     environment:
       - EBPF_GW_SETUP=yes
       - EBPF_GW_N6_IP_ADDR=192.168.72.135
       - N6_IF_NAME=eth0
-      - SGI_IF_NAME=eth2
-      - GW_SGI_IP_ADDR=172.18.0.9
-      - N3_IF_NAME=eth1
-      - GW_N3_IP_ADDR=192.168.100.135
+      - SGI_IF_NAME=eth1
+      - GW_SGI_IP_ADDR=172.18.1.9
       - UE_IP_ADDRESS_POOL_1=12.1.1.0
       - UE_IP_ADDRESS_POOL_2=13.1.1.0
       - UE_IP_ADDRESS_POOL_3=14.1.1.0
-      - SGI_DEMO_OAI_ADDR=172.18.0.1
+      - SGI_DEMO_OAI_ADDR=172.18.1.1
       - N6_UPF_IP_ADDR=192.168.72.134
     entrypoint: /bin/bash -c \
               "iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE;"\
@@ -299,64 +134,81 @@ services:
     volumes:
       - ./configs/ext_dn:/tmp
     depends_on:
-      - upf
-    command: >
-      sh -c "sleep 5 &&
-             /tmp/trfgen_entrypoint.sh &&
-             sleep infinity"
+      - upf_co
     healthcheck:
       test: /bin/bash -c "ping -c 2 192.168.72.134"
       start_period: 10s
       interval: 10s
       timeout: 5s
       retries: 5
+
   # ==========================================
-  # Central RAN - CU
+  # DU Centraloffice (CellID=11111111, PCI=0)
+  # F1-C → CU-CP @ Core (192.168.0.200:38472)
+  # F1-U → CU-UP_co (local, 192.168.74.140:2153)
   # ==========================================
-  cu:
-    image: cu:comnetsemu
-    container_name: cu
-    hostname: cu
+
+  du_co:
+    image: du:comnetsemu
+    container_name: du_co
+    hostname: du_co
     cap_add:
       - SYS_NICE
       - NET_ADMIN
     networks:
+      f1c_net:
+        ipv4_address: 192.168.73.141
+      f1u_net:
+        ipv4_address: 192.168.74.141
+      ran_net:
+        ipv4_address: 192.168.80.10
       core_net:
-        ipv4_address: 192.168.71.140
+        ipv4_address: 192.168.71.141
     ports:
-      - "192.168.0.193:38472:38472/sctp"       # F1-C/SCTP (CRITICAL for Machine 2 DU)
-      - "192.168.0.193:2153:2153/udp" 
+      - "192.168.0.193:500:500/sctp"         # F1-C local SCTP port
+      - "192.168.0.193:2156:2152/udp"        # F1-U local GTP-U port
+    devices:
+      - /dev/net/tun:/dev/net/tun
     volumes:
-      - ./configs/cu/gnb-cu.sa.band78.106prb.conf:/opt/oai-gnb/etc/gnb.conf
-      - ./logs/cu:/opt/oai-gnb/logs
+      - ./configs/du_co/gnb-du.sa.band78.106prb.rfsim.conf:/opt/oai-gnb/etc/gnb.conf
+      - ./logs/du_co:/opt/oai-gnb/logs
     environment:
       USE_ADDITIONAL_OPTIONS: >-
-                               --e2_agent.near_ric_ip_addr 192.168.71.150 --e2_agent.sm_dir /usr/local/lib/flexric/ 
-                               --telnetsrv --telnetsrv.shrmod ci
-                               -E --log_config.global_log_options level,nocolor,time
-                               --gNBs.[0].gNB_ID  0xe00 
-                               --gNBs.[0].gNB_name gNB-OAI
-                               --gNBs.[0].nr_cellid 11111111 
-                               --gNBs.[0].tr_s_preference f1
-                               --gNBs.[0].local_s_address 192.168.71.140
-                               --gNBs.[0].local_s_portd 2153 
-                               --log_config.global_log_level debug
-                               --log_config.ngap_log_level debug
-                               --log_config.gtpu_log_level debug
-                               --log_config.f1u_log_level debug
-
+        --e2_agent.near_ric_ip_addr 192.168.71.150
+        --e2_agent.sm_dir /usr/local/lib/flexric/
+        --telnetsrv --telnetsrv.shrmod ci
+        -E --rfsim --Active_gNBs gNB-OAI
+        --gNBs.[0].gNB_ID 0xe00
+        --gNBs.[0].gNB_DU_ID 0xe00
+        --gNBs.[0].gNB_name gNB-OAI
+        --gNBs.[0].nr_cellid 11111111
+        --gNBs.[0].min_rxtxtime 6
+        --gNBs.[0].servingCellConfigCommon.[0].physCellId 0
+        --MACRLCs.[0].local_n_address 192.168.73.141
+        --MACRLCs.[0].remote_n_address 192.168.0.200
+        --MACRLCs.[0].local_n_address_f1u 192.168.74.141
+        --MACRLCs.[0].remote_n_address_f1u 192.168.74.140
+        --MACRLCs.[0].remote_n_portd 2153
+        --MACRLCs.[0].remote_n_portc 38472
+        --MACRLCs.[0].tr_s_preference local_L1
+        --MACRLCs.[0].tr_n_preference f1
+        --MACRLCs.[0].stats_max_ue 11
+        --gNBs.[0].TIMERS.t300 1000
+        --rfsimulator.[0].serveraddr server
+        --rfsimulator.[0].serverport 4043
+        --log_config.phy_log_level info
+        --log_config.mac_log_level info
     depends_on:
-      - amf
-      - upf
+      - cuup_co
     command: >
-          sh -c "sleep 15 &&
-             exec /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem 2>&1 | 
-             stdbuf -oL tee /opt/oai-gnb/logs/cu_stdout.log"
+      sh -c "sleep 25 &&
+             /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem 2>&1 |
+             stdbuf -oL tee /opt/oai-gnb/logs/du_co_stdout.log"
 
- 
-# ==========================================
-# Flexric Near Real-Time RIC
-# ==========================================
+  # ==========================================
+  # FlexRIC Near Real-Time RIC
+  # Stays at centraloffice per requirement
+  # ==========================================
 
   flexric:
     image: comnetsemu_flexric:comnetsemu
@@ -368,24 +220,20 @@ services:
       core_net:
         ipv4_address: 192.168.71.150
     ports:
-      - "192.168.0.193:36421:36421/sctp"      # F1-C local SCTP port
-      - "192.168.0.193:36422:36422/sctp" 
+      - "192.168.0.193:36421:36421/sctp"
+      - "192.168.0.193:36422:36422/sctp"
     volumes:
       - ./configs/flexric:/usr/local/etc/flexric
       - ./logs/flexric:/usr/local/logs
-      - ./logs/cu:/usr/local/flexric/cu_logs:ro 
+      - ./logs/cuup_co:/usr/local/flexric/cu_logs:ro
       - ./flexric_volumes/event_ric_watchdog.sh:/usr/local/bin/ric_watchdog.sh
       - ./flexric_volumes/xapp_daemon.py:/usr/local/flexric/xApp/python3/xapp_daemon.py
       - ./flexric_volumes/topology.py:/usr/local/flexric/xApp/python3/topology.py
       - ./flexric_volumes/xapp_functs.py:/usr/local/flexric/xApp/python3/xapp_functs.py
       - ./flexric_volumes/xapp_test.py:/usr/local/flexric/xApp/python3/xapp.py
-      #- ./flexric_volumes/event_ric_watchdog.sh:/usr/local/flexric/xApp/python3/event_ric_watchdog.sh
-    depends_on:
-      - mysql
     command: >
       sh -c "sleep 5 &&
              /usr/local/bin/ric_watchdog.sh"
-
 
 # ==========================================
 # Networks Configuration
@@ -409,7 +257,34 @@ networks:
           gateway: 192.168.72.129
     driver_opts:
       com.docker.network.bridge.name: br-ext
-  
+
+  f1c_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.73.128/26
+          gateway: 192.168.73.129
+    driver_opts:
+      com.docker.network.bridge.name: br-f1c
+
+  f1u_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.74.128/26
+          gateway: 192.168.74.129
+    driver_opts:
+      com.docker.network.bridge.name: br-f1u
+
+  ran_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.80.0/26
+          gateway: 192.168.80.1
+    driver_opts:
+      com.docker.network.bridge.name: br-ran
+
   n3_net:
     driver: bridge
     ipam:
@@ -418,20 +293,12 @@ networks:
           gateway: 192.168.100.129
     driver_opts:
       com.docker.network.bridge.name: br-n3
-  
+
   sgi_net:
     driver: bridge
     ipam:
       config:
-        - subnet: 172.18.0.0/16
-          gateway: 172.18.0.1
+        - subnet: 172.18.1.0/24
+          gateway: 172.18.1.1
     driver_opts:
       com.docker.network.bridge.name: br-sgi
-
-# ==========================================
-# Volumes
-# ==========================================
-
-volumes:
-  mysql_data:
-    driver: local

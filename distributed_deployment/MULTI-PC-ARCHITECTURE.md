@@ -1,159 +1,47 @@
-# Multi-PC 5G Network Deployment Architecture
+┌──────────────────────────────────────────────────────────────────────────┐
+│  CORE MACHINE (192.168.0.200)                                            │
+│  ┌────────────────────────────────────────────────────────────────────┐  │
+│  │ 5G Core: MySQL, NRF, AMF, SMF, UDM, UDR, AUSF, PCF, NSSF           │  │
+│  │ CU-CP (nr-softmodem --sa, E1+F1-C+NGAP)                            │  │
+│  │ UPF_core (central/anchor UPF) + ext_dn_core                        │  │
+│  │                                                                    │  │
+│  │ Slice 1 (SST=1, SD=1) → UPF_core                                   │  │
+│  └────────────────────────────────────────────────────────────────────┘  │
+│    NGAP:38412/sctp  E1:38462/sctp  F1-C:38472/sctp  N4:8805/udp          │
+└──────────┬──────────────┬──────────────┬────────────────┬────────────────┘
+           │              │              │                │
+     ┌─────┴──────────────┴──────────────┴────────────────┴─────┐
+     │                    Physical LAN                          │
+     └─────┬──────────────────────────────────────┬─────────────┘
+           │                                      │
+┌──────────┴───────────────────────────────┐  ┌───┴────────────────────────────────────┐
+│  CENTRALOFFICE (192.168.0.193)           │  │  EDGE (192.168.0.243)                  │
+│  ┌─────────────────────────────────────┐ │  │  ┌──────────────────────────────────┐  │
+│  │ CU-UP_co (gNB_CU_UP_ID=0xe01)       │ │  │  │ CU-UP_e (gNB_CU_UP_ID=0xe02)     │  │
+│  │   E1 → Core:38462                   │ │  │  │   E1 → Core:38462                │  │
+│  │   F1-U ← DU_co, DU_e1               │ │  │  │   F1-U ← DU_e2                   │  │
+│  │   N3 → UPF_co                       │ │  │  │   N3 → UPF_e                     │  │
+│  │                                     │ │  │  │                                  │  │
+│  │ UPF_co + ext_dn_co                  │ │  │  │ UPF_e + ext_dn_e                 │  │
+│  │   Slice 2 (SST=1, SD=2)             │ │  │  │   Slice 3 (SST=1, SD=3)          │  │
+│  │                                     │ │  │  │                                  │  │
+│  │ DU_co (CellID=11111111, PCI=0)      │ │  │  │ DU_e1 (CellID=22222222, PCI=1)   │  │
+│  │   F1-C → Core:38472                 │ │  │  │   F1-C → Core:38472              │  │
+│  │   F1-U → CU-UP_co (local)           │ │  │  │   F1-U → CU-UP_co @ CO:2153      │  │
+│  │                                     │ │  │  │                                  │  │
+│  │ FlexRIC (E2AP:36421,36422)          │ │  │  │ DU_e2 (CellID=33333333, PCI=2)   │  │
+│  └─────────────────────────────────────┘ │  │  │   F1-C → Core:38472              │  │
+│                                          │  │  │   F1-U → CU-UP_e (local)         │  │
+│                                          │  │  │                                  │  │
+│                                          │  │  │ UE_1 (10 UEs) → DU_e1            │  │
+│                                          │  │  └──────────────────────────────────┘  │
+└──────────────────────────────────────────┘  └────────────────────────────────────────┘
 
-## Overview
-
-This deployment distributes the 5G network across multiple physical PCs using the 192.168.0.x physical network, with virtual networks for 5G components.
-
-## Physical Network Layout
-
-```
-Physical Network: 192.168.0.x/24
-
-┌─────────────────────────────────────────────────────────────────┐
-│                    Physical LAN (192.168.0.x)                   │
-│                                                                 │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │
-│  │   PC 1      │  │   PC 2      │  │   PC 3      │              │
-│  │ .193 (RAN)  │  │ .200 (GW)   │  │ .243 (RAN)  │              │
-│  │             │  │             │  │             │              │
-│  └─────────────┘  └─────────────┘  └─────────────┘              │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                         Internet via GW
-```
-
-## Deployment Scenarios
-
-### Scenario 1: All on Centraloffice PC (Development)
-- **PC 192.168.0.193**: All components for testing
-
-### Scenario 2: Core on PC1, RAN & UE on PC2
-- **PC 192.168.0.193**: CU_UP, FlexRIC, External_DN_1, DU, UE 
-- **PC 192.168.0.200**: Gateway, Core Functions(-UPF), CU_CP, UPF_1
-
-### Scenario 3: Core on PC1, UPF and L3 RAN on PC2, L2/1 Ran on PC3
-- **PC 192.168.0.193**: CU-UP, FlexRIC, UPF_1, External_DN_1 
-- **PC 192.168.0.200**: Gateway, Core Functions(-UPF), CU_CP
-- **PC 192.168.0.243**: DU, L2 Proxy, UE
-
-
-### Scenario 4: Core on PC1, UPF & RAN on PC2, UE on PC3
-- **PC 192.168.0.193**: UPF_1, External_DN_1 
-- **PC 192.168.0.200**: Gateway, Core Functions(-UPF), CU_CP
-- **PC 192.168.0.243**: CU_UP, FlexRIC, DU, L2 Proxy, UE 
-
-------------------------------------------------------------------------------------Reviewed till here
-
-## Network Architecture
-
-### Virtual Networks (Internal to each PC)
-
-Each PC runs Docker with internal virtual networks:
-
-```yaml
-# On Core PC (192.168.0.193)
-core_net: 192.168.71.0/26
-ext_net: 192.168.72.0/26
-
-# On RAN PC (192.168.0.243)  
-ran_net: 192.168.80.0/26
-```
-
-### Cross-PC Communication
-
-Components on different PCs communicate via:
-1. **Physical network** (192.168.0.x)
-2. **Port forwarding** on Docker containers
-3. **Host network mode** for some RAN components
-
-## IP Address Mapping
-
-### Core Network Functions (PC 192.168.0.193)
-| Component | Virtual IP     | Physical Access        |
-|-----------|----------------|------------------------|
-| MySQL     | 192.168.71.131 | 192.168.0.193:3306     |
-| NRF       | 192.168.71.130 | 192.168.0.193:8080     |
-| AMF       | 192.168.71.132 | 192.168.0.193:38412    |
-| SMF       | 192.168.71.133 | 192.168.0.193:8805     |
-| PCF       | 192.168.71.139 | 192.168.0.193:8806     |
-| NSSF      | 192.168.71.135 | 192.168.0.193:8807     |
-| UDM       | 192.168.71.136 | 192.168.0.193:8808     |
-| UDR       | 192.168.71.137 | 192.168.0.193:8809     |
-| AUSF      | 192.168.71.138 | 192.168.0.193:8810     |
-| UPF       | 192.168.71.134 | 192.168.0.193:8805     |
-
-### RAN Components (PC 192.168.0.243)
-| Component | Virtual IP     | Physical Access        |
-|-----------|----------------|------------------------|
-| CU-CP     | 192.168.71.140 | 192.168.0.243:38472    |
-| CU-UP     | 192.168.71.143 | 192.168.0.243:38462    |
-| DU        | 192.168.80.151 | 192.168.0.243:2152     |
-| L2 Proxy  | 192.168.80.163 | 192.168.0.243:7878     |
-| UE        | 192.168.80.170 | 192.168.0.243:n/a      |
-| FlexRIC   | 192.168.71.150 | 192.168.0.243:36422    |
-
-## Communication Requirements
-
-### Core ↔ RAN Communication
-
-1. **AMF (Core PC) ↔ CU-CP (RAN PC)**
-   - Protocol: NGAP (N2 interface)
-   - Port: 38412 (AMF listening)
-   
-2. **SMF (Core PC) ↔ UPF (Core PC) ↔ CU-UP (RAN PC)**
-   - Protocol: PFCP, GTP-U
-   - Ports: 8805, 2152
-
-3. **CU-CP ↔ CU-UP ↔ DU**
-   - Protocol: E1AP, F1AP
-   - Within RAN PC or cross-PC via physical network
-
-## Configuration Changes Needed
-
-### 1. Core Components (Point to Physical IPs)
-
-All core components must accept connections from RAN PC's physical IP (192.168.0.243):
-
-```yaml
-# AMF config example
-amf:
-  ngap:
-    bind_addr: 0.0.0.0  # Listen on all interfaces
-    port: 38412
-  # Allow connections from RAN PC
-  allowed_nssai:
-    - sst: 1
-      sd: 0x000001
-```
-
-### 2. RAN Components (Point to Core PC Physical IP)
-
-RAN components must connect to core functions via physical IP (192.168.0.193):
-
-```yaml
-# CU-CP config example
-cucp:
-  amf_addr: 192.168.0.193  # Physical IP of Core PC
-  amf_port: 38412
-```
-
-### 3. Docker Compose Port Exposure
-
-Each PC's docker-compose must expose necessary ports to the physical network.
-
-## Files Generated
-
-I'll create:
-1. **docker-compose-core.yml** - For Core PC (192.168.0.193)
-2. **docker-compose-ran.yml** - For RAN PC (192.168.0.243)
-3. **docker-compose-allinone.yml** - For single PC deployment
-4. **Multi-PC setup scripts**
-5. **Configuration templates** with correct IP mappings
-6. **Network routing setup** between PCs
-
-## Prerequisites
-
-- All PCs on same physical network (192.168.0.x)
-- Gateway PC (192.168.0.200) configured with network-setup scripts
-- Docker installed on all PCs
-- Same Docker images available on all PCs
+  core_net 192.168.71.0/26	192.168.71.128/26	 192.168.61.128/26
+  ext_net	 192.168.72.0/26	192.168.72.128/26	 192.168.82.0/26
+  e1_net	 192.168.75.0/26	192.168.75.128/26	 192.168.85.0/26
+  f1c_net	 —	              192.168.73.128/26	 192.168.83.0/26
+  f1u_net	 —	              192.168.74.128/26	 192.168.84.0/26
+  ran_net	 —	              192.168.80.0/26	   192.168.80.128/26
+  n3_net	 192.168.100.0/26	192.168.100.128/26 192.168.101.0/26
+  sgi_net	 172.18.0.0/24	  172.18.1.0/24	     172.18.2.0/24
