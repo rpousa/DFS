@@ -56,9 +56,6 @@ wait_for_service() {
     return 1
 }
 
-wait_for_healthy()
-
-
 wait_for_healthy() {
     local service=$1
     local max_wait=${2:-120}
