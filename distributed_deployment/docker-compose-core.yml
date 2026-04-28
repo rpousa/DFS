@@ -234,7 +234,7 @@ services:
       - "192.168.0.200:38472:38472/sctp"    # F1-C (inbound from all DUs)
       - "192.168.0.200:38462:38462/sctp"    # E1 (inbound from all CU-UPs)
     volumes:
-      - ./configs/cucp/gnb-cucp.sa.conf:/opt/oai-gnb/etc/gnb.conf
+      - ./configs/cucp/gnb-cucp.sa.f1.conf:/opt/oai-gnb/etc/gnb.conf
       - ./logs/cucp:/opt/oai-gnb/logs
     environment:
       USE_ADDITIONAL_OPTIONS: >-

@@ -1,26 +1,3 @@
- Switch cdeployment composition
- 
-                                    [192.168.0.200 device]
-                                     MAC: 00:01:2e:79:a6:4b
-                                           │
-                                           │
-              ┌────────────────────────────┐│┌────────────────────────────────┐
-              │      SWITCH 1              │││       SWITCH 2                 │
-              │  f4:03:43:07:ed:50         │││   f4:03:43:07:7e:60           │
-              │  IP: 192.168.0.211         │││   IP: 192.168.0.210           │
-              │  FW: WC.16.02.0014         │││   FW: WC.16.11.0003          │
-              ├────────────────────────────┤│├────────────────────────────────┤
-              │ P1: 192.168.0.200 device ──┘│ P1: 192.168.0.200 device      │
-              │ P2: Edge eno5 (main data)   │ P2: ←──── Switch 1 P3 ────→   │
-              │ P3: ←──── Switch 2 P2 ──→   │ P3: Central Office eno3       │
-              │                             │ P5: Edge eno7                  │
-              └────────────────────────────┘ └────────────────────────────────┘
-                       │                              │              │
-                       │                              │              │
-                  ┌────┴──────────┐          ┌────────┴────────┐     │
-                  │    Edge       │          │  Central Office  │     │
-                  │  192.168.0.243│          │  192.168.0.193   │     │
-                  │  eno5 (main)  │          │  eno3            │     │
-                  │  eno7 ────────┼──────────┼──────────────────┘     │
-                  └───────────────┘          └─────────────────────────┘
-
+There is multiple deployments within this a distributed deployment.
+In the old_scripts directory you can find the different worked on architecures. 
+The ones not working were step gaps where some developed content could be reused.
