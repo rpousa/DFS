@@ -39,7 +39,7 @@ http_version: 2
 ### Each NF takes its local SBI interfaces and remote interfaces from here, unless it gets them using NRF discovery mechanisms
 nfs:
   amf:
-    host: 192.168.0.193
+    host: 192.168.0.200
     sbi:
       port: 8080
       api_version: v1
@@ -48,7 +48,7 @@ nfs:
       interface_name: eth0
       port: 38412
   smf:
-    host: 192.168.0.193
+    host: 192.168.0.200
     sbi:
       port: 8080
       api_version: v1
@@ -57,65 +57,65 @@ nfs:
       interface_name: eth0
       port: 8805
   upf:
-    host: 192.168.0.243
+    host: 192.168.0.200
     sbi:
       port: 8080
       api_version: v1
       interface_name: eth0
-      addr: 192.168.0.243
+      addr: 192.168.0.200
     n3:
       interface_name: eth0
       port: 2152
-      addr: 192.168.0.243
+      addr: 192.168.0.200
     n4:
-      addr: 192.168.0.243
+      addr: 192.168.0.200
       interface_name: eth0
       port: 8805
     n6:
-      addr: 192.168.0.243
+      addr: 192.168.0.200
       interface_name: eth1
     n9:
-      addr: 192.168.0.243
+      addr: 192.168.0.200
       interface_name: eth0
       port: 2152
   spgwu:
-    host: 192.168.0.193
+    host: 192.168.0.200
     sbi:
       port: 8080
       api_version: v1
       interface_name: eth0
   udm:
-    host: 192.168.0.193
+    host: 192.168.0.200
     sbi:
       port: 8080
       api_version: v1
       interface_name: eth0
   udr:
-    host: 192.168.0.193
+    host: 192.168.0.200
     sbi:
       port: 8080
       api_version: v1
       interface_name: eth0
   ausf:
-    host: 192.168.0.193
+    host: 192.168.0.200
     sbi:
       port: 8080
       api_version: v1
       interface_name: eth0
   nrf:
-    host: 192.168.0.193
+    host: 192.168.0.200
     sbi:
       port: 9090
       api_version: v1
       interface_name: eth0
   pcf:
-    host: 192.168.0.193
+    host: 192.168.0.200
     sbi:
       port: 8080
       api_version: v1
       interface_name: eth0
   nssf:
-    host: 192.168.0.193
+    host: 192.168.0.200
     sbi:
       port: 8080
       api_version: v1
@@ -123,7 +123,7 @@ nfs:
 
 #### Common for UDR and AMF
 database:
-  host: 192.168.0.193
+  host: 192.168.0.200
   user: test
   type: mysql
   password: test
