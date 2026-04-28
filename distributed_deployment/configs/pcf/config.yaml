@@ -135,7 +135,7 @@ nfs:
       interface_name: eth0
 
   pcf:
-    host: 192.168.0.193              # PCF on Machine 1 (Docker IP)
+    host: 192.168.71.139              # PCF on Machine 1 (Docker IP)
     sbi:
       port: 8080
       api_version: v1
