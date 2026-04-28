@@ -16,7 +16,7 @@ services:
       - SYS_NICE
     networks:
       core_net:
-        ipv4_address: 192.168.71.3
+        ipv4_address: 192.168.71.131
     ports:
       - "192.168.0.200:3306:3306/tcp"
       - "192.168.0.200:33060:33060/tcp"
@@ -44,7 +44,7 @@ services:
       - SYS_NICE
     networks:
       core_net:
-        ipv4_address: 192.168.71.2
+        ipv4_address: 192.168.71.130
     ports:
       - "192.168.0.200:80:80/tcp"
       - "192.168.0.200:8080:8080/tcp"
@@ -68,7 +68,7 @@ services:
       - SYS_NICE
     networks:
       core_net:
-        ipv4_address: 192.168.71.4
+        ipv4_address: 192.168.71.132
     ports:
       - "192.168.0.200:38412:38412/sctp"    # NGAP
       - "192.168.0.200:9094:80/tcp"
@@ -92,7 +92,7 @@ services:
       - SYS_NICE
     networks:
       core_net:
-        ipv4_address: 192.168.71.5
+        ipv4_address: 192.168.71.133
     ports:
       - "192.168.0.200:9091:80/tcp"
       - "192.168.0.200:9101:8080/tcp"
@@ -115,7 +115,7 @@ services:
       - SYS_NICE
     networks:
       core_net:
-        ipv4_address: 192.168.71.6
+        ipv4_address: 192.168.71.139
     ports:
       - "192.168.0.200:9092:80/tcp"
       - "192.168.0.200:9102:9090/tcp"
@@ -138,7 +138,7 @@ services:
       - SYS_NICE
     networks:
       core_net:
-        ipv4_address: 192.168.71.7
+        ipv4_address: 192.168.71.135
     ports:
       - "192.168.0.200:9093:80/tcp"
       - "192.168.0.200:9103:8080/tcp"
@@ -160,7 +160,7 @@ services:
       - SYS_NICE
     networks:
       core_net:
-        ipv4_address: 192.168.71.8
+        ipv4_address: 192.168.71.136
     ports:
       - "192.168.0.200:9095:80/tcp"
       - "192.168.0.200:9105:8080/tcp"
@@ -182,7 +182,7 @@ services:
       - SYS_NICE
     networks:
       core_net:
-        ipv4_address: 192.168.71.9
+        ipv4_address: 192.168.71.137
     ports:
       - "192.168.0.200:9096:80/tcp"
     volumes:
@@ -204,7 +204,7 @@ services:
       - SYS_NICE
     networks:
       core_net:
-        ipv4_address: 192.168.71.10
+        ipv4_address: 192.168.71.138
     ports:
       - "192.168.0.200:9097:80/tcp"
     volumes:
@@ -229,7 +229,7 @@ services:
       - NET_ADMIN
     networks:
       core_net:
-        ipv4_address: 192.168.71.20
+        ipv4_address: 192.168.71.140
     ports:
       - "192.168.0.200:38472:38472/sctp"    # F1-C (inbound from all DUs)
       - "192.168.0.200:38462:38462/sctp"    # E1 (inbound from all CU-UPs)
@@ -251,12 +251,12 @@ services:
         --gNBs.[0].gNB_name gNB-OAI
         --gNBs.[0].nr_cellid 11111111
         --gNBs.[0].tr_s_preference f1
-        --gNBs.[0].local_s_address 192.168.71.20
+        --gNBs.[0].local_s_address 192.168.71.140
         --gNBs.[0].E1_INTERFACE.[0].type cp
         --gNBs.[0].E1_INTERFACE.[0].ipv4_cucp 192.168.0.200
         --gNBs.[0].E1_INTERFACE.[0].ipv4_cuup 0.0.0.0
-        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.71.20/26
-        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.71.20/26
+        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.71.140/26
+        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.71.140/26
     depends_on:
       - amf
     command: >
@@ -276,7 +276,7 @@ services:
       - SYS_NICE
     networks:
       core_net:
-        ipv4_address: 192.168.71.30
+        ipv4_address: 192.168.71.134
         priority: 1000
       ext_net:
         ipv4_address: 192.168.72.30
@@ -297,7 +297,7 @@ services:
       - nrf
       - smf
     environment:
-      - ETH0_IP=192.168.71.30
+      - ETH0_IP=192.168.71.134
       - ETH1_IP=192.168.72.30
     entrypoint: ["/openair-upf/etc/fix_interfaces.sh"]
     command: >
@@ -351,8 +351,8 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: 192.168.71.0/26
-          gateway: 192.168.71.1
+        - subnet: 192.168.71.128/26
+          gateway: 192.168.71.129
     driver_opts:
       com.docker.network.bridge.name: br-core
 
