@@ -4,7 +4,7 @@
 │  │ 5G Core: MySQL, NRF, AMF, SMF, UDM, UDR, AUSF, PCF, NSSF           │  │
 │  │ CU-CP (nr-softmodem --sa, E1+F1-C+NGAP)                            │  │
 │  │ UPF_core (central/anchor UPF) + ext_dn_core                        │  │
-│  │                                                                    │  │
+│  │ FlexRIC (E2AP:36421,36422)                                         │  │
 │  │ Slice 1 (SST=1, SD=1) → UPF_core                                   │  │
 │  └────────────────────────────────────────────────────────────────────┘  │
 │    NGAP:38412/sctp  E1:38462/sctp  F1-C:38472/sctp  N4:8805/udp          │
@@ -29,7 +29,7 @@
 │  │   F1-C → Core:38472                 │ │  │  │   F1-C → Core:38472              │  │
 │  │   F1-U → CU-UP_co (local)           │ │  │  │   F1-U → CU-UP_co @ CO:2153      │  │
 │  │                                     │ │  │  │                                  │  │
-│  │ FlexRIC (E2AP:36421,36422)          │ │  │  │ DU_e2 (CellID=33333333, PCI=2)   │  │
+│  │                                     │ │  │  │ DU_e2 (CellID=33333333, PCI=2)   │  │
 │  └─────────────────────────────────────┘ │  │  │   F1-C → Core:38472              │  │
 │                                          │  │  │   F1-U → CU-UP_e (local)         │  │
 │                                          │  │  │                                  │  │
