@@ -96,7 +96,7 @@ for f in "$COMPOSE_FILE" "fix-sctp-routing.sh"; do
 done
 [ ! -d "configs" ] && print_error "configs directory not found" && exit 1
 
-chmod +x fix-sctp-routing.sh
+#chmod +x fix-sctp-routing.sh
 source ./fix-sctp-routing.sh
 
 # IP check

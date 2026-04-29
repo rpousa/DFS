@@ -110,7 +110,7 @@ done
 [ ! -d "configs" ] && print_error "configs directory not found" && exit 1
 
 # Make fix-sctp-routing.sh executable and source it
-chmod +x fix-sctp-routing.sh
+#chmod +x fix-sctp-routing.sh
 source ./fix-sctp-routing.sh
 
 # SCTP module
