@@ -17,8 +17,41 @@ build_image() {
 IMAGES=(ext_dn mysql amf smf nrf ausf udm udr upf nssf pcf gnb ue cu du cuup cucp onos proxy_l2 comnetsemu_flexric) # comnetsemu_flexric
 DOCKERFILE_DIR=./dockerfiles
 
+# ---- defaults ----
+NO_CACHE=""
+MODE="default"
+
+# ---- parse args ----
+for arg in "$@"; do
+  case $arg in
+    --no-cache)
+      NO_CACHE="--no-cache"
+      ;;
+    core)
+      MODE="core"
+      ;;
+    full)
+      MODE="full"
+      ;;
+    *)
+      echo "Unknown option: $arg"
+      ;;
+  esac
+done
+
+# ---- define image sets ----
+if [ "$MODE" == "core" ]; then
+  IMAGES=(ext_dn mysql amf smf nrf ausf udm udr upf nssf pcf cucp cu gnb comnetsemu_flexric)
+elif [ "$MODE" == "full" ]; then
+  IMAGES=(ext_dn mysql amf smf nrf ausf udm udr upf nssf pcf gnb ue cu du cuup cucp onos proxy_l2 comnetsemu_flexric)
+else
+  # default (could be same as full or something smaller)
+  IMAGES=(mysql amf smf upf)
+fi
+
+
 for image in "${IMAGES[@]}"; do
-  build_image "$image":comnetsemu "$DOCKERFILE_DIR/Dockerfile.$image" "$1" 
+  build_image "$image":comnetsemu "$DOCKERFILE_DIR/Dockerfile.$image" "$NO_CACHE"
   echo "$image"
 done
 
