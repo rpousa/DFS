@@ -6,7 +6,7 @@ RIC_CONF="/usr/local/etc/flexric/flexric.conf"
 RIC_LOG_DIR="/usr/local/etc/flexric_logs"
 WATCHDOG_LOG="/var/log/ric_watchdog.log"
 INDEX_FILE="/var/run/ric_restart_index"
-XAPP_SCRIPT="/usr/local/flexric/xApp/python3/xapp_test.py"
+XAPP_SCRIPT="/usr/local/flexric/xApp/python3/xapp_daemon.py"
 XAPP_PID_FILE="/var/run/xapp_daemon.pid"
 CHECK_INTERVAL=2
 
