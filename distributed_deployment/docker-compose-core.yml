@@ -337,7 +337,7 @@ services:
     command: >
       sh -c "sleep 5 &&
              /usr/local/bin/ric_watchdog.sh"
-             
+
   # ==========================================
   # CU-CP (Control Plane only)
   # ==========================================
@@ -366,7 +366,7 @@ services:
         --log_config.ngap_log_level debug
         --log_config.f1ap_log_level debug
         --log_config.e1ap_log_level debug
-        --e2_agent.near_ric_ip_addr 192.168.0.193
+        --e2_agent.near_ric_ip_addr 192.168.0.200
         --e2_agent.sm_dir /usr/local/lib/flexric/
         --telnetsrv --telnetsrv.shrmod ci
         --gNBs.[0].gNB_ID 0xe00
