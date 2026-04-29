@@ -1,5 +1,5 @@
 # Core
-sudo chmod +x deploy-core.sh stop.sh configs/ext_dn/trfgen_entrypoint.sh configs/mysql/mysql-healthcheck.sh configs/upf_core/fix_interfaces.sh fix-sctp-routing.sh flexric_volumes/ric_watchdog.sh
+sudo chmod +x deploy-core.sh stop.sh configs/ext_dn/trfgen_entrypoint.sh configs/mysql/mysql-healthcheck.sh configs/upf_core/fix_interfaces.sh fix-sctp-routing.sh flexric_volumes/event_ric_watchdog.sh flexric_volumes/xapp_daemon_topo.py
 
 #Central office
 sudo chmod +x deploy-centraloffice.sh stop.sh configs/ext_dn/trfgen_entrypoint.sh fix-sctp-routing.sh configs/upf/fix_interfaces.sh flexric_volumes/ric_watchdog.sh flexric_volumes/topology.py flexric_volumes/xapp_functs.py flexric_volumes/xapp_test.py flexric_volumes/xapp_daemon.py flexric_volumes/event_ric_watchdog.sh
