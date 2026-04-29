@@ -323,8 +323,8 @@ services:
       core_net:
         ipv4_address: 192.168.71.150
     ports:
-      - "192.168.0.193:36421:36421/sctp"
-      - "192.168.0.193:36422:36422/sctp"
+      - "192.168.0.200:36421:36421/sctp"
+      - "192.168.0.200:36422:36422/sctp"
     volumes:
       - ./configs/flexric:/usr/local/etc/flexric
       - ./logs/flexric:/usr/local/logs
