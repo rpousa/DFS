@@ -315,14 +315,18 @@ services:
     networks:
       ext_net:
         ipv4_address: 192.168.72.31
+      n3_net:
+        ipv4_address: 192.168.100.31
       sgi_net:
         ipv4_address: 172.18.0.9
     environment:
       - EBPF_GW_SETUP=yes
       - EBPF_GW_N6_IP_ADDR=192.168.72.31
       - N6_IF_NAME=eth0
-      - SGI_IF_NAME=eth1
+      - SGI_IF_NAME=eth2
+      - N3_IF_NAME=eth1
       - GW_SGI_IP_ADDR=172.18.0.9
+      - GW_N3_IP_ADDR=192.168.100.31
       - UE_IP_ADDRESS_POOL_1=12.1.1.0
       - UE_IP_ADDRESS_POOL_2=13.1.1.0
       - UE_IP_ADDRESS_POOL_3=14.1.1.0
@@ -339,6 +343,10 @@ services:
       - ./configs/ext_dn:/tmp
     depends_on:
       - upf_core
+    command: >
+      sh -c "sleep 5 &&
+             /tmp/trfgen_entrypoint.sh &&
+             sleep infinity"
     healthcheck:
       test: /bin/bash -c "ping -c 2 192.168.72.30"
       start_period: 10s
