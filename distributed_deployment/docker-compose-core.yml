@@ -329,7 +329,8 @@ services:
       - ./configs/flexric:/usr/local/etc/flexric
       - ./logs/flexric:/usr/local/logs
       - ./logs/cuup_co:/usr/local/flexric/cu_logs:ro
-      - ./flexric_volumes/event_ric_watchdog.sh:/usr/local/bin/ric_watchdog.sh
+      - ./flexric_volumes/event_ric_watchdog.sh:/usr/local/bin/event_ric_watchdog.sh
+      - ./flexric_volumes/ric_watchdog.sh:/usr/local/bin/ric_watchdog.sh
       - ./flexric_volumes/xapp_daemon.py:/usr/local/flexric/xApp/python3/xapp_daemon.py
       - ./flexric_volumes/topology.py:/usr/local/flexric/xApp/python3/topology.py
       - ./flexric_volumes/xapp_functs.py:/usr/local/flexric/xApp/python3/xapp_functs.py
