@@ -148,13 +148,13 @@ print_stage "Creating Docker networks..."
 docker compose -f "$COMPOSE_FILE" up --no-start
 echo ""
 
-# Stage 1/6: MySQL
+# Stage 1/7: MySQL
 print_stage "Stage 1/6: Starting MySQL database..."
 docker compose -f "$COMPOSE_FILE" up -d mysql
 wait_for_healthy "mysql" 60
 echo ""
 
-# Stage 2/6: 5G Core NFs
+# Stage 2/7: 5G Core NFs
 print_stage "Stage 2/6: Starting 5G Core Network Functions..."
 docker compose -f "$COMPOSE_FILE" up -d nrf smf pcf nssf amf udm udr ausf
 wait_for_service "nrf" 30
@@ -164,7 +164,7 @@ print_info "Waiting for core NFs to register with NRF..."
 sleep 8
 echo ""
 
-# Stage 3/6: UPF_core + ext_dn_core
+# Stage 3/7: UPF_core + ext_dn_core
 print_stage "Stage 3/6: Starting UPF_core and ext_dn_core..."
 docker compose -f "$COMPOSE_FILE" up -d upf_core ext_dn_core
 wait_for_service "upf_core" 30
@@ -172,8 +172,17 @@ wait_for_service "ext_dn_core" 30
 sleep 5
 echo ""
 
-# Stage 4/6: CU-CP
-print_stage "Stage 4/6: Starting CU-CP (control plane)..."
+# Stage 4/7: Flexric
+print_stage "Stage 4/7: Flexric..."
+docker compose -f "$COMPOSE_FILE" up -d flexric
+wait_for_service "flexric" 30
+print_info "Waiting for FlexRIC to bind E2AP sockets..."
+sleep 10
+docker exec flexric ss -Slnp 2>/dev/null | grep -iE "36421|36422" || print_warn "FlexRIC E2AP sockets not yet bound"
+echo ""
+
+# Stage 5/7: CU-CP
+print_stage "Stage 5/7: Starting CU-CP (control plane)..."
 docker compose -f "$COMPOSE_FILE" up -d cucp
 wait_for_service "cucp" 30
 print_info "Waiting for CU-CP to bind SCTP sockets (F1-C:38472, E1:38462, NGAP)..."
@@ -183,14 +192,14 @@ print_info "CU-CP SCTP listening sockets:"
 docker exec cucp ss -Slnp 2>/dev/null | grep -iE "sctp|38472|38462" || print_warn "  CU-CP SCTP sockets not yet ready"
 echo ""
 
-# Stage 5/6: Dynamic SCTP Routing Fix
-print_stage "Stage 5/6: Applying dynamic SCTP routing fix..."
+# Stage 6/7: Dynamic SCTP Routing Fix
+print_stage "Stage 6/7: Applying dynamic SCTP routing fix..."
 echo ""
 fix_sctp_routing "$COMPOSE_FILE" "$CORE_IP"
 echo ""
 
-# Stage 6/6: Final verification
-print_stage "Stage 6/6: Final verification..."
+# Stage 7/7: Final verification
+print_stage "Stage 7/7: Final verification..."
 echo ""
 docker compose -f "$COMPOSE_FILE" ps
 echo ""
