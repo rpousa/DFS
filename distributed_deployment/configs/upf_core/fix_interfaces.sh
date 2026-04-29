@@ -13,8 +13,8 @@ set -e
 
 # For UPF:
 INTERFACE_MAP=(
-    "eth0=192.168.61.160"    # core_net should be eth0
-    "eth1=192.168.72.160"    # ext_net should be eth1
+    "eth0=192.168.71.134"    # core_net should be eth0
+    "eth1=192.168.72.30"    # ext_net should be eth1
 )
 
 # Override from environment if provided

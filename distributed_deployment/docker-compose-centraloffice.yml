@@ -205,35 +205,6 @@ services:
              /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem 2>&1 |
              stdbuf -oL tee /opt/oai-gnb/logs/du_co_stdout.log"
 
-  # ==========================================
-  # FlexRIC Near Real-Time RIC
-  # Stays at centraloffice per requirement
-  # ==========================================
-
-  flexric:
-    image: comnetsemu_flexric:comnetsemu
-    container_name: flexric
-    hostname: flexric
-    cap_add:
-      - SYS_NICE
-    networks:
-      core_net:
-        ipv4_address: 192.168.71.150
-    ports:
-      - "192.168.0.193:36421:36421/sctp"
-      - "192.168.0.193:36422:36422/sctp"
-    volumes:
-      - ./configs/flexric:/usr/local/etc/flexric
-      - ./logs/flexric:/usr/local/logs
-      - ./logs/cuup_co:/usr/local/flexric/cu_logs:ro
-      - ./flexric_volumes/event_ric_watchdog.sh:/usr/local/bin/ric_watchdog.sh
-      - ./flexric_volumes/xapp_daemon.py:/usr/local/flexric/xApp/python3/xapp_daemon.py
-      - ./flexric_volumes/topology.py:/usr/local/flexric/xApp/python3/topology.py
-      - ./flexric_volumes/xapp_functs.py:/usr/local/flexric/xApp/python3/xapp_functs.py
-      - ./flexric_volumes/xapp_test.py:/usr/local/flexric/xApp/python3/xapp.py
-    command: >
-      sh -c "sleep 5 &&
-             /usr/local/bin/ric_watchdog.sh"
 
 # ==========================================
 # Networks Configuration

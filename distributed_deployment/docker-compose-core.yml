@@ -216,53 +216,7 @@ services:
       sh -c "sleep 5 &&
              /openair-ausf/bin/oai_ausf -c /openair-ausf/etc/config.yaml -o"
 
-  # ==========================================
-  # CU-CP (Control Plane only)
-  # ==========================================
 
-  cucp:
-    image: cu:comnetsemu
-    container_name: cucp
-    hostname: cucp
-    cap_add:
-      - SYS_NICE
-      - NET_ADMIN
-    networks:
-      core_net:
-        ipv4_address: 192.168.71.140
-    ports:
-      - "192.168.0.200:38472:38472/sctp"    # F1-C (inbound from all DUs)
-      - "192.168.0.200:38462:38462/sctp"    # E1 (inbound from all CU-UPs)
-    volumes:
-      - ./configs/cucp/gnb-cucp.sa.f1.conf:/opt/oai-gnb/etc/gnb.conf
-      - ./logs/cucp:/opt/oai-gnb/logs
-    environment:
-      USE_ADDITIONAL_OPTIONS: >-
-        --sa -E
-        --log_config.global_log_options level,nocolor,time
-        --log_config.global_log_level info
-        --log_config.ngap_log_level debug
-        --log_config.f1ap_log_level debug
-        --log_config.e1ap_log_level debug
-        --e2_agent.near_ric_ip_addr 192.168.0.193
-        --e2_agent.sm_dir /usr/local/lib/flexric/
-        --telnetsrv --telnetsrv.shrmod ci
-        --gNBs.[0].gNB_ID 0xe00
-        --gNBs.[0].gNB_name gNB-OAI
-        --gNBs.[0].nr_cellid 11111111
-        --gNBs.[0].tr_s_preference f1
-        --gNBs.[0].local_s_address 192.168.71.140
-        --gNBs.[0].E1_INTERFACE.[0].type cp
-        --gNBs.[0].E1_INTERFACE.[0].ipv4_cucp 192.168.0.200
-        --gNBs.[0].E1_INTERFACE.[0].ipv4_cuup 0.0.0.0
-        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.71.140/26
-        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.71.140/26
-    depends_on:
-      - amf
-    command: >
-      sh -c "sleep 15 &&
-             exec /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem 2>&1 |
-             stdbuf -oL tee /opt/oai-gnb/logs/cucp_stdout.log"
 
   # ==========================================
   # Core UPF (Central/Anchor) — Slice 1 (SST=1, SD=1)
@@ -354,6 +308,83 @@ services:
       timeout: 5s
       retries: 5
 
+  # ==========================================
+  # FlexRIC Near Real-Time RIC
+  # Needs to start at the core level to enable ran units to boot up
+  # ==========================================
+
+  flexric:
+    image: comnetsemu_flexric:comnetsemu
+    container_name: flexric
+    hostname: flexric
+    cap_add:
+      - SYS_NICE
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.150
+    ports:
+      - "192.168.0.193:36421:36421/sctp"
+      - "192.168.0.193:36422:36422/sctp"
+    volumes:
+      - ./configs/flexric:/usr/local/etc/flexric
+      - ./logs/flexric:/usr/local/logs
+      - ./logs/cuup_co:/usr/local/flexric/cu_logs:ro
+      - ./flexric_volumes/event_ric_watchdog.sh:/usr/local/bin/ric_watchdog.sh
+      - ./flexric_volumes/xapp_daemon.py:/usr/local/flexric/xApp/python3/xapp_daemon.py
+      - ./flexric_volumes/topology.py:/usr/local/flexric/xApp/python3/topology.py
+      - ./flexric_volumes/xapp_functs.py:/usr/local/flexric/xApp/python3/xapp_functs.py
+      - ./flexric_volumes/xapp_test.py:/usr/local/flexric/xApp/python3/xapp.py
+    command: >
+      sh -c "sleep 5 &&
+             /usr/local/bin/ric_watchdog.sh"
+             
+  # ==========================================
+  # CU-CP (Control Plane only)
+  # ==========================================
+
+  cucp:
+    image: cu:comnetsemu
+    container_name: cucp
+    hostname: cucp
+    cap_add:
+      - SYS_NICE
+      - NET_ADMIN
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.140
+    ports:
+      - "192.168.0.200:38472:38472/sctp"    # F1-C (inbound from all DUs)
+      - "192.168.0.200:38462:38462/sctp"    # E1 (inbound from all CU-UPs)
+    volumes:
+      - ./configs/cucp/gnb-cucp.sa.f1.conf:/opt/oai-gnb/etc/gnb.conf
+      - ./logs/cucp:/opt/oai-gnb/logs
+    environment:
+      USE_ADDITIONAL_OPTIONS: >-
+        --sa -E
+        --log_config.global_log_options level,nocolor,time
+        --log_config.global_log_level info
+        --log_config.ngap_log_level debug
+        --log_config.f1ap_log_level debug
+        --log_config.e1ap_log_level debug
+        --e2_agent.near_ric_ip_addr 192.168.0.193
+        --e2_agent.sm_dir /usr/local/lib/flexric/
+        --telnetsrv --telnetsrv.shrmod ci
+        --gNBs.[0].gNB_ID 0xe00
+        --gNBs.[0].gNB_name gNB-OAI
+        --gNBs.[0].nr_cellid 11111111
+        --gNBs.[0].tr_s_preference f1
+        --gNBs.[0].local_s_address 192.168.71.140
+        --gNBs.[0].E1_INTERFACE.[0].type cp
+        --gNBs.[0].E1_INTERFACE.[0].ipv4_cucp 192.168.0.200
+        --gNBs.[0].E1_INTERFACE.[0].ipv4_cuup 0.0.0.0
+        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.71.140/26
+        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.71.140/26
+    depends_on:
+      - amf
+    command: >
+      sh -c "sleep 15 &&
+             exec /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem 2>&1 |
+             stdbuf -oL tee /opt/oai-gnb/logs/cucp_stdout.log"
 networks:
   core_net:
     driver: bridge
