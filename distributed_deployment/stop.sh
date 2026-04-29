@@ -239,7 +239,7 @@ cleanup_custom_nft_rules() {
         for bridge in $BRIDGES; do
             local count
             count=$(sudo nft -a list chain ip filter DOCKER-BRIDGE 2>/dev/null \
-                | grep -c "oifname \"${bridge}\".*jump DOCKER" || echo "0")
+                | grep -c "oifname \"${bridge}\".*jump DOCKER")
             while [ "$count" -gt 1 ]; do
                 local H
                 H=$(sudo nft -a list chain ip filter DOCKER-BRIDGE 2>/dev/null \
@@ -361,33 +361,44 @@ print_stage "Final rule verification..."
 echo ""
 print_info "=== Remaining custom nftables rules (should be empty) ==="
 
-local_fail=0
+verification_fail=0
 
-# Check NAT DOCKER for SCTP
-remaining=$(sudo nft list chain ip nat DOCKER 2>/dev/null | grep -c sctp || echo "0")
-if [ "$remaining" -gt 0 ]; then
+# Helper: safe count (always returns a single integer, even on 0 matches)
+nft_count() {
+    # $1 = table, $2 = chain, $3 = pattern (extended regex)
+    sudo nft list chain "$1" "$2" 2>/dev/null | grep -Ec "$3" || true
+}
+
+# --- Check NAT DOCKER for SCTP ---
+remaining=$(sudo nft list chain ip nat DOCKER 2>/dev/null | grep -c sctp)
+remaining=${remaining:-0}
+if [ "$remaining" -gt 0 ] 2>/dev/null; then
     print_warn "  ⚠ $remaining SCTP DNAT rule(s) still in NAT DOCKER"
-    local_fail=$((local_fail + 1))
+    verification_fail=$((verification_fail + 1))
 else
     print_info "  ✓ NAT DOCKER clean (SCTP)"
 fi
 
-# Check NAT POSTROUTING for each subnet
+# --- Check NAT POSTROUTING for each subnet ---
+postrouting_fail=0
 for subnet in $SUBNETS; do
-    local esc
     esc=$(echo "$subnet" | sed 's/\./\\./g')
-    remaining=$(sudo nft list chain ip nat POSTROUTING 2>/dev/null | grep -cE "${esc}.*masquerade" || echo "0")
-    if [ "$remaining" -gt 0 ]; then
+    remaining=$(sudo nft list chain ip nat POSTROUTING 2>/dev/null | grep -cE "${esc}.*masquerade")
+    remaining=${remaining:-0}
+    if [ "$remaining" -gt 0 ] 2>/dev/null; then
         print_warn "  ⚠ $remaining MASQUERADE rule(s) remain for ${subnet}"
-        local_fail=$((local_fail + 1))
+        postrouting_fail=$((postrouting_fail + 1))
+        verification_fail=$((verification_fail + 1))
     fi
 done
-[ "$local_fail" -eq 0 ] && print_info "  ✓ NAT POSTROUTING clean (all compose subnets)"
+[ "$postrouting_fail" -eq 0 ] && print_info "  ✓ NAT POSTROUTING clean (all compose subnets)"
 
-# Check DOCKER-ISOLATION for SCTP bypass
-remaining=$(sudo nft list chain ip filter DOCKER-ISOLATION-STAGE-1 2>/dev/null | grep -c "sctp.*accept" || echo "0")
-if [ "$remaining" -gt 0 ]; then
+# --- Check DOCKER-ISOLATION for SCTP bypass ---
+remaining=$(sudo nft list chain ip filter DOCKER-ISOLATION-STAGE-1 2>/dev/null | grep -cE "sctp.*accept")
+remaining=${remaining:-0}
+if [ "$remaining" -gt 0 ] 2>/dev/null; then
     print_warn "  ⚠ $remaining SCTP isolation bypass rule(s) remain"
+    verification_fail=$((verification_fail + 1))
 else
     print_info "  ✓ DOCKER-ISOLATION-STAGE-1 clean (SCTP)"
 fi
