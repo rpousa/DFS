@@ -376,6 +376,7 @@ services:
         --gNBs.[0].tr_s_preference f1
         --gNBs.[0].local_s_address 192.168.71.140
         --gNBs.[0].remote_s_address 0.0.0.0
+        --gNBs.[0].amf_ip_address.[0] 192.168.0.200
         --gNBs.[0].E1_INTERFACE.[0].type cp
         --gNBs.[0].E1_INTERFACE.[0].ipv4_cucp 192.168.71.140
         --gNBs.[0].E1_INTERFACE.[0].ipv4_cuup 0.0.0.0
