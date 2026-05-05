@@ -281,11 +281,11 @@ services:
     privileged: true
     networks:
       ran_net:
-        ipv4_address: 192.168.80.200
+        ipv4_address: 192.168.80.168
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
-      - ./configs/ue_1:/opt/oai-nr-ue/etc
+      - ./ue_volumes/nrue.rfsim.conf:/opt/oai-nr-ue/etc/nrue.uicc.conf
       - ./logs/ue_1:/opt/oai-nr-ue/logs
     environment:
       USE_ADDITIONAL_OPTIONS: >-
@@ -305,8 +305,8 @@ services:
       - du_e1
     command: >
       sh -c "sleep 45 &&
-             /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem 2>&1 |
-             stdbuf -oL tee /opt/oai-nr-ue/logs/ue_1_stdout.log"
+             /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem 2>&1 "
+ #            stdbuf -oL tee /opt/oai-nr-ue/logs/ue_1_stdout.log"
 
 # ==========================================
 # Networks Configuration
