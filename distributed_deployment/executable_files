@@ -5,4 +5,4 @@ sudo chmod +x deploy-core.sh stop.sh configs/ext_dn/trfgen_entrypoint.sh configs
 sudo chmod +x deploy-centraloffice.sh stop.sh configs/ext_dn/trfgen_entrypoint.sh fix-sctp-routing.sh configs/upf_co/fix_interfaces.sh 
 
 #Edge 
-sudo chmod +x deploy-edge.sh stop.sh configs/ext_dn_1/trfgen_entrypoint.sh fix-sctp-routing.sh ue_volumes/ue_entrypoint.sh 
+sudo chmod +x deploy-edge.sh stop.sh configs/ext_dn_1/trfgen_entrypoint.sh fix-sctp-routing.sh ue_volumes/ue_entrypoint.sh  configs/upf_e/fix_interfaces.sh 
