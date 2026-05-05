@@ -116,12 +116,13 @@ print_info "✓ SCTP kernel module loaded"
 
 # CRITICAL: Both other machines must be reachable
 for target in "$CORE_IP:Core" "$CO_IP:Centraloffice"; do
-    local ip="${target%:*}"; local name="${target#*:}"
-    if ! ping -c 3 -W 2 "$ip" &> /dev/null; then
-        print_error "✗ Cannot reach $name ($ip)"
+    tgt_ip="${target%:*}"
+    tgt_name="${target#*:}"
+    if ! ping -c 3 -W 2 "$tgt_ip" &> /dev/null; then
+        print_error "✗ Cannot reach $tgt_name ($tgt_ip)"
         exit 1
     fi
-    print_info "✓ Can reach $name ($ip)"
+    print_info "✓ Can reach $tgt_name ($tgt_ip)"
 done
 
 # SCTP connectivity test
@@ -129,12 +130,12 @@ if command -v ncat &> /dev/null; then
     print_info "Testing cross-machine SCTP reachability..."
     for entry in "${CORE_IP}:38472:F1-C→Core CU-CP" \
                  "${CORE_IP}:38462:E1→Core CU-CP" \
-                 "${CORE_IP}:36421:E2AP→NOT APPLICABLE (FlexRIC is at CO)" \
-                 "${CO_IP}:36421:E2AP→CO FlexRIC" \
-                 "${CO_IP}:2153:F1-U→CO CU-UP (UDP, not tested here)"; do
-        local h="${entry%%:*}"; local rest="${entry#*:}"
-        local p="${rest%%:*}"; local label="${rest#*:}"
-        # Skip UDP markers
+                 "${CO_IP}:36421:E2AP→CO FlexRIC"; do
+        h="${entry%%:*}"
+        rest="${entry#*:}"
+        p="${rest%%:*}"
+        label="${rest#*:}"
+        # Skip UDP markers / NOT APPLICABLE entries
         [[ "$label" == *UDP* ]] && continue
         [[ "$label" == *"NOT APPLICABLE"* ]] && continue
         if timeout 3 ncat --sctp "$h" "$p" < /dev/null 2>/dev/null; then
