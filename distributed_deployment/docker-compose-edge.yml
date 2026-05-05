@@ -20,7 +20,7 @@ services:
       core_net:
         ipv4_address: 192.168.61.140
       f1u_net:
-        ipv4_address: 192.168.84.140
+        ipv4_address: 192.168.84.40
       n3_net:
         ipv4_address: 192.168.101.40
     ports:
@@ -49,7 +49,7 @@ services:
         --gNBs.[0].E1_INTERFACE.[0].ipv4_cuup 192.168.61.140
         --gNBs.[0].tr_s_preference f1
         --gNBs.[0].local_s_portd 2153
-        --gNBs.[0].local_s_address 192.168.84.140
+        --gNBs.[0].local_s_address 192.168.84.40
         --gNBs.[0].remote_s_address 0.0.0.0
         --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.61.140/26
         --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.101.40/26
@@ -184,8 +184,6 @@ services:
         --gNBs.[0].servingCellConfigCommon.[0].physCellId 1
         --MACRLCs.[0].local_n_address 192.168.83.10
         --MACRLCs.[0].remote_n_address 192.168.0.200
-        --MACRLCs.[0].local_n_address_f1u 192.168.84.10
-        --MACRLCs.[0].remote_n_address_f1u 192.168.0.193
         --MACRLCs.[0].remote_n_portd 2153
         --MACRLCs.[0].remote_n_portc 38472
         --MACRLCs.[0].tr_s_preference local_L1
@@ -196,6 +194,8 @@ services:
         --rfsimulator.[0].serverport 4043
         --log_config.phy_log_level info
         --log_config.mac_log_level info
+#        --MACRLCs.[0].local_n_address_f1u 192.168.84.10
+#        --MACRLCs.[0].remote_n_address_f1u 192.168.0.193
     depends_on:
       - cuup_e
     command: >
@@ -246,9 +246,7 @@ services:
         --gNBs.[0].min_rxtxtime 6
         --gNBs.[0].servingCellConfigCommon.[0].physCellId 2
         --MACRLCs.[0].local_n_address 192.168.83.20
-        --MACRLCs.[0].remote_n_address 192.168.0.200
-        --MACRLCs.[0].local_n_address_f1u 192.168.84.20
-        --MACRLCs.[0].remote_n_address_f1u 192.168.84.140
+        --MACRLCs.[0].remote_n_address 192.168.0.200  
         --MACRLCs.[0].remote_n_portd 2153
         --MACRLCs.[0].remote_n_portc 38472
         --MACRLCs.[0].tr_s_preference local_L1
@@ -259,6 +257,8 @@ services:
         --rfsimulator.[0].serverport 4044
         --log_config.phy_log_level info
         --log_config.mac_log_level info
+#      --MACRLCs.[0].local_n_address_f1u 192.168.84.20
+#      --MACRLCs.[0].remote_n_address_f1u 192.168.84.140
     depends_on:
       - cuup_e
     command: >
