@@ -1,6 +1,6 @@
 # Docker Compose for Centraloffice Machine
 # Deploy on PC: 192.168.0.193
-# Components: CU-UP_co + UPF_co + ext_dn_co + DU_co + FlexRIC
+# Components: CU-UP_co + UPF_co + ext_dn_co + DU_co
 #
 # The 5G Core has moved to the Core Machine (192.168.0.200)
 # CU-CP has moved to the Core Machine (192.168.0.200)
@@ -202,8 +202,8 @@ services:
       - cuup_co
     command: >
       sh -c "sleep 25 &&
-             /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem 2>&1 |
-             stdbuf -oL tee /opt/oai-gnb/logs/du_co_stdout.log"
+             /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem 2>&1"
+# stdbuf -oL tee /opt/oai-gnb/logs/du_co_stdout.log"
 
 
 # ==========================================
