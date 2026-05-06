@@ -130,7 +130,7 @@ if command -v ncat &> /dev/null; then
     print_info "Testing cross-machine SCTP reachability..."
     for entry in "${CORE_IP}:38472:F1-C→Core CU-CP" \
                  "${CORE_IP}:38462:E1→Core CU-CP" \
-                 "${CO_IP}:36421:E2AP→CO FlexRIC"; do
+                 "${CORE_IP}:36421:E2AP→CO FlexRIC"; do
         h="${entry%%:*}"
         rest="${entry#*:}"
         p="${rest%%:*}"

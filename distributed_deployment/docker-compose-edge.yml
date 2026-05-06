@@ -285,7 +285,7 @@ services:
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
-      - ./ue_volumes/nrue.rfsim.conf:/opt/oai-nr-ue/etc/nrue.uicc.conf
+      - ./ue_volumes/nrue.rfsim.conf:/opt/oai-nr-ue/etc/nr-ue.conf
       - ./logs/ue_1:/opt/oai-nr-ue/logs
     environment:
       USE_ADDITIONAL_OPTIONS: >-
