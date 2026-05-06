@@ -357,7 +357,7 @@ networks:
     ipam:
       config:
         - subnet: 192.168.101.128/26
-          gateway: 192.168.101.1
+          gateway: 192.168.101.129
     driver_opts:
       com.docker.network.bridge.name: br-n3
 
