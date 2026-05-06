@@ -5,90 +5,128 @@
 # This script ensures eth0 = core_net, eth1 = ext_net regardless of
 # Docker's random interface ordering.
 
+
 set -e
 
-# Define expected interface-to-IP mapping
-# Format: EXPECTED_INTERFACE_NAME=IP_ADDRESS
-# Customize these for each container type
+# ---- Build INTERFACE_MAP from ETH<N>_IP env vars (any count) ----
+INTERFACE_MAP=()
+i=0
+while true; do
+    var="ETH${i}_IP"
+    ip_val="${!var:-}"
+    [ -z "$ip_val" ] && break
+    INTERFACE_MAP+=("eth${i}=${ip_val}")
+    i=$((i+1))
+done
 
-# For UPF:
-INTERFACE_MAP=(
-    "eth0=192.168.61.134"    # core_net should be eth0
-    "eth1=192.168.82.34"    # ext_net should be eth1
-)
-
-# Override from environment if provided
-[ -n "$ETH0_IP" ] && INTERFACE_MAP[0]="eth0=$ETH0_IP"
-[ -n "$ETH1_IP" ] && INTERFACE_MAP[1]="eth1=$ETH1_IP"
+# Fallback defaults for UPF if nothing was passed
+if [ ${#INTERFACE_MAP[@]} -eq 0 ]; then
+    INTERFACE_MAP=(
+        "eth0=192.168.61.134"    # core_net should be eth0
+        "eth1=192.168.82.34"    # ext_net should be eth1 "eth2=192.168.101.34"    # n3_net should be eth2
+    )
+fi
 
 echo "=== Interface Renaming Script ==="
+echo "Target mapping:"
+for m in "${INTERFACE_MAP[@]}"; do echo "  $m"; done
+
+echo ""
 echo "Current interfaces:"
 ip -o addr show | grep -E "eth[0-9]" | awk '{print "  " $2 ": " $4}'
 
-# Build a map of current IP -> interface
+# ---- Build IP → current_iface and IP → MAC maps ----
 declare -A IP_TO_IFACE
-for iface in $(ip -o link show | grep -oP 'eth\d+' | sort -u); do
-    ip=$(ip -4 addr show "$iface" 2>/dev/null | grep -oP 'inet \K[0-9.]+' || echo "")
-    if [ -n "$ip" ]; then
-        IP_TO_IFACE["$ip"]="$iface"
-        echo "  Found: $iface has IP $ip"
-    fi
+declare -A IFACE_TO_MAC
+for iface in $(ip -o link show | awk -F': ' '/^[0-9]+: eth/ {print $2}' | awk '{print $1}'); do
+    ip_addr=$(ip -4 addr show "$iface" 2>/dev/null | awk '/inet /{print $2}' | cut -d/ -f1 | head -1)
+    mac=$(ip -o link show "$iface" | awk '{print $(NF-2)}')
+    [ -n "$ip_addr" ] && IP_TO_IFACE["$ip_addr"]="$iface"
+    IFACE_TO_MAC["$iface"]="$mac"
+    echo "  Found: $iface ($mac) has IP ${ip_addr:-<none>}"
 done
 
-echo ""
-echo "Renaming interfaces..."
-
-# Track which interfaces need renaming
-declare -A RENAME_MAP
-
+# ---- Decide which interfaces need to move ----
+declare -A DESIRED_NAME     # current_iface → desired_name
 for mapping in "${INTERFACE_MAP[@]}"; do
-    target_iface="${mapping%%=*}"
-    target_ip="${mapping#*=}"
-    
-    current_iface="${IP_TO_IFACE[$target_ip]}"
-    
-    if [ -z "$current_iface" ]; then
-        echo "  WARNING: No interface found with IP $target_ip (expected for $target_iface)"
+    target="${mapping%%=*}"
+    tip="${mapping#*=}"
+    cur="${IP_TO_IFACE[$tip]:-}"
+    if [ -z "$cur" ]; then
+        echo "  WARN: no interface has IP $tip (wanted $target) — skipping"
         continue
     fi
-    
-    if [ "$current_iface" = "$target_iface" ]; then
-        echo "  ✓ $target_iface already has correct IP $target_ip"
-        continue
+    DESIRED_NAME["$cur"]="$target"
+done
+
+# ---- Short-circuit if nothing to do ----
+need_work=0
+for cur in "${!DESIRED_NAME[@]}"; do
+    [ "$cur" != "${DESIRED_NAME[$cur]}" ] && need_work=1
+done
+if [ $need_work -eq 0 ]; then
+    echo "All interfaces already correctly named."
+    exec "$@"
+fi
+
+# ---- Phase 1: rename ALL managed interfaces to unique tmp names ----
+#    Using a counter-based tmp name avoids any collision with existing names.
+echo ""
+echo "Phase 1: move ALL managed interfaces to tmp names..."
+declare -A TMP_NAME
+idx=0
+for cur in "${!DESIRED_NAME[@]}"; do
+    tmp="ifrenametmp${idx}"
+    echo "  $cur → $tmp"
+    ip link set "$cur" down 2>/dev/null || true
+    ip link set "$cur" name "$tmp"
+    TMP_NAME["$cur"]="$tmp"
+    idx=$((idx+1))
+done
+
+# ---- Phase 2: if anything STILL squats on a target name, park it too ----
+#    (e.g., eth0 is held by an unmapped network → move it to a side name)
+echo "Phase 2: park any interface still squatting on a target name..."
+declare -A PARKED
+for cur in "${!DESIRED_NAME[@]}"; do
+    target="${DESIRED_NAME[$cur]}"
+    if ip link show "$target" &>/dev/null; then
+        parked="ifrenameparked${idx}"
+        echo "  $target is occupied — parking as $parked"
+        ip link set "$target" down 2>/dev/null || true
+        ip link set "$target" name "$parked"
+        PARKED["$target"]="$parked"
+        idx=$((idx+1))
     fi
-    
-    RENAME_MAP["$current_iface"]="$target_iface"
-    echo "  Will rename: $current_iface ($target_ip) → $target_iface"
 done
 
-# Perform renames using temporary names to avoid conflicts
-# (e.g., if eth0 needs to become eth1 and eth1 needs to become eth0)
-
-# Step 1: Rename all to temporary names
-TMP_SUFFIX="_tmp"
-for current_iface in "${!RENAME_MAP[@]}"; do
-    tmp_name="${current_iface}${TMP_SUFFIX}"
-    echo "  Step 1: $current_iface → $tmp_name"
-    ip link set "$current_iface" down 2>/dev/null || true
-    ip link set "$current_iface" name "$tmp_name"
+# ---- Phase 3: rename tmp → target ----
+echo "Phase 3: tmp → final name..."
+for cur in "${!DESIRED_NAME[@]}"; do
+    tmp="${TMP_NAME[$cur]}"
+    target="${DESIRED_NAME[$cur]}"
+    echo "  $tmp → $target"
+    ip link set "$tmp" name "$target"
+    ip link set "$target" up
 done
 
-# Step 2: Rename from temporary to final names
-for current_iface in "${!RENAME_MAP[@]}"; do
-    tmp_name="${current_iface}${TMP_SUFFIX}"
-    target_iface="${RENAME_MAP[$current_iface]}"
-    echo "  Step 2: $tmp_name → $target_iface"
-    ip link set "$tmp_name" name "$target_iface"
-    ip link set "$target_iface" up
+# ---- Phase 4: give parked squatters a fresh name so they still work ----
+#    Assign them to the next available ethN slot.
+echo "Phase 4: re-home parked interfaces..."
+next=0
+for target in "${!PARKED[@]}"; do
+    parked="${PARKED[$target]}"
+    while ip link show "eth$next" &>/dev/null; do next=$((next+1)); done
+    echo "  $parked → eth$next"
+    ip link set "$parked" name "eth$next"
+    ip link set "eth$next" up
+    next=$((next+1))
 done
 
 echo ""
 echo "Final interface configuration:"
 ip -o addr show | grep -E "eth[0-9]" | awk '{print "  " $2 ": " $4}'
-
 echo ""
 echo "=== Interface renaming complete ==="
-echo ""
 
-# Execute the main command
 exec "$@"

@@ -76,9 +76,6 @@ services:
       ext_net:
         ipv4_address: 192.168.82.34
         priority: 900
-      n3_net:
-        ipv4_address: 192.168.101.34
-        priority: 800
     ports:
       - "192.168.0.243:8085:8085/tcp"
       - "8805/udp"
@@ -109,14 +106,18 @@ services:
     networks:
       ext_net:
         ipv4_address: 192.168.82.35
+      n3_net:
+        ipv4_address: 192.168.101.135
       sgi_net:
         ipv4_address: 172.18.2.9
     environment:
       - EBPF_GW_SETUP=yes
       - EBPF_GW_N6_IP_ADDR=192.168.82.35
       - N6_IF_NAME=eth0
-      - SGI_IF_NAME=eth1
+      - SGI_IF_NAME=eth2
       - GW_SGI_IP_ADDR=172.18.2.9
+      - N3_IF_NAME=eth1
+      - GW_N3_IP_ADDR=192.168.100.135
       - UE_IP_ADDRESS_POOL_1=12.1.1.0
       - UE_IP_ADDRESS_POOL_2=13.1.1.0
       - UE_IP_ADDRESS_POOL_3=14.1.1.0
