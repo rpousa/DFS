@@ -71,10 +71,10 @@ services:
       - SYS_NICE
     networks:
       core_net:
-        ipv4_address: 192.168.61.134
+        ipv4_address: 192.168.71.154
         priority: 1000
       ext_net:
-        ipv4_address: 192.168.82.34
+        ipv4_address: 192.168.82.154
         priority: 900
     ports:
       - "192.168.0.243:8085:8085/tcp"
@@ -88,8 +88,8 @@ services:
     depends_on:
       - cuup_e
     environment:
-      - ETH0_IP=192.168.61.134
-      - ETH1_IP=192.168.82.34
+      - ETH0_IP=192.168.71.154
+      - ETH1_IP=192.168.82.154
     entrypoint: ["/openair-upf/etc/fix_interfaces.sh"]
     command: >
       sh -c "sysctl -w net.ipv4.ip_forward=1 &&
@@ -105,29 +105,29 @@ services:
       - NET_ADMIN
     networks:
       ext_net:
-        ipv4_address: 192.168.82.35
+        ipv4_address: 192.168.82.135
       n3_net:
         ipv4_address: 192.168.101.135
       sgi_net:
         ipv4_address: 172.18.2.9
     environment:
       - EBPF_GW_SETUP=yes
-      - EBPF_GW_N6_IP_ADDR=192.168.82.35
+      - EBPF_GW_N6_IP_ADDR=192.168.82.135
       - N6_IF_NAME=eth0
       - SGI_IF_NAME=eth2
       - GW_SGI_IP_ADDR=172.18.2.9
       - N3_IF_NAME=eth1
-      - GW_N3_IP_ADDR=192.168.100.135
+      - GW_N3_IP_ADDR=192.168.101.135
       - UE_IP_ADDRESS_POOL_1=12.1.1.0
       - UE_IP_ADDRESS_POOL_2=13.1.1.0
       - UE_IP_ADDRESS_POOL_3=14.1.1.0
       - SGI_DEMO_OAI_ADDR=172.18.2.1
-      - N6_UPF_IP_ADDR=192.168.82.34
+      - N6_UPF_IP_ADDR=192.168.82.154
     entrypoint: /bin/bash -c \
               "iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE;"\
-              "ip route add 12.1.1.0/24 via 192.168.82.34 dev eth0;"\
-              "ip route add 13.1.1.0/24 via 192.168.82.34 dev eth0;"\
-              "ip route add 14.1.1.0/24 via 192.168.82.34 dev eth0; sleep infinity"
+              "ip route add 12.1.1.0/24 via 192.168.82.154 dev eth0;"\
+              "ip route add 13.1.1.0/24 via 192.168.82.154 dev eth0;"\
+              "ip route add 14.1.1.0/24 via 192.168.82.154 dev eth0; sleep infinity"
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
@@ -135,7 +135,7 @@ services:
     depends_on:
       - upf_e
     healthcheck:
-      test: /bin/bash -c "ping -c 2 192.168.82.34"
+      test: /bin/bash -c "ping -c 2 192.168.82.15 4"
       start_period: 10s
       interval: 10s
       timeout: 5s
@@ -311,8 +311,8 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: 192.168.61.128/26
-          gateway: 192.168.61.129
+        - subnet: 192.168.71.128/26
+          gateway: 192.168.71.129
     driver_opts:
       com.docker.network.bridge.name: br-core
 
@@ -320,8 +320,8 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: 192.168.82.0/26
-          gateway: 192.168.82.1
+        - subnet: 192.168.82.128/26
+          gateway: 192.168.82.129
     driver_opts:
       com.docker.network.bridge.name: br-ext
 

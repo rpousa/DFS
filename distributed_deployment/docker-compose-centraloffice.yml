@@ -73,10 +73,10 @@ services:
       - SYS_NICE
     networks:
       core_net:
-        ipv4_address: 192.168.71.134
+        ipv4_address: 192.168.71.144
         priority: 1000
       ext_net:
-        ipv4_address: 192.168.72.134
+        ipv4_address: 192.168.72.144
         priority: 900
 
     ports:
@@ -91,8 +91,8 @@ services:
     depends_on:
       - cuup_co
     environment:
-      - ETH0_IP=192.168.71.134
-      - ETH1_IP=192.168.72.134
+      - ETH0_IP=192.168.71.144
+      - ETH1_IP=192.168.72.144
     entrypoint: ["/openair-upf/etc/fix_interfaces.sh"]
     command: >
       sh -c "sysctl -w net.ipv4.ip_forward=1 &&
@@ -125,12 +125,12 @@ services:
       - UE_IP_ADDRESS_POOL_2=13.1.1.0
       - UE_IP_ADDRESS_POOL_3=14.1.1.0
       - SGI_DEMO_OAI_ADDR=172.18.1.1
-      - N6_UPF_IP_ADDR=192.168.72.134
+      - N6_UPF_IP_ADDR=192.168.72.144
     entrypoint: /bin/bash -c \
               "iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE;"\
-              "ip route add 12.1.1.0/24 via 192.168.72.134 dev eth0;"\
-              "ip route add 13.1.1.0/24 via 192.168.72.134 dev eth0;"\
-              "ip route add 14.1.1.0/24 via 192.168.72.134 dev eth0; sleep infinity"
+              "ip route add 12.1.1.0/24 via 192.168.72.144 dev eth0;"\
+              "ip route add 13.1.1.0/24 via 192.168.72.144 dev eth0;"\
+              "ip route add 14.1.1.0/24 via 192.168.72.144 dev eth0; sleep infinity"
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
@@ -138,7 +138,7 @@ services:
     depends_on:
       - upf_co
     healthcheck:
-      test: /bin/bash -c "ping -c 2 192.168.72.134"
+      test: /bin/bash -c "ping -c 2 192.168.72.144"
       start_period: 10s
       interval: 10s
       timeout: 5s
