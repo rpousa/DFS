@@ -112,7 +112,7 @@ on each host's physical IP and transits both switches as needed.
      │                                                                     │
      │  ┌───────────────────────────────────────────────────────────────┐  │
      │  │  cuup_e    (gNB_CU_UP_ID=0xe02)                               │  │
-     │  │     core_net .140   f1u_net .40    n3_net .140                │  │
+     │  │     core_net .140   f1u_net .140    n3_net .140               │  │
      │  │     E1  → Core:38462      F1-U ← DU_e2 (local)                │  │
      │  │     N3  → upf_e (local)                                       │  │
      │  │                                                               │  │
@@ -123,12 +123,12 @@ on each host's physical IP and transits both switches as needed.
      │  │     ext_net .135   n3_net .135   sgi_net .9                   │  │
      │  │                                                               │  │
      │  │  du_e1     (CellID=22222222, PCI=1)                           │  │
-     │  │     f1c_net .10   f1u_net .10   ran_net .151                  │  │
+     │  │     f1c_net .151   f1u_net .151   ran_net .151                │  │
      │  │     core_net .151                                             │  │
      │  │     F1-C → Core:38472      F1-U → cuup_co @ CO:2153 ◄──┐      │  │
      │  │                                        (CROSS-MACHINE) │      │  │
      │  │  du_e2     (CellID=33333333, PCI=2)                    │      │  │
-     │  │     f1c_net .20   f1u_net .20   ran_net .161           │      │  │
+     │  │     f1c_net .161   f1u_net .161   ran_net .161         │      │  │
      │  │     core_net .161                                      │      │  │
      │  │     F1-C → Core:38472      F1-U → cuup_e (local)       │      │  │
      │  │                                                        │      │  │
@@ -137,8 +137,8 @@ on each host's physical IP and transits both switches as needed.
      │  └───────────────────────────────────────────────────────────────┘  │
      │                                                                     │
      │  Docker bridges:                                                    │
-     │    br-core 192.168.71.128/26   br-f1c 192.168.83.0/26               │
-     │    br-ext  192.168.82.128/26   br-f1u 192.168.84.0/26               │
+     │    br-core 192.168.71.128/26   br-f1c 192.168.83.128/26             │
+     │    br-ext  192.168.82.128/26   br-f1u 192.168.84.128/26             │
      │    br-ran  192.168.80.128/26   br-n3  192.168.101.128/26            │
      │    br-sgi  172.18.2.0/24                                            │
      │                                                                     │

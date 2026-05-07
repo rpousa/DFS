@@ -18,9 +18,9 @@ services:
       - NET_ADMIN
     networks:
       core_net:
-        ipv4_address: 192.168.61.140
+        ipv4_address: 192.168.71.140
       f1u_net:
-        ipv4_address: 192.168.84.40
+        ipv4_address: 192.168.84.140
       n3_net:
         ipv4_address: 192.168.101.140
     ports:
@@ -46,7 +46,7 @@ services:
         --gNBs.[0].gNB_CU_UP_ID 0xe02
         --gNBs.[0].E1_INTERFACE.[0].type up
         --gNBs.[0].E1_INTERFACE.[0].ipv4_cucp 192.168.0.200
-        --gNBs.[0].E1_INTERFACE.[0].ipv4_cuup 192.168.61.140
+        --gNBs.[0].E1_INTERFACE.[0].ipv4_cuup 192.168.71.140
         --gNBs.[0].tr_s_preference f1
         --gNBs.[0].local_s_portd 2153
         --gNBs.[0].local_s_address 192.168.84.40
@@ -156,13 +156,13 @@ services:
       - NET_ADMIN
     networks:
       f1c_net:
-        ipv4_address: 192.168.83.10
+        ipv4_address: 192.168.83.151
       f1u_net:
-        ipv4_address: 192.168.84.10
+        ipv4_address: 192.168.84.151
       ran_net:
         ipv4_address: 192.168.80.151
       core_net:
-        ipv4_address: 192.168.61.151
+        ipv4_address: 192.168.71.151
     ports:
       - "192.168.0.243:500:500/sctp"         # F1-C local SCTP port
       - "192.168.0.243:2156:2152/udp"        # F1-U local GTP-U port
@@ -183,7 +183,7 @@ services:
         --gNBs.[0].nr_cellid 22222222
         --gNBs.[0].min_rxtxtime 6
         --gNBs.[0].servingCellConfigCommon.[0].physCellId 1
-        --MACRLCs.[0].local_n_address 192.168.83.10
+        --MACRLCs.[0].local_n_address 192.168.83.151
         --MACRLCs.[0].remote_n_address 192.168.0.200
         --MACRLCs.[0].remote_n_portd 2153
         --MACRLCs.[0].remote_n_portc 38472
@@ -219,13 +219,13 @@ services:
       - NET_ADMIN
     networks:
       f1c_net:
-        ipv4_address: 192.168.83.20
+        ipv4_address: 192.168.83.161
       f1u_net:
-        ipv4_address: 192.168.84.20
+        ipv4_address: 192.168.84.161
       ran_net:
         ipv4_address: 192.168.80.161
       core_net:
-        ipv4_address: 192.168.61.161
+        ipv4_address: 192.168.71.161
     ports:
       - "192.168.0.243:501:501/sctp"         # F1-C local SCTP port (different from DU_e1)
       - "192.168.0.243:2157:2152/udp"        # F1-U local GTP-U port
@@ -246,7 +246,7 @@ services:
         --gNBs.[0].nr_cellid 33333333
         --gNBs.[0].min_rxtxtime 6
         --gNBs.[0].servingCellConfigCommon.[0].physCellId 2
-        --MACRLCs.[0].local_n_address 192.168.83.20
+        --MACRLCs.[0].local_n_address 192.168.83.161
         --MACRLCs.[0].remote_n_address 192.168.0.200  
         --MACRLCs.[0].remote_n_portd 2153
         --MACRLCs.[0].remote_n_portc 38472
@@ -329,8 +329,8 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: 192.168.83.0/26
-          gateway: 192.168.83.1
+        - subnet: 192.168.83.128/26
+          gateway: 192.168.83.129
     driver_opts:
       com.docker.network.bridge.name: br-f1c
 
@@ -338,8 +338,8 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: 192.168.84.0/26
-          gateway: 192.168.84.1
+        - subnet: 192.168.84.128/26
+          gateway: 192.168.84.129
     driver_opts:
       com.docker.network.bridge.name: br-f1u
 
