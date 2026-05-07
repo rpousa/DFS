@@ -66,7 +66,7 @@ on each host's physical IP and transits both switches as needed.
      │  │     N3  → upf_co (local)                                      │  │
      │  │                                                               │  │
      │  │  upf_co    (Slice 2: SST=1/SD=2)                              │  │
-     │  │     core_net .134   ext_net .134                              │  │
+     │  │     core_net .144   ext_net .144                              │  │
      │  │                                                               │  │
      │  │  ext_dn_co                                                    │  │
      │  │     ext_net .135   n3_net .135   sgi_net .9                   │  │
@@ -117,10 +117,10 @@ on each host's physical IP and transits both switches as needed.
      │  │     N3  → upf_e (local)                                       │  │
      │  │                                                               │  │
      │  │  upf_e     (Slice 3: SST=1/SD=3)                              │  │
-     │  │     core_net .134   ext_net .34                               │  │
+     │  │     core_net .154   ext_net .154                              │  │
      │  │                                                               │  │
      │  │  ext_dn_e                                                     │  │
-     │  │     ext_net .35   n3_net .135   sgi_net .9                    │  │
+     │  │     ext_net .135   n3_net .135   sgi_net .9                   │  │
      │  │                                                               │  │
      │  │  du_e1     (CellID=22222222, PCI=1)                           │  │
      │  │     f1c_net .10   f1u_net .10   ran_net .151                  │  │
@@ -137,8 +137,8 @@ on each host's physical IP and transits both switches as needed.
      │  └───────────────────────────────────────────────────────────────┘  │
      │                                                                     │
      │  Docker bridges:                                                    │
-     │    br-core 192.168.61.128/26   br-f1c 192.168.83.0/26               │
-     │    br-ext  192.168.82.0/26     br-f1u 192.168.84.0/26               │
+     │    br-core 192.168.71.128/26   br-f1c 192.168.83.0/26               │
+     │    br-ext  192.168.82.128/26   br-f1u 192.168.84.0/26               │
      │    br-ran  192.168.80.128/26   br-n3  192.168.101.128/26            │
      │    br-sgi  172.18.2.0/24                                            │
      │                                                                     │
