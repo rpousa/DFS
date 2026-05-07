@@ -39,7 +39,7 @@ services:
         --log_config.e1ap_log_level debug
         --log_config.f1u_log_level debug
         --log_config.gtpu_log_level debug
-        --e2_agent.near_ric_ip_addr 192.168.0.193
+        --e2_agent.near_ric_ip_addr 192.168.0.200
         --e2_agent.sm_dir /usr/local/lib/flexric/
         --telnetsrv --telnetsrv.shrmod ci
         --gNBs.[0].gNB_ID 0xe00
@@ -52,7 +52,7 @@ services:
         --gNBs.[0].local_s_address 192.168.84.40
         --gNBs.[0].remote_s_address 0.0.0.0
         --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.61.140/26
-        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.101.40/26
+        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.101.140/26
     command: >
       sh -c "sleep 20 &&
              /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-cuup -O /opt/oai-gnb/etc/gnb.conf 2>&1 |
@@ -173,7 +173,7 @@ services:
       - ./logs/du_e1:/opt/oai-gnb/logs
     environment:
       USE_ADDITIONAL_OPTIONS: >-
-        --e2_agent.near_ric_ip_addr 192.168.0.193
+        --e2_agent.near_ric_ip_addr 192.168.0.200
         --e2_agent.sm_dir /usr/local/lib/flexric/
         --telnetsrv --telnetsrv.shrmod ci
         -E --rfsim --Active_gNBs gNB-OAI
@@ -236,7 +236,7 @@ services:
       - ./logs/du_e2:/opt/oai-gnb/logs
     environment:
       USE_ADDITIONAL_OPTIONS: >-
-        --e2_agent.near_ric_ip_addr 192.168.0.193
+        --e2_agent.near_ric_ip_addr 192.168.0.200
         --e2_agent.sm_dir /usr/local/lib/flexric/
         --telnetsrv --telnetsrv.shrmod ci
         -E --rfsim --Active_gNBs gNB-OAI
