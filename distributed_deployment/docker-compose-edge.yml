@@ -51,7 +51,7 @@ services:
         --gNBs.[0].local_s_portd 2153
         --gNBs.[0].local_s_address 192.168.84.140
         --gNBs.[0].remote_s_address 0.0.0.0
-        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.61.140/26
+        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.71.140/26
         --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.101.140/26
     command: >
       sh -c "sleep 20 &&
@@ -195,7 +195,7 @@ services:
         --rfsimulator.[0].serverport 4043
         --log_config.phy_log_level info
         --log_config.mac_log_level info
-#        --MACRLCs.[0].local_n_address_f1u 192.168.84.10
+        --MACRLCs.[0].local_n_address_f1u 192.168.84.151
 #        --MACRLCs.[0].remote_n_address_f1u 192.168.0.193
     depends_on:
       - cuup_e
@@ -258,7 +258,7 @@ services:
         --rfsimulator.[0].serverport 4044
         --log_config.phy_log_level info
         --log_config.mac_log_level info
-#      --MACRLCs.[0].local_n_address_f1u 192.168.84.20
+        --MACRLCs.[0].local_n_address_f1u 192.168.84.161
 #      --MACRLCs.[0].remote_n_address_f1u 192.168.84.140
     depends_on:
       - cuup_e
