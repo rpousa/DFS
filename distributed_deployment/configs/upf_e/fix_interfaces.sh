@@ -22,8 +22,8 @@ done
 # Fallback defaults for UPF if nothing was passed
 if [ ${#INTERFACE_MAP[@]} -eq 0 ]; then
     INTERFACE_MAP=(
-        "eth0=192.168.61.134"    # core_net should be eth0
-        "eth1=192.168.82.34"    # ext_net should be eth1 "eth2=192.168.101.34"    # n3_net should be eth2
+        "eth0=192.168.71.154"    # core_net should be eth0
+        "eth1=192.168.82.154"    # ext_net should be eth1 "eth2=192.168.101.34"    # n3_net should be eth2
     )
 fi
 
