@@ -193,7 +193,7 @@ services:
         --MACRLCs.[0].remote_n_portc 38472
         --MACRLCs.[0].tr_s_preference local_L1
         --MACRLCs.[0].tr_n_preference f1
-        --MACRLCs.[0].stats_max_ue 11
+        --MACRLCs.[0].stats_max_ue 32
         --gNBs.[0].TIMERS.t300 1000       
         --rfsimulator.[0].serveraddr server
         --rfsimulator.[0].serverport 4043
@@ -260,7 +260,7 @@ services:
         --MACRLCs.[0].remote_n_portc 38472
         --MACRLCs.[0].tr_s_preference local_L1
         --MACRLCs.[0].tr_n_preference f1
-        --MACRLCs.[0].stats_max_ue 11
+        --MACRLCs.[0].stats_max_ue 32
         --gNBs.[0].TIMERS.t300 1000
         --rfsimulator.[0].serveraddr server
         --rfsimulator.[0].serverport 4044
