@@ -137,6 +137,10 @@ services:
       - ./configs/ext_dn:/tmp
     depends_on:
       - upf_co
+    command: >
+      sh -c "sleep 5 &&
+             /tmp/trfgen_entrypoint.sh &&
+             sleep infinity"
     healthcheck:
       test: /bin/bash -c "ping -c 2 192.168.72.144"
       start_period: 10s

@@ -134,6 +134,10 @@ services:
       - ./configs/ext_dn:/tmp
     depends_on:
       - upf_e
+    command: >
+      sh -c "sleep 5 &&
+             /tmp/trfgen_entrypoint.sh &&
+             sleep infinity"
     healthcheck:
       test: /bin/bash -c "ping -c 2 192.168.82.15 4"
       start_period: 10s
@@ -290,7 +294,7 @@ services:
       - ./logs/ue_1:/opt/oai-nr-ue/logs
     environment:
       USE_ADDITIONAL_OPTIONS: >-
-        -E --rfsim --num-ues 10
+        -E --rfsim --num-ues 4
         -r 106 --numerology 1 --band 78 -C 3619200000
         --ssb 516
         --log_config.global_log_options level,nocolor,time
