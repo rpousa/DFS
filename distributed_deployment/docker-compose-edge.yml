@@ -195,6 +195,10 @@ services:
         --MACRLCs.[0].tr_n_preference f1
         --MACRLCs.[0].stats_max_ue 11
         --gNBs.[0].TIMERS.t300 2000
+        --gNBs.[0].TIMERS.t301 2000
+        --gNBs.[0].TIMERS.t310 2000
+        --gNBs.[0].TIMERS.t311 30000
+        --gNBs.[0].TIMERS.t319 2000
         --rfsimulator.[0].serveraddr server
         --rfsimulator.[0].serverport 4043
         --log_config.phy_log_level info
@@ -258,6 +262,10 @@ services:
         --MACRLCs.[0].tr_n_preference f1
         --MACRLCs.[0].stats_max_ue 11
         --gNBs.[0].TIMERS.t300 2000
+        --gNBs.[0].TIMERS.t301 2000
+        --gNBs.[0].TIMERS.t310 2000
+        --gNBs.[0].TIMERS.t311 30000
+        --gNBs.[0].TIMERS.t319 2000
         --rfsimulator.[0].serveraddr server
         --rfsimulator.[0].serverport 4044
         --log_config.phy_log_level info
