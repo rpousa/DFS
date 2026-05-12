@@ -306,8 +306,8 @@ dnns:
 # - Different IP pools: 12.2.1.0/24, 13.2.1.0/24, 14.2.1.0/24
 
 nrf:
-  heartbeat: 10                       # NF heartbeat interval in seconds
-  suspended_nf_interval: 20           # Interval to check suspended NFs
+  heartbeat: 20                       # NF heartbeat interval in seconds
+  suspended_nf_interval: 40           # Interval to check suspended NFs
 
 pcf:
   local_policy:
