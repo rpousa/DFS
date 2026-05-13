@@ -1,3 +1,4 @@
+
 # Docker Compose for Centraloffice Machine
 # Deploy on PC: 192.168.0.193
 # Components: CU-UP_co + UPF_co + ext_dn_co + DU_co
@@ -140,9 +141,6 @@ services:
     command: >
       sh -c "sleep 5 &&
              /tmp/trfgen_entrypoint.sh &&
-             iperf3 -s -D -p 5201;
-             iperf3 -s -D -p 5202;
-             iperf3 -s -D -p 5203;
              sleep infinity"
     healthcheck:
       test: /bin/bash -c "ping -c 2 192.168.72.144"

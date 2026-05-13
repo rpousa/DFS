@@ -217,6 +217,7 @@ services:
              /openair-ausf/bin/oai_ausf -c /openair-ausf/etc/config.yaml -o"
 
 
+
   # ==========================================
   # Core UPF (Central/Anchor) — Slice 1 (SST=1, SD=1)
   # ==========================================
@@ -296,9 +297,6 @@ services:
     command: >
       sh -c "sleep 5 &&
              /tmp/trfgen_entrypoint.sh &&
-             iperf3 -s -D -p 5201;
-             iperf3 -s -D -p 5202;
-             iperf3 -s -D -p 5203;
              sleep infinity"
     healthcheck:
       test: /bin/bash -c "ping -c 2 192.168.72.30"
@@ -324,7 +322,6 @@ services:
     ports:
       - "192.168.0.200:36421:36421/sctp"
       - "192.168.0.200:36422:36422/sctp"
-      - "192.168.0.200:9464:9464/tcp"
     volumes:
       - ./configs/flexric:/usr/local/etc/flexric
       - ./logs/flexric:/usr/local/logs
@@ -388,60 +385,6 @@ services:
       sh -c "sleep 15 &&
              exec /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem 2>&1 |
              stdbuf -oL tee /opt/oai-gnb/logs/cucp_stdout.log"
-  # ==========================================
-  # Observability: Prometheus (central TSDB)
-  # ==========================================
-  prometheus:
-    image: prom/prometheus:v2.54.1
-    container_name: prometheus
-    hostname: prometheus
-    user: root
-    cap_add:
-      - SYS_NICE
-    networks:
-      core_net:
-        ipv4_address: 192.168.71.180
-    ports:
-      - "192.168.0.200:9080:9080/tcp"
-    volumes:
-      - ./configs/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - ./configs/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
-      - prometheus_data:/prometheus
-    command:
-      - --config.file=/etc/prometheus/prometheus.yml
-      - --storage.tsdb.path=/prometheus
-      - --storage.tsdb.retention.time=30d
-      - --storage.tsdb.retention.size=10GB
-      - --web.enable-lifecycle
-      - --web.listen-address=0.0.0.0:9080
-    depends_on:
-      - flexric
-    restart: unless-stopped
-
-  # ==========================================
-  # Observability: Grafana (dashboards)
-  # ==========================================
-  grafana:
-    image: grafana/grafana:11.2.0
-    container_name: grafana
-    hostname: grafana
-    networks:
-      core_net:
-        ipv4_address: 192.168.71.181
-    ports:
-      - "192.168.0.200:3000:3000/tcp"
-    volumes:
-      - ./configs/grafana/provisioning:/etc/grafana/provisioning:ro
-      - ./configs/grafana/dashboards:/var/lib/grafana/dashboards:ro
-      - grafana_data:/var/lib/grafana
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
-      - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_INSTALL_PLUGINS=grafana-piechart-panel
-    depends_on:
-      - prometheus
-    restart: unless-stopped
-
 networks:
   core_net:
     driver: bridge
@@ -481,8 +424,4 @@ networks:
 
 volumes:
   mysql_data:
-    driver: local
-  prometheus_data:
-    driver: local
-  grafana_data:
     driver: local

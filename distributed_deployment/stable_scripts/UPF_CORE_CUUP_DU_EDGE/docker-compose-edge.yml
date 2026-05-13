@@ -1,3 +1,4 @@
+
 # Docker Compose for Edge Machine
 # Deploy on PC: 192.168.0.243
 # Components: CU-UP_e + UPF_e + ext_dn_e + DU_e1 + DU_e2 + UE_1
@@ -137,9 +138,6 @@ services:
     command: >
       sh -c "sleep 5 &&
              /tmp/trfgen_entrypoint.sh &&
-             iperf3 -s -D -p 5201;
-             iperf3 -s -D -p 5202;
-             iperf3 -s -D -p 5203;
              sleep infinity"
     healthcheck:
       test: /bin/bash -c "ping -c 2 192.168.82.15 4"
@@ -197,7 +195,7 @@ services:
         --MACRLCs.[0].tr_s_preference local_L1
         --MACRLCs.[0].tr_n_preference f1
         --MACRLCs.[0].stats_max_ue 32
-        --gNBs.[0].TIMERS.t300 1000       
+        --gNBs.[0].TIMERS.t300 1000
         --rfsimulator.[0].serveraddr server
         --rfsimulator.[0].serverport 4043
         --log_config.phy_log_level info
@@ -258,7 +256,7 @@ services:
         --gNBs.[0].min_rxtxtime 6
         --gNBs.[0].servingCellConfigCommon.[0].physCellId 2
         --MACRLCs.[0].local_n_address 192.168.83.161
-        --MACRLCs.[0].remote_n_address 192.168.0.200  
+        --MACRLCs.[0].remote_n_address 192.168.0.200
         --MACRLCs.[0].remote_n_portd 2153
         --MACRLCs.[0].remote_n_portc 38472
         --MACRLCs.[0].tr_s_preference local_L1

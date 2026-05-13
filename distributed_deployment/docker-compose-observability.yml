@@ -1,0 +1,41 @@
+# docker-compose-observability.yml
+# Deployed on Core, CO, and Edge.
+# Exposes node + container metrics to Prometheus on Core (192.168.0.200:9090).
+
+services:
+  node_exporter:
+    image: prom/node-exporter:v1.8.2
+    container_name: node_exporter
+    hostname: node_exporter
+    network_mode: host
+    pid: host
+    restart: unless-stopped
+    volumes:
+      - /:/host:ro,rslave
+    command:
+      - --path.rootfs=/host
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
+      - --collector.netdev.device-include=^(eno.*|enp.*|eth.*|br-.*|veth.*)$$
+      - --web.listen-address=:9100
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: cadvisor
+    hostname: cadvisor
+    network_mode: host
+    privileged: true
+    restart: unless-stopped
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /dev/disk:/dev/disk:ro
+    command:
+      - --port=8081
+      - --housekeeping_interval=5s
+      - --docker_only=true
+      - --store_container_labels=false
+      - --whitelisted_container_labels=com.docker.compose.service,com.docker.compose.project
