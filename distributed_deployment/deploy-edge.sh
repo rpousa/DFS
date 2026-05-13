@@ -34,7 +34,7 @@ echo "  - UPF_e    (Slice SST=1/SD=3)"
 echo "  - ext_dn_e"
 echo "  - DU_e1    (CellID=22222222, PCI=1, F1-C→Core, F1-U→CU-UP_co@CO)"
 echo "  - DU_e2    (CellID=33333333, PCI=2, F1-C→Core, F1-U→CU-UP_e local)"
-echo "  - UE_1     (10 UEs → DU_e1 via RFSim)"
+echo "  - UE_1     (4 UEs → DU_e1 via RFSim)"
 echo ""
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC='\033[0m'
@@ -57,14 +57,14 @@ wait_for_service() {
 }
 
 # ==========================================
-# UE connection check (10 UEs on DU_e1)
+# UE connection check (4 UEs on DU_e1)
 # ==========================================
 check_ue_connections() {
-    local total_ues=10 connected=0 with_ip=0
+    local total_ues=4 connected=0 with_ip=0
     UE_IPS=(); UE_INTERFACES=()
     print_stage "Checking UE connections (all on DU_e1)..."
     echo ""
-    for i in {1..10}; do
+    for i in {1..4}; do
         local iface="oaitun_ue$i"
         if docker exec ue_1 ip addr show 2>/dev/null | grep -q "$iface"; then
             ((connected++))
@@ -81,7 +81,7 @@ check_ue_connections() {
     echo ""
     print_info "Connected: $connected/$total_ues — with IP: $with_ip/$connected"
     export CONNECTED_UES=$connected UES_WITH_IP=$with_ip
-    [ $connected -eq 10 ] && return 0 || return 1
+    [ $connected -eq 4 ] && return 0 || return 1
 }
 
 # ==========================================
@@ -130,7 +130,7 @@ if command -v ncat &> /dev/null; then
     print_info "Testing cross-machine SCTP reachability..."
     for entry in "${CORE_IP}:38472:F1-C→Core CU-CP" \
                  "${CORE_IP}:38462:E1→Core CU-CP" \
-                 "${CORE_IP}:36421:E2AP→CO FlexRIC"; do
+                 "${CORE_IP}:36421:E2AP→Core FlexRIC"; do
         h="${entry%%:*}"
         rest="${entry#*:}"
         p="${rest%%:*}"
@@ -166,8 +166,8 @@ print_stage "Creating Docker networks..."
 docker compose -f "$COMPOSE_FILE" up --no-start
 echo ""
 
-# Stage 1/6: CU-UP_e (initiates E1 outbound to Core)
-print_stage "Stage 1/6: Starting CU-UP_e..."
+# Stage 1/7: CU-UP_e (initiates E1 outbound to Core)
+print_stage "Stage 1/7: Starting CU-UP_e..."
 docker compose -f "$COMPOSE_FILE" up -d cuup_e
 wait_for_service "cuup_e" 30
 print_info "Waiting for CU-UP_e to set up E1 to Core CU-CP..."
@@ -175,16 +175,16 @@ sleep 15
 docker exec cuup_e ss -Slnp 2>/dev/null | grep -iE "sctp|2153" || print_warn "CU-UP_e not yet listening"
 echo ""
 
-# Stage 2/6: UPF_e + ext_dn_e
-print_stage "Stage 2/6: Starting UPF_e and ext_dn_e..."
+# Stage 2/7: UPF_e + ext_dn_e
+print_stage "Stage 2/7: Starting UPF_e and ext_dn_e..."
 docker compose -f "$COMPOSE_FILE" up -d upf_e ext_dn_e
 wait_for_service "upf_e" 30
 wait_for_service "ext_dn_e" 30
 sleep 5
 echo ""
 
-# Stage 3/6: DU_e1 (F1-U cross-machine to CO) + DU_e2 (F1-U local)
-print_stage "Stage 3/6: Starting DU_e1 and DU_e2..."
+# Stage 3/7: DU_e1 (F1-U cross-machine to CO) + DU_e2 (F1-U local)
+print_stage "Stage 3/7: Starting DU_e1 and DU_e2..."
 docker compose -f "$COMPOSE_FILE" up -d du_e1 du_e2
 wait_for_service "du_e1" 30
 wait_for_service "du_e2" 30
@@ -200,26 +200,36 @@ for du in du_e1 du_e2; do
 done
 echo ""
 
-# Stage 4/6: Dynamic SCTP Routing Fix
-print_stage "Stage 4/6: Applying dynamic SCTP routing fix..."
+# Stage 4/7: Dynamic SCTP Routing Fix
+print_stage "Stage 4/7: Applying dynamic SCTP routing fix..."
 echo ""
 fix_sctp_routing "$COMPOSE_FILE" "$EDGE_IP"
 echo ""
 
-# Stage 5/6: UEs (connect to DU_e1)
-print_stage "Stage 5/6: Starting 10 UEs (→ DU_e1)..."
+# Stage 5/7: UEs (connect to DU_e1)
+print_stage "Stage 5/7: Starting 10 UEs (→ DU_e1)..."
 docker compose -f "$COMPOSE_FILE" up -d ue_1
 wait_for_service "ue_1" 30
 print_info "Waiting 30s for UE attach + PDU session..."
 sleep 30
 echo ""
 
-# Stage 6/6: UE connection verification
-print_stage "Stage 6/6: Verifying UE connections..."
+# Stage 6/7: Observability agents
+if [ -f docker-compose-observability.yml ]; then
+    print_stage "Stage 6/7: Starting observability agents..."
+    docker compose -f docker-compose-observability.yml up -d
+    sleep 3
+    print_info "  ✓ node_exporter on ${EDGE_IP}:9100  (scraped by Core Prometheus)"
+    print_info "  ✓ cadvisor      on ${EDGE_IP}:8081  (scraped by Core Prometheus)"
+    echo ""
+fi
+
+# Stage 7/7: UE connection verification
+print_stage "Stage 7/7: Verifying UE connections..."
 if check_ue_connections; then
-    print_info "✓ All 10 UEs connected!"
+    print_info "✓ All 4 UEs connected!"
 else
-    print_warn "Only $CONNECTED_UES/10 UEs connected"
+    print_warn "Only $CONNECTED_UES/4 UEs connected"
     while true; do
         echo "Options: [w]ait+recheck  [p]roceed  [q]uit"
         read -p "Choice: " -n 1 -r; echo
@@ -257,7 +267,8 @@ print_info "  CU-UP_e → Core CU-CP:  E1   → ${CORE_IP}:38462/sctp"
 print_info "  DU_e1   → Core CU-CP:  F1-C → ${CORE_IP}:38472/sctp"
 print_info "  DU_e2   → Core CU-CP:  F1-C → ${CORE_IP}:38472/sctp"
 print_info "  DU_e1   → CO CU-UP:    F1-U → ${CO_IP}:2153/udp  (CROSS-MACHINE GTP-U)"
-print_info "  DU_e1/e2/CU-UP_e → FlexRIC: E2AP → ${CO_IP}:36421/sctp"
+print_info "  DU_e1/e2/CU-UP_e → FlexRIC: E2AP → ${CORE_IP}:36421/sctp"
+print_info "  Metrics → Core Grafana: http://${CORE_IP}:3000"
 echo ""
 print_info "UE summary: ${UES_WITH_IP:-0}/${CONNECTED_UES:-0}/10 UEs attached to DU_e1"
 echo ""

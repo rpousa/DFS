@@ -96,7 +96,7 @@ fi
 
 # Check SCTP connectivity to Core's CU-CP (F1-C + E1)
 if command -v ncat &> /dev/null; then
-    for port in 38472 38462 38412; do
+    for port in 38472 38462; do
         if timeout 3 ncat --sctp "$CORE_IP" "$port" < /dev/null 2>/dev/null; then
             print_info "✓ SCTP reachable: ${CORE_IP}:${port}"
         else
@@ -138,8 +138,8 @@ echo ""
 # docker exec flexric ss -Slnp 2>/dev/null | grep -iE "36421|36422" || print_warn "FlexRIC E2AP sockets not yet bound"
 # echo ""
 
-# Stage 1/4: CU-UP_co (initiates E1 outbound to Core)
-print_stage "Stage 1/4: Starting CU-UP_co..."
+# Stage 1/5: CU-UP_co (initiates E1 outbound to Core)
+print_stage "Stage 1/5: Starting CU-UP_co..."
 docker compose -f "$COMPOSE_FILE" up -d cuup_co
 wait_for_service "cuup_co" 30
 print_info "Waiting for CU-UP_co to set up E1 to Core CU-CP..."
@@ -147,16 +147,16 @@ sleep 15
 docker exec cuup_co ss -Slnp 2>/dev/null | grep -iE "sctp|2153" || print_warn "CU-UP_co not yet listening"
 echo ""
 
-# Stage 2/4: UPF_co + ext_dn_co
-print_stage "Stage 2/4: Starting UPF_co and ext_dn_co..."
+# Stage 2/5: UPF_co + ext_dn_co
+print_stage "Stage 2/5: Starting UPF_co and ext_dn_co..."
 docker compose -f "$COMPOSE_FILE" up -d upf_co ext_dn_co
 wait_for_service "upf_co" 30
 wait_for_service "ext_dn_co" 30
 sleep 5
 echo ""
 
-# Stage 3/4: DU_co (F1-C to Core, F1-U to local CU-UP_co)
-print_stage "Stage 3/4: Starting DU_co..."
+# Stage 3/5: DU_co (F1-C to Core, F1-U to local CU-UP_co)
+print_stage "Stage 3/5: Starting DU_co..."
 docker compose -f "$COMPOSE_FILE" up -d du_co
 wait_for_service "du_co" 30
 print_info "Waiting for DU_co to initialize SCTP F1-C + RFSimulator server..."
@@ -169,11 +169,21 @@ else
 fi
 echo ""
 
-# Stage 4/4: Dynamic SCTP Routing Fix
-print_stage "Stage 4/4: Applying dynamic SCTP routing fix..."
+# Stage 4/5: Dynamic SCTP Routing Fix
+print_stage "Stage 4/5: Applying dynamic SCTP routing fix..."
 echo ""
 fix_sctp_routing "$COMPOSE_FILE" "$CO_IP"
 echo ""
+
+# Stage 5/5: Observability agents
+if [ -f docker-compose-observability.yml ]; then
+    print_stage "Stage 5/5: Starting observability agents..."
+    docker compose -f docker-compose-observability.yml up -d
+    sleep 3
+    print_info "  ✓ node_exporter on ${CO_IP}:9100  (scraped by Core Prometheus)"
+    print_info "  ✓ cadvisor      on ${CO_IP}:8081  (scraped by Core Prometheus)"
+    echo ""
+fi
 
 # ==========================================
 # Final Verification
@@ -193,13 +203,14 @@ print_info "SCTP/UDP ports exposed on $CO_IP:"
 print_info "  DU_co F1-C:        ${CO_IP}:500/sctp"
 print_info "  CU-UP_co F1-U:     ${CO_IP}:2153/udp (DU_co local + DU_e1 cross-machine)"
 print_info "  CU-UP_co → UPF:    ${CO_IP}:2155→2152/udp (N3)"
-print_info "  FlexRIC E2AP:      ${CO_IP}:36421,36422/sctp"
+# REMOVED: FlexRIC line — FlexRIC lives on Core, not CO
 echo ""
 print_info "Outbound connections this machine initiates:"
-print_info "  CU-UP_co → Core CU-CP:  E1     → ${CORE_IP}:38462/sctp"
-print_info "  DU_co    → Core CU-CP:  F1-C   → ${CORE_IP}:38472/sctp"
-print_info "  DU_co    → FlexRIC:     E2AP   → local 192.168.71.150:36421/sctp"
-print_info "  CU-UP_co → FlexRIC:     E2AP   → local 192.168.71.150:36421/sctp"
+print_info "  CU-UP_co → Core CU-CP:    E1     → ${CORE_IP}:38462/sctp"
+print_info "  DU_co    → Core CU-CP:    F1-C   → ${CORE_IP}:38472/sctp"
+print_info "  CU-UP_co → Core FlexRIC:  E2AP   → ${CORE_IP}:36421/sctp  (cross-machine)"
+print_info "  DU_co    → Core FlexRIC:  E2AP   → ${CORE_IP}:36421/sctp  (cross-machine)"
+print_info "  Metrics  → Core Grafana:  http://${CORE_IP}:3000"
 echo ""
 print_info "Next: On Edge ($EDGE_IP), run ./deploy-edge.sh"
 echo ""

@@ -142,7 +142,7 @@ services:
              iperf3 -s -D -p 5203;
              sleep infinity"
     healthcheck:
-      test: /bin/bash -c "ping -c 2 192.168.82.15 4"
+      test: /bin/bash -c "ping -c 2 192.168.82.154"
       start_period: 10s
       interval: 10s
       timeout: 5s

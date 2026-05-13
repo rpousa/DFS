@@ -183,7 +183,7 @@ services:
       - ./logs/du_co:/opt/oai-gnb/logs
     environment:
       USE_ADDITIONAL_OPTIONS: >-
-        --e2_agent.near_ric_ip_addr 192.168.71.150
+        --e2_agent.near_ric_ip_addr 192.168.0.200
         --e2_agent.sm_dir /usr/local/lib/flexric/
         --telnetsrv --telnetsrv.shrmod ci
         -E --rfsim --Active_gNBs gNB-OAI
