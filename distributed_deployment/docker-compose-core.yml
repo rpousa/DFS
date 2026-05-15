@@ -429,7 +429,7 @@ services:
       core_net:
         ipv4_address: 192.168.71.181
     ports:
-      - "192.168.0.200:3000:3000/tcp"
+      - "172.31.54.33:3000:3000/tcp"
     volumes:
       - ./configs/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./configs/grafana/dashboards:/var/lib/grafana/dashboards:ro
