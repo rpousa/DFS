@@ -438,6 +438,17 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_INSTALL_PLUGINS=grafana-piechart-panel
+      # ▼▼▼ ADD THESE ▼▼▼
+      - GF_SERVER_HTTP_ADDR=0.0.0.0
+      - GF_SERVER_HTTP_PORT=3000
+      - GF_SERVER_PROTOCOL=http
+      - GF_SERVER_DOMAIN=172.31.54.33
+      - GF_SERVER_ROOT_URL=http://172.31.54.33:3000/
+      - GF_SERVER_SERVE_FROM_SUB_PATH=false
+      # Optional hardening / cosmetics:
+      - GF_SECURITY_COOKIE_SECURE=false       # set true once you put TLS in front
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+      - GF_LOG_LEVEL=info
     depends_on:
       - prometheus
     restart: unless-stopped

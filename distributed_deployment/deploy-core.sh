@@ -236,6 +236,9 @@ echo ""
 docker compose -f "$COMPOSE_FILE" ps
 echo ""
 
+GRAFANA_BIND_IP="172.31.54.33"
+
+
 verify_sctp_routing "$COMPOSE_FILE" "$CORE_IP"
 
 print_info "================================================"
@@ -250,7 +253,7 @@ print_info "  PFCP (SMF):    ${CORE_IP}:8805/udp"
 print_info "  GTP-U (UPF):   ${CORE_IP}:2152/udp"
 print_info ""
 print_info "Observability:"
-print_info "  Grafana:     http://${CORE_IP}:3000   (admin / \$GRAFANA_PASSWORD)"
+print_info "  Grafana:     http://${GRAFANA_BIND_IP}:3000   (admin / \$GRAFANA_PASSWORD)"
 print_info "  Prometheus:  http://${CORE_IP}:9080"
 print_info "  Targets:     http://${CORE_IP}:9080/targets"
 echo ""
