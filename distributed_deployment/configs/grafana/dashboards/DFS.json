@@ -1,0 +1,216 @@
+{
+  "title": "5G Distributed Performance",
+  "uid": "5g-perf",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "time": { "from": "now-15m", "to": "now" },
+  "tags": ["5g", "oai", "performance"],
+  "templating": {
+    "list": [
+      {
+        "name": "instance",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": "label_values(node_cpu_seconds_total, instance)",
+        "includeAll": true,
+        "multi": true,
+        "current": { "text": "All", "value": "$__all" }
+      },
+      {
+        "name": "host",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": "label_values(node_cpu_seconds_total, instance)",
+        "includeAll": false
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "CPU usage per node (%)",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "100 - (avg by (instance)(rate(node_cpu_seconds_total{mode=\"idle\",instance=~\"$instance\"}[1m])) * 100)",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 } }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Per-core CPU usage (host = $host)",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "100 - (rate(node_cpu_seconds_total{mode=\"idle\",instance=\"$host\"}[1m]) * 100)",
+          "legendFormat": "cpu{{cpu}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 } }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Top 10 containers by CPU (cores)",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "topk(10, sum by (name, instance)(rate(container_cpu_usage_seconds_total{name!=\"\"}[1m])))",
+          "legendFormat": "{{name}} @ {{instance}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 2 } }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Container memory (RSS) — top 10",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "topk(10, container_memory_rss{name!=\"\"})",
+          "legendFormat": "{{name}} @ {{instance}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "bytes" } }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Memory usage per node",
+      "gridPos": { "x": 0, "y": 16, "w": 8, "h": 7 },
+      "targets": [
+        {
+          "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 } }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Load average (1m)",
+      "gridPos": { "x": 8, "y": 16, "w": 8, "h": 7 },
+      "targets": [
+        { "expr": "node_load1", "legendFormat": "{{instance}}" }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Disk I/O wait (%)",
+      "gridPos": { "x": 16, "y": 16, "w": 8, "h": 7 },
+      "targets": [
+        {
+          "expr": "rate(node_cpu_seconds_total{mode=\"iowait\"}[1m]) * 100",
+          "legendFormat": "{{instance}} cpu{{cpu}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percent" } }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Host network RX (bits/s) — physical NICs only",
+      "gridPos": { "x": 0, "y": 23, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "rate(node_network_receive_bytes_total{device=~\"en.*|eth.*\"}[1m]) * 8",
+          "legendFormat": "{{instance}} {{device}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "bps" } }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Host network TX (bits/s) — physical NICs only",
+      "gridPos": { "x": 12, "y": 23, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "rate(node_network_transmit_bytes_total{device=~\"en.*|eth.*\"}[1m]) * 8",
+          "legendFormat": "{{instance}} {{device}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "bps" } }
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Container network RX (bits/s) — top 10",
+      "gridPos": { "x": 0, "y": 31, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "topk(10, sum by (name, instance)(rate(container_network_receive_bytes_total{name!=\"\"}[1m])) * 8)",
+          "legendFormat": "{{name}} @ {{instance}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "bps" } }
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Container network TX (bits/s) — top 10",
+      "gridPos": { "x": 12, "y": 31, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "topk(10, sum by (name, instance)(rate(container_network_transmit_bytes_total{name!=\"\"}[1m])) * 8)",
+          "legendFormat": "{{name}} @ {{instance}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "bps" } }
+    },
+    {
+      "id": 12,
+      "type": "stat",
+      "title": "Targets up",
+      "gridPos": { "x": 0, "y": 39, "w": 6, "h": 4 },
+      "targets": [{ "expr": "sum(up)" }],
+      "fieldConfig": { "defaults": { "unit": "none" } }
+    },
+    {
+      "id": 13,
+      "type": "stat",
+      "title": "Targets down",
+      "gridPos": { "x": 6, "y": 39, "w": 6, "h": 4 },
+      "targets": [{ "expr": "count(up == 0) OR vector(0)" }],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 14,
+      "type": "table",
+      "title": "Per-container CPU & memory snapshot",
+      "gridPos": { "x": 12, "y": 39, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "topk(20, sum by (name, instance)(rate(container_cpu_usage_seconds_total{name!=\"\"}[1m])))",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        },
+        {
+          "expr": "container_memory_rss{name!=\"\"}",
+          "format": "table",
+          "instant": true,
+          "refId": "B"
+        }
+      ]
+    }
+  ]
+}
