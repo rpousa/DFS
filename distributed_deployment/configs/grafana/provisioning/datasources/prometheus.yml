@@ -3,6 +3,6 @@ datasources:
   - name: Prometheus
     type: prometheus
     access: proxy
-    url: http://192.168.71.180:9090      # Prometheus on Core's core_net
+    url: http://192.168.71.180:9080      # Prometheus on Core's core_net
     isDefault: true
     editable: false
