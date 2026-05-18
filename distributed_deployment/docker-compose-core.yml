@@ -282,24 +282,25 @@ services:
       - UE_IP_ADDRESS_POOL_3=14.1.1.0
       - SGI_DEMO_OAI_ADDR=172.18.0.1
       - N6_UPF_IP_ADDR=192.168.72.30
-    entrypoint: /bin/bash -c \
-              "iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE;"\
-              "ip route add 12.1.1.0/24 via 192.168.72.30 dev eth0;"\
-              "ip route add 13.1.1.0/24 via 192.168.72.30 dev eth0;"\
-              "ip route add 14.1.1.0/24 via 192.168.72.30 dev eth0; sleep infinity"
+    entrypoint: ["/bin/bash", "-c"]
+              #"iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE;"\
+              #"ip route add 12.1.1.0/24 via 192.168.72.30 dev eth0;"\
+              #"ip route add 13.1.1.0/24 via 192.168.72.30 dev eth0;"\
+              #"ip route add 14.1.1.0/24 via 192.168.72.30 dev eth0; sleep infinity"
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
       - ./configs/ext_dn:/tmp
     depends_on:
       - upf_core
-    command: >
-      sh -c "sleep 5 &&
-             /tmp/trfgen_entrypoint.sh &&
-             iperf3 -s -D -p 5201;
-             iperf3 -s -D -p 5202;
-             iperf3 -s -D -p 5203;
-             sleep infinity"
+    command: 
+      - |
+        set -ex
+        /tmp/trfgen_entrypoint.sh 
+        iperf3 -s -D -p 5201
+        iperf3 -s -D -p 5202
+        iperf3 -s -D -p 5203
+        sleep infinity
     healthcheck:
       test: /bin/bash -c "ping -c 2 192.168.72.30"
       start_period: 10s
