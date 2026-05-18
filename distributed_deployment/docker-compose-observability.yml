@@ -27,12 +27,15 @@ services:
     container_name: cadvisor
     hostname: cadvisor
     network_mode: host
+    pid: host
+    cgroupns: host
     privileged: true
     restart: unless-stopped
     volumes:
-      - /:/rootfs:ro
+      - /:/rootfs:ro,rslave
       - /var/run:/var/run:ro
       - /sys:/sys:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
       - ${DOCKER_ROOT_DIR:-/var/lib/docker}:/var/lib/docker:ro
       - /dev/disk:/dev/disk:ro
     command:
