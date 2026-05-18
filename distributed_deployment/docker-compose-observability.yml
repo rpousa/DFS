@@ -28,7 +28,7 @@ services:
     hostname: cadvisor
     network_mode: host
     pid: host
-    cgroupns: host
+    cgroup: host
     privileged: true
     restart: unless-stopped
     volumes:
