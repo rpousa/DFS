@@ -1,8 +1,17 @@
 apiVersion: 1
 datasources:
   - name: Prometheus
+    uid: prometheus               
     type: prometheus
     access: proxy
     url: http://192.168.71.180:9080      # Prometheus on Core's core_net
     isDefault: true
-    editable: false
+    editable: true
+  - job_name: node
+    static_configs:
+    - targets: ['192.168.0.200:9100']
+      labels: { host: core }
+    - targets: ['192.168.0.193:9100']
+      labels: { host: co }
+    - targets: ['192.168.0.243:9100']
+      labels: { host: edge }
