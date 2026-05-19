@@ -1,8 +1,8 @@
 # Core
-sudo chmod +x deploy-core.sh stop.sh configs/ext_dn/trfgen_entrypoint.sh configs/mysql/mysql-healthcheck.sh configs/upf_core/fix_interfaces.sh fix-sctp-routing.sh flexric_volumes/event_ric_watchdog.sh flexric_volumes/xapp_daemon_topo.py
+sudo chmod +x deploy-core.sh stop.sh configs/ext_dn/trfgen_entrypoint.sh configs/mysql/mysql-healthcheck.sh configs/upf_core/fix_interfaces.sh fix-sctp-routing.sh flexric_volumes/event_ric_watchdog.sh flexric_volumes/xapp_daemon_topo.py f1u-routes.sh
 
 #Central office
-sudo chmod +x deploy-centraloffice.sh stop.sh configs/ext_dn/trfgen_entrypoint.sh fix-sctp-routing.sh configs/upf_co/fix_interfaces.sh 
+sudo chmod +x deploy-centraloffice.sh stop.sh configs/ext_dn/trfgen_entrypoint.sh fix-sctp-routing.sh configs/upf_co/fix_interfaces.sh f1u-routes.sh
 
 #Edge 
-sudo chmod +x deploy-edge.sh stop.sh configs/ext_dn/trfgen_entrypoint.sh fix-sctp-routing.sh ue_volumes/ue_entrypoint.sh  configs/upf_e/fix_interfaces.sh 
+sudo chmod +x deploy-edge.sh stop.sh configs/ext_dn/trfgen_entrypoint.sh fix-sctp-routing.sh ue_volumes/ue_entrypoint.sh  configs/upf_e/fix_interfaces.sh f1u-routes.sh

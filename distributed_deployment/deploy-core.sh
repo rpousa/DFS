@@ -112,6 +112,7 @@ done
 # Make fix-sctp-routing.sh executable and source it
 #chmod +x fix-sctp-routing.sh
 source ./fix-sctp-routing.sh
+source ./f1u-routes.sh
 
 # SCTP module
 if ! lsmod | grep -q "^sctp"; then
@@ -138,6 +139,10 @@ if docker compose -f "$COMPOSE_FILE" ps -q 2>/dev/null | grep -q .; then
 fi
 
 print_info "Pre-flight checks passed!"
+echo ""
+
+# Optional: Core has no F1-U bridge, but call for symmetry/future use
+setup_f1u_routes_core
 echo ""
 
 # ==========================================

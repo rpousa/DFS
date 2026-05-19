@@ -63,6 +63,7 @@ done
 
 #chmod +x fix-sctp-routing.sh
 source ./fix-sctp-routing.sh
+source ./f1u-routes.sh
 
 # Verify IP
 CURRENT_IP=""
@@ -122,6 +123,14 @@ print_info "Pre-flight checks passed!"
 echo ""
 
 # ==========================================
+# Stage 0/5: Cross-machine F1-U routing
+# ==========================================
+print_stage "Stage 0/5: Setting up cross-machine F1-U routes..."
+setup_f1u_routes_co
+echo ""
+
+
+# ==========================================
 # Deployment Stages
 # ==========================================
 
@@ -173,6 +182,9 @@ echo ""
 print_stage "Stage 4/5: Applying dynamic SCTP routing fix..."
 echo ""
 fix_sctp_routing "$COMPOSE_FILE" "$CO_IP"
+echo ""
+
+verify_f1u_routes co
 echo ""
 
 # Stage 5/5: Observability agents
