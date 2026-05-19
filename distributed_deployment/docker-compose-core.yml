@@ -277,9 +277,9 @@ services:
       - N3_IF_NAME=eth1
       - GW_SGI_IP_ADDR=172.18.0.9
       - GW_N3_IP_ADDR=192.168.100.31
-      - UE_IP_ADDRESS_POOL_1=12.1.1.0
-      - UE_IP_ADDRESS_POOL_2=13.1.1.0
-      - UE_IP_ADDRESS_POOL_3=14.1.1.0
+      - UE_IP_ADDRESS_POOL_1=12.1.1.0/24
+      - UE_IP_ADDRESS_POOL_2=13.1.1.0/24
+      - UE_IP_ADDRESS_POOL_3=14.1.1.0/24
       - SGI_DEMO_OAI_ADDR=172.18.0.1
       - N6_UPF_IP_ADDR=192.168.72.30
     entrypoint: ["/bin/bash", "-c"]
