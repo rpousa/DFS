@@ -62,6 +62,32 @@ _rt_enable_forwarding() {
 }
 
 # ─────────────────────────────────────────────────────────
+# Docker 28+ installs raw-table drops that block cross-host
+# access to internal container IPs. Remove the specific
+# drops for the IPs we deliberately want reachable from the LAN.
+# ─────────────────────────────────────────────────────────
+_rt_remove_raw_isolation_drop() {
+    local target_ip="$1" desc="$2"
+    local removed=0
+    while true; do
+        local H
+        H=$(sudo nft -a list chain ip raw PREROUTING 2>/dev/null \
+            | awk -v ip="$target_ip" '
+                $0 ~ "ip daddr " ip " " && /drop/ {
+                    for (i=1;i<=NF;i++) if ($i=="handle") { print $(i+1); exit }
+                }' | head -1)
+        [ -z "$H" ] && break
+        sudo nft delete rule ip raw PREROUTING handle "$H" 2>/dev/null || break
+        ((removed++))
+    done
+    if [ "$removed" -gt 0 ]; then
+        _rt_info "✓ Removed $removed raw-PREROUTING drop rule(s) for $target_ip ($desc)"
+    else
+        _rt_info "✓ No raw-PREROUTING drop rule for $target_ip ($desc)"
+    fi
+}
+
+# ─────────────────────────────────────────────────────────
 # Per-host entrypoints
 # ─────────────────────────────────────────────────────────
 
@@ -89,6 +115,11 @@ setup_f1u_routes_co() {
     _rt_add_docker_user "DL F1-U return from DU_e1" \
         -p udp -s "$DU_E1_F1U_IP" --sport 2152 -j ACCEPT
 
+    _rt_remove_raw_isolation_drop "$CUUP_CO_F1U_IP" \
+     "CU-UP_co f1u (UL F1-U from DU_e1)"
+    _rt_remove_raw_isolation_drop "192.168.74.141" \
+     "DU_co f1u (not strictly needed, kept symmetric)"
+
     _rt_info "Centraloffice F1-U routing ready"
 }
 
@@ -110,6 +141,12 @@ setup_f1u_routes_edge() {
         -p udp -d "$CUUP_CO_F1U_IP" --dport 2153 -j ACCEPT
     _rt_add_docker_user "UL F1-U return from CU-UP_co" \
         -p udp -s "$CUUP_CO_F1U_IP" --sport 2153 -j ACCEPT
+
+    _rt_remove_raw_isolation_drop "$DU_E1_F1U_IP" \
+       "DU_e1 f1u (DL F1-U from CU-UP_co)"
+    _rt_remove_raw_isolation_drop "192.168.84.140" \
+     "CU-UP_e f1u (in case of future cross-host)"
+
 
     _rt_info "Edge F1-U routing ready"
 }
