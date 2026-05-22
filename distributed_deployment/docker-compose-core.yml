@@ -234,6 +234,9 @@ services:
       ext_net:
         ipv4_address: 192.168.72.30
         priority: 900
+      n3_net:
+        ipv4_address: 192.168.10034
+        priority: 950
     ports:
       - "192.168.0.200:8085:8085/tcp"
       - "8805/udp"
@@ -249,6 +252,7 @@ services:
     environment:
       - ETH0_IP=192.168.71.134
       - ETH1_IP=192.168.72.30
+      - ETH2_IP=192.168.100.34 
     entrypoint: ["/openair-upf/etc/fix_interfaces.sh"]
     command: >
       sh -c "sysctl -w net.ipv4.ip_forward=1 &&
