@@ -160,13 +160,6 @@ print_info "Pre-flight checks passed!"
 echo ""
 
 # ==========================================
-# Stage 0/7: Cross-machine F1-U routing
-# ==========================================
-print_stage "Stage 0/7: Setting up cross-machine F1-U routes..."
-setup_f1u_routes_edge
-echo ""
-
-# ==========================================
 # Deployment Stages
 # ==========================================
 

@@ -142,8 +142,7 @@ print_info "Pre-flight checks passed!"
 echo ""
 
 # Optional: Core has no F1-U bridge, but call for symmetry/future use
-setup_f1u_routes_core
-echo ""
+
 
 # ==========================================
 # Deployment Stages
@@ -201,6 +200,8 @@ echo ""
 print_stage "Stage 6/8: Applying dynamic SCTP routing fix..."
 echo ""
 fix_sctp_routing "$COMPOSE_FILE" "$CORE_IP"
+echo ""
+setup_f1u_routes_core
 echo ""
 
 # Stage 7/8: Observability stack (Prometheus + Grafana on Core, agents on host)
