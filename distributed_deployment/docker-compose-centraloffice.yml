@@ -20,7 +20,7 @@ services:
       - NET_ADMIN
     networks:
       core_net:
-        ipv4_address: 192.168.71.140
+        ipv4_address: 192.168.61.140
       f1u_net:
         ipv4_address: 192.168.74.140
       n3_net:
@@ -48,12 +48,12 @@ services:
         --gNBs.[0].gNB_CU_UP_ID 0xe01
         --gNBs.[0].E1_INTERFACE.[0].type up
         --gNBs.[0].E1_INTERFACE.[0].ipv4_cucp 192.168.0.200
-        --gNBs.[0].E1_INTERFACE.[0].ipv4_cuup 192.168.71.140
+        --gNBs.[0].E1_INTERFACE.[0].ipv4_cuup 192.168.61.140
         --gNBs.[0].tr_s_preference f1
         --gNBs.[0].local_s_portd 2153
         --gNBs.[0].local_s_address 192.168.74.140
         --gNBs.[0].remote_s_address 0.0.0.0
-        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.71.140/26
+        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.61.140/26
         --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.100.140/26
     command: >
       sh -c "sleep 20 &&
@@ -73,7 +73,7 @@ services:
       - SYS_NICE
     networks:
       core_net:
-        ipv4_address: 192.168.71.144
+        ipv4_address: 192.168.61.144
         priority: 1000
       ext_net:
         ipv4_address: 192.168.72.144
@@ -91,7 +91,7 @@ services:
     depends_on:
       - cuup_co
     environment:
-      - ETH0_IP=192.168.71.144
+      - ETH0_IP=192.168.61.144
       - ETH1_IP=192.168.72.144
     entrypoint: ["/openair-upf/etc/fix_interfaces.sh"]
     command: >
@@ -173,7 +173,7 @@ services:
       ran_net:
         ipv4_address: 192.168.80.10
       core_net:
-        ipv4_address: 192.168.71.141
+        ipv4_address: 192.168.61.141
     ports:
       - "192.168.0.193:500:500/sctp"         # F1-C local SCTP port
       - "192.168.0.193:2156:2152/udp"        # F1-U local GTP-U port
@@ -225,8 +225,8 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: 192.168.71.128/26
-          gateway: 192.168.71.129
+        - subnet: 192.168.61.128/26
+          gateway: 192.168.61.129
     driver_opts:
       com.docker.network.bridge.name: br-core
 
