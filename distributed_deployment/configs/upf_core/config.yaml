@@ -222,7 +222,7 @@ smf:
           - dnn: "oai.2"
       - sNssai: *miot_slice
         dnnSmfInfoList:
-          - dnn: "oai.2"
+          - dnn: "oai.3"
 
   # the DNN you configure here should be configured in "dnns"
   local_subscription_infos:
@@ -239,7 +239,7 @@ smf:
         session_ambr_ul: "10Mbps"
         session_ambr_dl: "10Mbps"
     - single_nssai: *miot_slice
-      dnn: "oai.2"
+      dnn: "oai.3"
       qos_profile:
         5qi: 76
         session_ambr_ul: "20Mbps"
@@ -266,7 +266,7 @@ upf:
           - dnn: "oai.2"
       - sNssai: *miot_slice
         dnnUpfInfoList:
-          - dnn: "oai.2"
+          - dnn: "oai.3"
 
 ## DNN configuration
 dnns:

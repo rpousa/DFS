@@ -271,7 +271,7 @@ smf:
           - dnn: "oai.2"              # DNN for URLLC slice
       - sNssai: *miot_slice
         dnnSmfInfoList:
-          - dnn: "oai.2"              # DNN for mIoT slice
+          - dnn: "oai.3"              # DNN for mIoT slice
 
   # Local subscription info (used only if use_local_subscription_info: yes)
   local_subscription_infos:

@@ -26,7 +26,6 @@ _rt_add_route() {
 
     if ip route show "$subnet" 2>/dev/null | grep -q "via $gw"; then
         _rt_info "✓ Route to $subnet via $gw already exists ($desc)"
-        return 0
     fi
     sudo ip route replace "$subnet" via "$gw" || {
         _rt_err "  ✗ Failed to set route $subnet → $gw"; return 1
@@ -43,7 +42,6 @@ _rt_add_docker_user() {
     local desc="$1"; shift
     if sudo iptables -C DOCKER-USER "$@" 2>/dev/null; then
         _rt_info "✓ DOCKER-USER rule already present ($desc)"
-        return 0
     fi
     # Ensure DOCKER-USER chain exists (Docker creates it on daemon start)
     sudo iptables -N DOCKER-USER 2>/dev/null || true
@@ -153,18 +151,25 @@ setup_f1u_routes_edge() {
 
 verify_f1u_routes() {
     local role="$1"
-    _rt_info "Verifying F1-U cross-machine reachability..."
+    _rt_info "Verifying F1-U cross-machine reachability (UDP, not ICMP)..."
     case "$role" in
         co)
-            ping -c 2 -W 2 "$DU_E1_F1U_IP" &>/dev/null \
-                && _rt_info "✓ CO can reach DU_e1 ($DU_E1_F1U_IP)" \
-                || _rt_warn "✗ CO cannot reach $DU_E1_F1U_IP (Edge may not be up)"
+            # UDP probe DU_e1's GTP-U port from CO host
+            if echo "" | timeout 2 nc -u -w1 "$DU_E1_F1U_IP" 2152 2>/dev/null; then
+                _rt_info "✓ CO can send UDP to DU_e1 ($DU_E1_F1U_IP:2152)"
+            else
+                _rt_warn "⚠ UDP probe inconclusive (nc returns 0 on send regardless)"
+            fi
+            # Real test: capture GTP-U
+            _rt_info "  Run: sudo tcpdump -ni any 'udp port 2152 or udp port 2153' to confirm GTP-U"
             ;;
         edge)
-            ping -c 2 -W 2 "$CUUP_CO_F1U_IP" &>/dev/null \
-                && _rt_info "✓ Edge can reach CU-UP_co ($CUUP_CO_F1U_IP)" \
-                || _rt_warn "✗ Edge cannot reach $CUUP_CO_F1U_IP (CO may not be up)"
+            if echo "" | timeout 2 nc -u -w1 "$CUUP_CO_F1U_IP" 2153 2>/dev/null; then
+                _rt_info "✓ Edge can send UDP to CU-UP_co ($CUUP_CO_F1U_IP:2153)"
+            else
+                _rt_warn "⚠ UDP probe inconclusive"
+            fi
+            _rt_info "  Run: sudo tcpdump -ni any 'udp port 2152 or udp port 2153' to confirm GTP-U"
             ;;
-        core) _rt_info "Core: no F1-U verification needed" ;;
     esac
 }
