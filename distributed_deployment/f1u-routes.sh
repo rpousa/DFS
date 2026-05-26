@@ -23,10 +23,9 @@ _rt_err()  { echo -e "${_RT_RED}[ROUTE]${_RT_NC} $*"; }
 # ─────────────────────────────────────────────────────────
 _rt_add_route() {
     local subnet="$1" gw="$2" desc="$3"
-
     if ip route show "$subnet" 2>/dev/null | grep -q "via $gw"; then
         _rt_info "✓ Route to $subnet via $gw already exists ($desc)"
-        return 0
+        return 0                                   
     fi
     sudo ip route replace "$subnet" via "$gw" || {
         _rt_err "  ✗ Failed to set route $subnet → $gw"; return 1
@@ -43,13 +42,18 @@ _rt_add_docker_user() {
     local desc="$1"; shift
     if sudo iptables -C DOCKER-USER "$@" 2>/dev/null; then
         _rt_info "✓ DOCKER-USER rule already present ($desc)"
-        return 0
+        return 0                                   
     fi
-    # Ensure DOCKER-USER chain exists (Docker creates it on daemon start)
     sudo iptables -N DOCKER-USER 2>/dev/null || true
-    sudo iptables -I DOCKER-USER 1 "$@" || {
-        _rt_err "  ✗ Failed to add DOCKER-USER rule ($desc)"; return 1
-    }
+    if ! sudo iptables -I DOCKER-USER 1 "$@" 2>/dev/null; then
+        # Re-check: another concurrent run may have created it
+        if sudo iptables -C DOCKER-USER "$@" 2>/dev/null; then
+            _rt_info "✓ DOCKER-USER rule appeared concurrently ($desc)"
+            return 0
+        fi
+        _rt_err "  ✗ Failed to add DOCKER-USER rule ($desc)"
+        return 1
+    fi
     _rt_info "✓ Added DOCKER-USER rule ($desc)"
 }
 
@@ -78,7 +82,7 @@ _rt_remove_raw_isolation_drop() {
                 }' | head -1)
         [ -z "$H" ] && break
         sudo nft delete rule ip raw PREROUTING handle "$H" 2>/dev/null || break
-        ((removed++))
+        removed=$((removed + 1))
     done
     if [ "$removed" -gt 0 ]; then
         _rt_info "✓ Removed $removed raw-PREROUTING drop rule(s) for $target_ip ($desc)"
