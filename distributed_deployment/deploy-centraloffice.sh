@@ -178,7 +178,7 @@ fix_sctp_routing "$COMPOSE_FILE" "$CO_IP"
 echo ""
 setup_f1u_routes_co
 echo ""
-
+print_info "SCTP and F1-U routing setup complete. Verifying connectivity..."
 verify_f1u_routes co
 echo ""
 

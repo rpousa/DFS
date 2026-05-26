@@ -206,8 +206,7 @@ print_stage "Stage 4/7: Applying dynamic SCTP routing fix..."
 echo ""
 fix_sctp_routing "$COMPOSE_FILE" "$EDGE_IP"
 echo ""
-verify_f1u_routes edge
-echo ""
+
 
 # Stage 5/7: UEs (connect to DU_e1)
 print_stage "Stage 5/7: Starting 10 UEs (→ DU_e1)..."
@@ -226,6 +225,13 @@ if [ -f docker-compose-observability.yml ]; then
     print_info "  ✓ cadvisor      on ${EDGE_IP}:8081  (scraped by Core Prometheus)"
     echo ""
 fi
+
+# Stage 6.5/7: F1-U cross-machine routing setup (Edge → CO)
+print_stage "Stage 6.5/7: Starting observability agents..."
+setup_f1u_routes_edge
+echo ""
+verify_f1u_routes edge
+echo ""
 
 # Stage 7/7: UE connection verification
 print_stage "Stage 7/7: Verifying UE connections..."
