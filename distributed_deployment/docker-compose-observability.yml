@@ -31,6 +31,11 @@ services:
     cgroup: host
     privileged: true
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:8081/healthz || exit 1"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
     volumes:
       - /:/rootfs:ro,rslave
       - /var/run:/var/run:ro
