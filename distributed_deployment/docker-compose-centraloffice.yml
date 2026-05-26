@@ -28,6 +28,7 @@ services:
     ports:
       - "192.168.0.193:2153:2153/udp"       # GTP-U F1-U (inbound from DU_co local + DU_e1 cross-machine)
       - "192.168.0.193:2155:2152/udp"       # GTP-U N3 (towards UPF_co)
+      - 
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
@@ -41,7 +42,7 @@ services:
         --log_config.e1ap_log_level debug
         --log_config.f1u_log_level debug
         --log_config.gtpu_log_level debug
-        --e2_agent.near_ric_ip_addr 192.168.71.150
+        --e2_agent.near_ric_ip_addr 192.168.0.200
         --e2_agent.sm_dir /usr/local/lib/flexric/
         --telnetsrv --telnetsrv.shrmod ci
         --gNBs.[0].gNB_ID 0xe00
