@@ -64,7 +64,7 @@ nfs:
       interface_name: eth0
       addr: 192.168.0.193
     n3:
-      interface_name: eth0
+      interface_name: eth2
       port: 2152
       addr: 192.168.0.193
     n4:

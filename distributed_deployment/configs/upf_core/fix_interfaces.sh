@@ -37,7 +37,7 @@ ip -o addr show | grep -E "eth[0-9]" | awk '{print "  " $2 ": " $4}'
 # ---- Build IP → current_iface and IP → MAC maps ----
 declare -A IP_TO_IFACE
 declare -A IFACE_TO_MAC
-for iface in $(ip -o link show | awk -F': ' '/^[0-9]+: eth/ {print $2}' | awk '{print $1}'); do
+for iface in $(ip -o link show | awk -F': ' '/^[0-9]+: eth/ {print $2}' | sed 's/@.*//'); do
     ip_addr=$(ip -4 addr show "$iface" 2>/dev/null | awk '/inet /{print $2}' | cut -d/ -f1 | head -1)
     mac=$(ip -o link show "$iface" | awk '{print $(NF-2)}')
     [ -n "$ip_addr" ] && IP_TO_IFACE["$ip_addr"]="$iface"
