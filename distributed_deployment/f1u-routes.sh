@@ -26,6 +26,7 @@ _rt_add_route() {
 
     if ip route show "$subnet" 2>/dev/null | grep -q "via $gw"; then
         _rt_info "✓ Route to $subnet via $gw already exists ($desc)"
+        return 0
     fi
     sudo ip route replace "$subnet" via "$gw" || {
         _rt_err "  ✗ Failed to set route $subnet → $gw"; return 1
@@ -42,6 +43,7 @@ _rt_add_docker_user() {
     local desc="$1"; shift
     if sudo iptables -C DOCKER-USER "$@" 2>/dev/null; then
         _rt_info "✓ DOCKER-USER rule already present ($desc)"
+        return 0
     fi
     # Ensure DOCKER-USER chain exists (Docker creates it on daemon start)
     sudo iptables -N DOCKER-USER 2>/dev/null || true
