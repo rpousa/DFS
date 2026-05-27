@@ -22,7 +22,7 @@ services:
       f1u_net:
         ipv4_address: 192.168.84.140
       n3_net:
-        ipv4_address: 192.168.101.140
+        ipv4_address: 192.168.102.140
     ports:
       - "192.168.0.243:2153:2153/udp"       # GTP-U F1-U (inbound from DU_e2 local)
       - "192.168.0.243:2155:2152/udp"       # GTP-U N3 (towards UPF_e)
@@ -52,7 +52,7 @@ services:
         --gNBs.[0].local_s_address 192.168.84.140
         --gNBs.[0].remote_s_address 0.0.0.0
         --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.71.140/26
-        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.101.140/26
+        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.102.140/26
     command: >
       sh -c "sleep 20 &&
              /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-cuup -O /opt/oai-gnb/etc/gnb.conf 2>&1 |
@@ -77,7 +77,7 @@ services:
         ipv4_address: 192.168.82.154
         priority: 900
       n3_net:
-        ipv4_address: 192.168.101.154
+        ipv4_address: 192.168.102.154
         priority: 950
     ports:
       - "192.168.0.243:8085:8085/tcp"
@@ -93,7 +93,7 @@ services:
     environment:
       - ETH0_IP=192.168.71.154
       - ETH1_IP=192.168.82.154
-      - ETH2_IP=192.168.101.154   
+      - ETH2_IP=192.168.102.154   
     entrypoint: ["/openair-upf/etc/fix_interfaces.sh"]
     command: >
       sh -c "sysctl -w net.ipv4.ip_forward=1 &&
@@ -111,7 +111,7 @@ services:
       ext_net:
         ipv4_address: 192.168.82.135
       n3_net:
-        ipv4_address: 192.168.101.135
+        ipv4_address: 192.168.102.135
       sgi_net:
         ipv4_address: 172.18.2.9
     environment:
@@ -121,7 +121,7 @@ services:
       - SGI_IF_NAME=eth2
       - GW_SGI_IP_ADDR=172.18.2.9
       - N3_IF_NAME=eth1
-      - GW_N3_IP_ADDR=192.168.101.135
+      - GW_N3_IP_ADDR=192.168.102.135
       - UE_IP_ADDRESS_POOL_1=12.1.1.0/24
       - UE_IP_ADDRESS_POOL_2=13.1.1.0/24
       - UE_IP_ADDRESS_POOL_3=14.1.1.0/24
@@ -376,8 +376,8 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: 192.168.101.128/26
-          gateway: 192.168.101.129
+        - subnet: 192.168.102.128/26
+          gateway: 192.168.102.129
     driver_opts:
       com.docker.network.bridge.name: br-n3
 
