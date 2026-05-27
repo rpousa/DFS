@@ -20,7 +20,9 @@
 #   source fix-sctp-routing.sh
 #   fix_sctp_routing "docker-compose-core.yml" "192.168.0.200"
 
-set -euo pipefail
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    set -euo pipefail
+fi
 
 # ==========================================
 # Colors

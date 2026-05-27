@@ -81,23 +81,30 @@ _rt_enable_forwarding() {
 # ─────────────────────────────────────────────────────────
 _rt_remove_raw_isolation_drop() {
     local target_ip="$1" desc="$2"
-    local removed=0
+    local removed=0 H=""
+
+    # Make this function never abort the parent script:
+    # explicit `|| true` on every external command that may fail,
+    # and never let pipefail propagate.
     while true; do
-        local H
-        H=$(sudo nft -a list chain ip raw PREROUTING 2>/dev/null \
-            | awk -v ip="$target_ip" '
-                $0 ~ "ip daddr " ip " " && /drop/ {
-                    for (i=1;i<=NF;i++) if ($i=="handle") { print $(i+1); exit }
-                }' | head -1)
+        H=$( { sudo nft -a list chain ip raw PREROUTING 2>/dev/null \
+               || true; } \
+             | awk -v ip="$target_ip" '
+                 $0 ~ "ip daddr " ip " " && /drop/ {
+                     for (i=1;i<=NF;i++) if ($i=="handle") { print $(i+1); exit }
+                 }' \
+             | head -1 || true)
         [ -z "$H" ] && break
         sudo nft delete rule ip raw PREROUTING handle "$H" 2>/dev/null || break
         removed=$((removed + 1))
     done
+
     if [ "$removed" -gt 0 ]; then
         _rt_info "✓ Removed $removed raw-PREROUTING drop rule(s) for $target_ip ($desc)"
     else
         _rt_info "✓ No raw-PREROUTING drop rule for $target_ip ($desc)"
     fi
+    return 0
 }
 
 # ─────────────────────────────────────────────────────────
