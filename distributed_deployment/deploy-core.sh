@@ -203,6 +203,9 @@ fix_sctp_routing "$COMPOSE_FILE" "$CORE_IP"
 echo ""
 setup_f1u_routes_core
 echo ""
+setup_n3_routes_core
+echo ""
+
 
 # Stage 7/8: Observability stack (Prometheus + Grafana on Core, agents on host)
 print_stage "Stage 7/8: Starting observability stack..."

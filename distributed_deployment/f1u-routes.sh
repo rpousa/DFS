@@ -3,8 +3,17 @@
 
 CO_F1U_SUBNET="192.168.74.128/26"
 EDGE_F1U_SUBNET="192.168.84.128/26"
-CO_N3_SUBNET="192.168.100.128/26"
-EDGE_N3_SUBNET="192.168.101.128/26"
+CORE_N3_SUBNET="192.168.100.0/26"
+CO_N3_SUBNET="192.168.101.128/26"
+EDGE_N3_SUBNET="192.168.102.128/26"
+
+
+UPF_CORE_N3_IP="192.168.100.34"
+CUUP_CO_N3_IP="192.168.101.140"
+UPF_CO_N3_IP="192.168.101.144"
+CUUP_E_N3_IP="192.168.102.140"
+UPF_E_N3_IP="192.168.102.154"
+
 
 CORE_IP="${CORE_IP:-192.168.0.200}"
 CO_IP="${CO_IP:-192.168.0.193}"
@@ -153,6 +162,41 @@ setup_f1u_routes_edge() {
 
 
     _rt_info "Edge F1-U routing ready"
+}
+
+setup_n3_routes_co() {
+    _rt_info "Setting up cross-host N3 on Centraloffice..."
+    _rt_add_route "$CORE_N3_SUBNET"  "$CORE_IP" "Core n3_net (CU-UP_co → UPF_core)"
+    _rt_add_route "$EDGE_N3_SUBNET"  "$EDGE_IP" "Edge n3_net (future direct N3)"
+
+    _rt_add_docker_user "N3 to UPF_core" -p udp -d "$UPF_CORE_N3_IP" --dport 2152 -j ACCEPT
+    _rt_add_docker_user "N3 return from UPF_core" -p udp -s "$UPF_CORE_N3_IP" --sport 2152 -j ACCEPT
+
+    _rt_remove_raw_isolation_drop "$CUUP_CO_N3_IP" "CU-UP_co n3 (cross-host N3)"
+}
+
+setup_n3_routes_core() {
+    _rt_info "Setting up cross-host N3 on Core..."
+    _rt_add_route "$CO_N3_SUBNET"   "$CO_IP"   "CO n3_net (return N3 to CU-UP_co)"
+    _rt_add_route "$EDGE_N3_SUBNET" "$EDGE_IP" "Edge n3_net (return N3 to CU-UP_e)"
+
+    _rt_add_docker_user "N3 from CU-UP_co" -p udp -s "$CUUP_CO_N3_IP" -j ACCEPT
+    _rt_add_docker_user "N3 to CU-UP_co"   -p udp -d "$CUUP_CO_N3_IP" -j ACCEPT
+    _rt_add_docker_user "N3 from CU-UP_e"  -p udp -s "$CUUP_E_N3_IP"  -j ACCEPT
+    _rt_add_docker_user "N3 to CU-UP_e"    -p udp -d "$CUUP_E_N3_IP"  -j ACCEPT
+
+    _rt_remove_raw_isolation_drop "$UPF_CORE_N3_IP" "UPF_core n3 (cross-host N3)"
+}
+
+setup_n3_routes_edge() {
+    _rt_info "Setting up cross-host N3 on Edge..."
+    _rt_add_route "$CORE_N3_SUBNET" "$CORE_IP" "Core n3_net (CU-UP_e → UPF_core)"
+    _rt_add_route "$CO_N3_SUBNET"   "$CO_IP"   "CO n3_net (future direct N3)"
+
+    _rt_add_docker_user "N3 to UPF_core" -p udp -d "$UPF_CORE_N3_IP" --dport 2152 -j ACCEPT
+    _rt_add_docker_user "N3 return from UPF_core" -p udp -s "$UPF_CORE_N3_IP" --sport 2152 -j ACCEPT
+
+    _rt_remove_raw_isolation_drop "$CUUP_E_N3_IP" "CU-UP_e n3 (cross-host N3)"
 }
 
 verify_f1u_routes() {
