@@ -107,6 +107,31 @@ _rt_remove_raw_isolation_drop() {
     return 0
 }
 
+_rt_exclude_n3_masquerade() {
+    # Preserve original container source IPs for cross-host N3 traffic.
+    # GTP-U is two independent unidirectional flows in conntrack; if we
+    # MASQUERADE one direction, the PDR/peer-IP mapping on the other side
+    # breaks and the kernel ends up in a routing loop (ICMP TTL exceeded).
+    local pairs=(
+        "192.168.101.128/26 192.168.100.0/26"
+        "192.168.100.0/26   192.168.101.128/26"
+        "192.168.102.128/26 192.168.100.0/26"
+        "192.168.100.0/26   192.168.102.128/26"
+        "192.168.101.128/26 192.168.102.128/26"
+        "192.168.102.128/26 192.168.101.128/26"
+    )
+    for pair in "${pairs[@]}"; do
+        local s=${pair% *} d=${pair#* }
+        if ! sudo nft -a list chain ip nat POSTROUTING 2>/dev/null \
+             | grep -q "ip saddr $s ip daddr $d.*return"; then
+            sudo nft insert rule ip nat POSTROUTING \
+                ip saddr "$s" ip daddr "$d" counter return
+            _rt_info "✓ No-MASQUERADE for $s → $d"
+        else
+            _rt_info "✓ No-MASQUERADE already present for $s → $d"
+        fi
+    done
+}
 # ─────────────────────────────────────────────────────────
 # Per-host entrypoints
 # ─────────────────────────────────────────────────────────
@@ -180,6 +205,7 @@ setup_n3_routes_co() {
     _rt_add_docker_user "N3 return from UPF_core" -p udp -s "$UPF_CORE_N3_IP" --sport 2152 -j ACCEPT
 
     _rt_remove_raw_isolation_drop "$CUUP_CO_N3_IP" "CU-UP_co n3 (cross-host N3)"
+    _rt_exclude_n3_masquerade
 }
 
 setup_n3_routes_core() {
@@ -193,6 +219,7 @@ setup_n3_routes_core() {
     _rt_add_docker_user "N3 to CU-UP_e"    -p udp -d "$CUUP_E_N3_IP"  -j ACCEPT
 
     _rt_remove_raw_isolation_drop "$UPF_CORE_N3_IP" "UPF_core n3 (cross-host N3)"
+    _rt_exclude_n3_masquerade
 }
 
 setup_n3_routes_edge() {
@@ -204,6 +231,7 @@ setup_n3_routes_edge() {
     _rt_add_docker_user "N3 return from UPF_core" -p udp -s "$UPF_CORE_N3_IP" --sport 2152 -j ACCEPT
 
     _rt_remove_raw_isolation_drop "$CUUP_E_N3_IP" "CU-UP_e n3 (cross-host N3)"
+    _rt_exclude_n3_masquerade
 }
 
 verify_f1u_routes() {
