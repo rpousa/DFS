@@ -231,12 +231,15 @@ services:
       core_net:
         ipv4_address: 192.168.71.134
         priority: 1000
+        interface_name: eth0
       ext_net:
         ipv4_address: 192.168.72.30
         priority: 900
+        interface_name: eth2
       n3_net:
         ipv4_address: 192.168.100.34
         priority: 950
+        interface_name: eth1
     ports:
       - "192.168.0.200:8085:8085/tcp"
       - "8805/udp"
