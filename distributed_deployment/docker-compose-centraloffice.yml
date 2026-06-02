@@ -84,7 +84,7 @@ services:
         interface_name: eth1
     ports:
       - "192.168.0.193:8085:8085/tcp"
-      - "8805/udp"
+      - "192.168.0.193:8085:8805/udp"
       - "192.168.0.193:2152:2152/udp"       # GTP-U N3 (from CU-UP_co)
     devices:
       - /dev/net/tun:/dev/net/tun
@@ -207,7 +207,7 @@ services:
         --rfsimulator.[0].serverport 4043
         --log_config.phy_log_level info
         --log_config.mac_log_level info
-#        --MACRLCs.[0].local_n_address_f1u 192.168.74.141
+        --MACRLCs.[0].local_n_address_f1u 192.168.74.141
 #        --MACRLCs.[0].remote_n_address_f1u 192.168.74.140
     depends_on:
       - cuup_co

@@ -77,7 +77,7 @@ fix_udp_routing() {
 
     # Autodetect role from hostname if not given
     if [ -z "$my_role" ]; then
-        case "$(hostname -s)" in
+        case "$(hostname -s | tr A-Z a-z)" in
             *core*)          my_role=core ;;
             *centraloffice*|*co*) my_role=centraloffice ;;
             *edge*)          my_role=edge ;;

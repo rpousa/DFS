@@ -82,7 +82,7 @@ services:
         interface_name: eth1
     ports:
       - "192.168.0.243:8085:8085/tcp"
-      - "8805/udp"
+      - "192.168.0.243:8085:8805/udp"
       - "192.168.0.243:2152:2152/udp"       # GTP-U N3 (from CU-UP_e)
     devices:
       - /dev/net/tun:/dev/net/tun
