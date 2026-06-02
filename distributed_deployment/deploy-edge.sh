@@ -228,12 +228,12 @@ fi
 
 # Stage 6.5/7: F1-U cross-machine routing setup (Edge → CO)
 print_stage "Stage 6.5/7: Starting observability agents..."
-setup_f1u_routes_edge
-echo ""
-setup_n3_routes_edge
-echo ""
-verify_f1u_routes edge
-echo ""
+# setup_f1u_routes_edge
+# echo ""
+# setup_n3_routes_edge
+# echo ""
+# verify_f1u_routes edge
+# echo ""
 
 # Stage 7/7: UE connection verification
 print_stage "Stage 7/7: Verifying UE connections..."
