@@ -84,10 +84,6 @@ services:
         ipv4_address: 192.168.82.154
         priority: 900
         interface_name: eth2
-      n3_net:
-        ipv4_address: 192.168.102.154
-        priority: 950
-        interface_name: eth1
     ports:
       - "192.168.0.243:8085:8085/tcp"
       - "8805/udp"
@@ -101,8 +97,7 @@ services:
       - cuup_e
     environment:
       - ETH0_IP=192.168.71.154
-      - ETH1_IP=192.168.82.154
-      - ETH2_IP=192.168.102.154   
+      - ETH1_IP=192.168.82.154  
     entrypoint: ["/openair-upf/etc/fix_interfaces.sh"]
     command: >
       sh -c "sysctl -w net.ipv4.ip_forward=1 &&
@@ -119,8 +114,6 @@ services:
     networks:
       ext_net:
         ipv4_address: 192.168.82.135
-      n3_net:
-        ipv4_address: 192.168.102.135
       sgi_net:
         ipv4_address: 172.18.2.9
     environment:
@@ -130,7 +123,7 @@ services:
       - SGI_IF_NAME=eth2
       - GW_SGI_IP_ADDR=172.18.2.9
       - N3_IF_NAME=eth1
-      - GW_N3_IP_ADDR=192.168.102.135
+      - GW_N3_IP_ADDR=192.168.82.135
       - UE_IP_ADDRESS_POOL_1=12.1.1.0/24
       - UE_IP_ADDRESS_POOL_2=13.1.1.0/24
       - UE_IP_ADDRESS_POOL_3=14.1.1.0/24
@@ -380,15 +373,6 @@ networks:
           gateway: 192.168.80.129
     driver_opts:
       com.docker.network.bridge.name: br-ran
-
-  n3_net:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 192.168.102.128/26
-          gateway: 192.168.102.129
-    driver_opts:
-      com.docker.network.bridge.name: br-n3
 
   sgi_net:
     driver: bridge
