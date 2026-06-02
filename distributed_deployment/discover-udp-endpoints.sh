@@ -33,29 +33,15 @@ command -v jq >/dev/null 2>&1 && have_jq=1
 # Output cols: container_port  host_ip  host_port
 _udp_mappings() {
     local c=$1
-    if [ "$have_jq" -eq 1 ]; then
-        docker inspect "$c" --format '{{json .NetworkSettings.Ports}}' 2>/dev/null \
-            | jq -r '
-                to_entries[]
-                | select(.key | endswith("/udp"))
-                | select(.value != null)
-                | .key as $pp
-                | .value[]
-                | [$pp | sub("/udp$";""), .HostIp, .HostPort] | @tsv
-              '
-    else
-        # Fallback: parse JSON crudely with awk (works for the simple shape Docker emits)
-        docker inspect "$c" --format '{{json .NetworkSettings.Ports}}' 2>/dev/null \
-            | tr ',' '\n' \
-            | awk -F'"' '
-                /\/udp/  { gsub(/\/udp.*/,"",$2); cport=$2 }
-                /HostIp/ { hip=$4 }
-                /HostPort/ {
-                    hport=$4
-                    if (cport!="" && hport!="") printf "%s\t%s\t%s\n", cport, hip, hport
-                    hip=""; hport=""
-                }'
-    fi
+    docker port "$c" 2>/dev/null | gawk '
+        /\/udp ->/ {
+            split($0, a, " -> ")
+            cport = gensub("/udp.*", "", 1, a[1])
+            n = split(a[2], b, ":")
+            hip   = (n == 2) ? b[1] : ""
+            hport = (n == 2) ? b[2] : b[1]
+            printf "%s\t%s\t%s\n", cport, hip, hport
+        }'
 }
 
 # ---------- helper: pick the container IP on the bridge that backs this publish ----------
