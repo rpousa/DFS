@@ -268,8 +268,10 @@ services:
     networks:
       ext_net:
         ipv4_address: 192.168.72.31
+        interface_name: eth1
       sgi_net:
         ipv4_address: 172.18.0.9
+        interface_name: eth0
     environment:
       - EBPF_GW_SETUP=yes
       - EBPF_GW_N6_IP_ADDR=192.168.72.31
