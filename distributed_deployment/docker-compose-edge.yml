@@ -18,7 +18,7 @@ services:
       - NET_ADMIN
     networks:
       core_net:
-        ipv4_address: 192.168.71.140
+        ipv4_address: 192.168.81.140
         priority: 900
         interface_name: eth0
       f1u_net:
@@ -48,12 +48,12 @@ services:
         --gNBs.[0].gNB_CU_UP_ID 0xe02
         --gNBs.[0].E1_INTERFACE.[0].type up
         --gNBs.[0].E1_INTERFACE.[0].ipv4_cucp 192.168.0.200
-        --gNBs.[0].E1_INTERFACE.[0].ipv4_cuup 192.168.71.140
+        --gNBs.[0].E1_INTERFACE.[0].ipv4_cuup 192.168.81.140
         --gNBs.[0].tr_s_preference f1
         --gNBs.[0].local_s_portd 2153
         --gNBs.[0].local_s_address 192.168.84.140
         --gNBs.[0].remote_s_address 0.0.0.0
-        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.71.140/26
+        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.81.140/26
         --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.102.140/26
     command: >
       sh -c "sleep 20 &&
@@ -73,7 +73,7 @@ services:
       - SYS_NICE
     networks:
       core_net:
-        ipv4_address: 192.168.71.154
+        ipv4_address: 192.168.81.154
         priority: 1000
         interface_name: eth0
       ext_net:
@@ -92,7 +92,7 @@ services:
     depends_on:
       - cuup_e
     environment:
-      - ETH0_IP=192.168.71.154
+      - ETH0_IP=192.168.81.154
       - ETH1_IP=192.168.82.154  
     entrypoint: ["/openair-upf/etc/fix_interfaces.sh"]
     command: >
@@ -172,7 +172,7 @@ services:
       ran_net:
         ipv4_address: 192.168.80.151
       core_net:
-        ipv4_address: 192.168.71.151
+        ipv4_address: 192.168.81.151
     ports:
       - "192.168.0.243:500:500/sctp"         # F1-C local SCTP port
       - "192.168.0.243:2156:2152/udp"        # F1-U local GTP-U port
@@ -239,7 +239,7 @@ services:
       ran_net:
         ipv4_address: 192.168.80.161
       core_net:
-        ipv4_address: 192.168.71.161
+        ipv4_address: 192.168.81.161
     ports:
       - "192.168.0.243:501:501/sctp"         # F1-C local SCTP port (different from DU_e1)
       - "192.168.0.243:2157:2152/udp"        # F1-U local GTP-U port
@@ -329,8 +329,8 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: 192.168.71.128/26
-          gateway: 192.168.71.129
+        - subnet: 192.168.81.128/26
+          gateway: 192.168.81.129
     driver_opts:
       com.docker.network.bridge.name: br-core
 
