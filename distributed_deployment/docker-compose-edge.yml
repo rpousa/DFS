@@ -94,7 +94,7 @@ services:
     environment:
       - ETH0_IP=192.168.81.154
       - ETH1_IP=192.168.82.154  
-    entrypoint: ["sleep infinity"]
+    entrypoint: [""]
     command: >
       sh -c "sysctl -w net.ipv4.ip_forward=1 &&
              sleep 2 &&
