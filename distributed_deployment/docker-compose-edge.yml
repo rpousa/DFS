@@ -20,7 +20,7 @@ services:
       core_net:
         ipv4_address: 192.168.71.140
         priority: 900
-        interface_name: eth1
+        interface_name: eth0
       f1u_net:
         ipv4_address: 192.168.84.140
         priority: 800
