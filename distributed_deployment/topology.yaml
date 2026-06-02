@@ -1,0 +1,19 @@
+# topology.yaml — UDP endpoints that must be reachable cross-host
+hosts:
+  core:
+    lan_ip: 192.168.0.200
+    udp_endpoints:
+      - { name: upf_core_n3, container_ip: 192.168.71.134, container_port: 2152, host_port: 2152 }
+  centraloffice:
+    lan_ip: 192.168.0.193
+    udp_endpoints:
+      - { name: cuup_co_f1u,  container_ip: 192.168.74.140, container_port: 2153, host_port: 2153 }
+      - { name: upf_co_n3,    container_ip: 192.168.61.144, container_port: 2152, host_port: 2152 }
+      - { name: du_co_f1u,    container_ip: 192.168.74.141, container_port: 2152, host_port: 2156 }
+  edge:
+    lan_ip: 192.168.0.243
+    udp_endpoints:
+      - { name: cuup_e_f1u,   container_ip: 192.168.84.140, container_port: 2153, host_port: 2153 }
+      - { name: upf_e_n3,     container_ip: 192.168.81.154, container_port: 2152, host_port: 2152 }
+      - { name: du_e1_f1u,    container_ip: 192.168.84.151, container_port: 2152, host_port: 2156 }
+      - { name: du_e2_f1u,    container_ip: 192.168.84.161, container_port: 2152, host_port: 2157 }

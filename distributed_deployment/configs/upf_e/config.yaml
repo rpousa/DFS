@@ -62,20 +62,20 @@ nfs:
       port: 8080
       api_version: v1
       interface_name: eth0
-      addr: 192.168.81.54
+      addr: 192.168.81.154
     n3:
       interface_name: eth0
       port: 2152
-      addr: 192.168.81.54
+      addr: 192.168.81.154
     n4:
-      addr: 192.168.81.54
+      addr: 192.168.81.154
       interface_name: eth0
       port: 8805
     n6:
-      addr: 192.168.82.54
+      addr: 192.168.82.154
       interface_name: eth1
     n9:
-      addr: 192.168.82.54
+      addr: 192.168.82.154
       interface_name: eth1
       port: 2152
   spgwu:
