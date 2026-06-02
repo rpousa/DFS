@@ -50,23 +50,51 @@ _udp_mappings() {
 # when both exist. Override with NETWORK_PRIORITY env var if needed.
 _container_ip_for_publish() {
     local c=$1 cport=$2
-    # 1) Try ss inside the container to find the actual listening IP
+
+    # 1) Try ss inside the container — find the LOCAL address column robustly.
+    #    We don't trust column numbers; instead, parse "ip:port" tokens and
+    #    pick the one that actually ends in :<cport>.
     local listen
-    listen=$(docker exec "$c" sh -c "ss -ulnp 2>/dev/null | awk -v p=:$cport '\$0 ~ p {print \$5}' | head -1" 2>/dev/null \
-            | sed 's/:[0-9]*$//' || true)
-    if [ -n "$listen" ] && [ "$listen" != "0.0.0.0" ] && [ "$listen" != "*" ] && [ "$listen" != "::" ]; then
+    listen=$(docker exec "$c" sh -c "ss -ulnH 2>/dev/null || ss -uln 2>/dev/null" 2>/dev/null \
+        | awk -v cp=":$cport" '
+            {
+                for (i = 1; i <= NF; i++) {
+                    tok = $i
+                    # Match either "1.2.3.4:PORT" or "*:PORT" or "[::]:PORT"
+                    if (tok ~ ("(^|[^*])"cp"$")) {
+                        sub(":[0-9]+$", "", tok)
+                        print tok
+                        exit
+                    }
+                }
+            }' | head -1)
+
+    # Normalize wildcards to empty so we fall through
+    case "$listen" in
+        "0.0.0.0"|"*"|"::"|"[::]"|"") listen="" ;;
+    esac
+
+    if [ -n "$listen" ]; then
         echo "$listen"; return
     fi
-    # 2) Listening on 0.0.0.0 — pick preferred network
+
+    # 2) Listening on wildcard — pick by preferred network
     local pref="${NETWORK_PRIORITY:-core_net f1u_net f1c_net ext_net ran_net sgi_net}"
     for net in $pref; do
+        # Match the network whose name ENDS with our preferred suffix
+        # (Compose prefixes networks with the project name, e.g. "distributed_deployment_core_net")
+        local found_net
+        found_net=$(docker inspect -f '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{"\n"}}{{end}}' "$c" 2>/dev/null \
+                    | grep -E "(^|_)${net}\$" | head -1)
+        [ -z "$found_net" ] && continue
         local ip
-        ip=$(docker inspect -f "{{with index .NetworkSettings.Networks \"$net\"}}{{.IPAddress}}{{end}}" "$c" 2>/dev/null || true)
+        ip=$(docker inspect -f "{{with index .NetworkSettings.Networks \"$found_net\"}}{{.IPAddress}}{{end}}" "$c" 2>/dev/null || true)
         [ -n "$ip" ] && { echo "$ip"; return; }
     done
-    # 3) Fallback: any first IP
-    docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}' "$c" \
-        | awk '{print $1}'
+
+    # 3) Fallback: any first non-empty IP
+    docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{"\n"}}{{end}}' "$c" \
+        | grep -v '^$' | head -1
 }
 
 # ---------- emit YAML ----------
