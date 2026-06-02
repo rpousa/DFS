@@ -200,12 +200,17 @@ echo ""
 print_stage "Stage 6/8: Applying dynamic SCTP routing fix..."
 echo ""
 fix_sctp_routing "$COMPOSE_FILE" "$CORE_IP"
-# echo ""
-# setup_f1u_routes_core
-# echo ""
-# setup_n3_routes_core
-# echo ""
+echo ""
 
+print_stage "Stage 6.5/8: Applying cross-host UDP DNAT..."
+if [ -f topology.yaml ] && [ -f fix-udp-routing.sh ]; then
+    source ./fix-udp-routing.sh
+    fix_udp_routing topology.yaml core
+    verify_udp_routing topology.yaml core
+else
+    print_warn "topology.yaml or fix-udp-routing.sh missing — skipping UDP fix"
+fi
+echo ""
 
 # Stage 7/8: Observability stack (Prometheus + Grafana on Core, agents on host)
 print_stage "Stage 7/8: Starting observability stack..."

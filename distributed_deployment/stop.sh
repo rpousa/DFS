@@ -261,6 +261,13 @@ cleanup_custom_nft_rules() {
         [ "$n" -gt 0 ] && print_info "    Removed $n SCTP isolation bypass rule(s)" && total_cleaned=$((total_cleaned + n))
     fi
 
+    print_info "  [8/8] Cross-host UDP DNAT (UDPFIX rules)"
+    for chain in PREROUTING OUTPUT POSTROUTING; do
+        n=$(nft_remove_all_matching "ip nat" "$chain" 'comment "UDPFIX')
+        [ "$n" -gt 0 ] && print_info "    Removed $n UDPFIX rule(s) from $chain" \
+                    && total_cleaned=$((total_cleaned + n))
+    done
+
     # --- IP aliases cleanup (if any added by setup scripts) ---
     for bridge in $BRIDGES; do
         # Remove /32 aliases matching any of our subnets on this bridge (rare but possible)

@@ -176,13 +176,18 @@ print_stage "Stage 4/5: Applying dynamic SCTP and F1u routing fix..."
 echo ""
 fix_sctp_routing "$COMPOSE_FILE" "$CO_IP"
 echo ""
-# setup_f1u_routes_co
-# echo ""
-# setup_n3_routes_co
-# echo ""
-# print_info "SCTP and F1-U routing setup complete. Verifying connectivity..."
-# verify_f1u_routes co
-# echo ""
+
+# Stage 4.5/5: Cross-host UDP DNAT (self-contained)
+print_stage "Stage 4.5/5: Applying cross-host UDP DNAT..."
+if [ -f topology.yaml ] && [ -f fix-udp-routing.sh ]; then
+    source ./fix-udp-routing.sh
+    fix_udp_routing topology.yaml centraloffice
+    verify_udp_routing topology.yaml centraloffice
+else
+    print_warn "topology.yaml or fix-udp-routing.sh missing — skipping UDP fix"
+fi
+echo ""
+
 
 # Stage 5/5: Observability agents
 if [ -f docker-compose-observability.yml ]; then

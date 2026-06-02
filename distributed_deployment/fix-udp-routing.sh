@@ -1,16 +1,12 @@
 #!/bin/bash
-# fix-udp-routing.sh — Cross-host UDP DNAT for OAI distributed deployment
+# fix-udp-routing.sh — Cross-host UDP DNAT for OAI 3-machine deployment.
+# Self-contained: reads only topology.yaml and local nft state. No SSH, no
+# remote docker calls, no cross-host queries.
 #
-# Solves: container A on host X sends UDP to container B's bridge IP on host Y,
-# which is unrouteable across the LAN. We install PREROUTING DNAT on host X to
-# rewrite the dest to host Y's LAN IP:published_port + POSTROUTING MASQUERADE.
-#
-# Usage:   ./fix-udp-routing.sh <topology.yaml> [my_role]
-#   my_role ∈ { core | centraloffice | edge }
-#
-# Can also be sourced:
-#   source fix-udp-routing.sh
+# Source-then-call (matches fix-sctp-routing.sh pattern):
+#   source ./fix-udp-routing.sh
 #   fix_udp_routing topology.yaml core
+#   verify_udp_routing topology.yaml core
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then set -euo pipefail; fi
 
@@ -21,38 +17,32 @@ _u_warn()   { echo -e "${YELLOW}[UDP-FIX]${NC} $1"; }
 _u_err()    { echo -e "${RED}[UDP-FIX]${NC} $1"; }
 _u_detail() { echo -e "${CYAN}[UDP-FIX]${NC}   $1"; }
 
-# ---------- minimal YAML parser (depends on yq if available, else awk fallback) ----------
+# Parse topology.yaml -> TSV: role lan_ip name container_ip container_port host_port
 _parse_topo() {
-    local topo=$1
-    if command -v yq &>/dev/null; then
-        # Emit lines: role lan_ip name container_ip container_port host_port
-        yq -r '
-          .hosts | to_entries[] as $h
-          | $h.value.udp_endpoints[]?
-          | [$h.key, $h.value.lan_ip, .name, .container_ip, .container_port, .host_port] | @tsv
-        ' "$topo"
-    else
-        # Fallback awk parser (assumes flat structure exactly like the example)
-        awk '
-          /^[[:space:]]*[a-zA-Z_][a-zA-Z0-9_]*:[[:space:]]*$/ && match($0,/^  ([a-zA-Z_][a-zA-Z0-9_]*):/,m) { role=m[1]; next }
-          /lan_ip:/ { gsub(/[ ,]/,""); split($0,a,":"); lan=a[2] }
-          /- \{/ {
-              line=$0
-              # crude key=value extraction
-              for (k in kv) delete kv[k]
-              n=split(line, parts, /[,{}]/)
-              for (i=1;i<=n;i++) {
-                  if (match(parts[i], /([a-zA-Z_]+):[[:space:]]*([^ ,}]+)/, kv2)) kv[kv2[1]]=kv2[2]
-              }
-              if (kv["name"] != "" && kv["container_ip"] != "") {
-                  printf "%s\t%s\t%s\t%s\t%s\t%s\n", role, lan, kv["name"], kv["container_ip"], kv["container_port"], kv["host_port"]
-              }
-          }
-        ' "$topo"
-    fi
+    awk '
+        /^[[:space:]]*[a-zA-Z_][a-zA-Z0-9_]*:[[:space:]]*$/ {
+            indent = match($0, /[^ ]/) - 1
+            if (indent == 2) { role = $1; sub(/:.*/, "", role); lan = "" }
+            next
+        }
+        /lan_ip:/ { lan = $2; gsub(/[",]/, "", lan); next }
+        /^[[:space:]]*-[[:space:]]*\{/ {
+            line = $0
+            for (k in kv) delete kv[k]
+            while (match(line, /[a-zA-Z_]+:[[:space:]]*[^,}]+/)) {
+                m = substr(line, RSTART, RLENGTH)
+                k_end = index(m, ":")
+                kk = substr(m, 1, k_end-1)
+                vv = substr(m, k_end+1); gsub(/^[[:space:]]+|[[:space:]]+$/, "", vv); gsub(/[",]/, "", vv)
+                kv[kk] = vv
+                line = substr(line, RSTART + RLENGTH)
+            }
+            if (kv["name"] && kv["container_ip"] && kv["container_port"] && kv["host_port"])
+                printf "%s\t%s\t%s\t%s\t%s\t%s\n", role, lan, kv["name"], kv["container_ip"], kv["container_port"], kv["host_port"]
+        }
+    ' "$1"
 }
 
-# ---------- nft rule helpers ----------
 _nft_del_matching() {
     local table=$1 chain=$2 pat=$3 removed=0
     while :; do
@@ -65,112 +55,86 @@ _nft_del_matching() {
     [ $removed -gt 0 ] && _u_detail "removed $removed rule(s) matching: $pat"
 }
 
-_ensure_chain_exists() {
-    # nat PREROUTING / POSTROUTING usually exist already in Docker hosts
-    sudo nft list table ip nat &>/dev/null || sudo nft add table ip nat
-}
-
-# ---------- main ----------
 fix_udp_routing() {
-    local topo="${1:?need topology.yaml}" my_role="${2:-}"
-    [ ! -f "$topo" ] && _u_err "topology file not found: $topo" && return 1
+    local topo="${1:?need topology.yaml}" my_role="${2:?need role}"
+    [ ! -f "$topo" ] && _u_err "topology not found: $topo" && return 1
 
-    # Autodetect role from hostname if not given
-    if [ -z "$my_role" ]; then
-        case "$(hostname -s | tr A-Z a-z)" in
-            *core*)          my_role=core ;;
-            *centraloffice*|*co*) my_role=centraloffice ;;
-            *edge*)          my_role=edge ;;
-            *) _u_err "cannot autodetect role; pass as 2nd arg"; return 1 ;;
-        esac
-    fi
-    _u_stage "Role: $my_role | topology: $topo"
+    echo ""
+    _u_stage "═══════════════════════════════════════════════════"
+    _u_stage "Cross-host UDP DNAT — role=$my_role  topo=$topo"
+    _u_stage "═══════════════════════════════════════════════════"
 
-    _ensure_chain_exists
-
-    # ---------- sysctl prerequisites ----------
-    _u_stage "Step 0: kernel knobs"
-    sudo sysctl -w net.ipv4.ip_forward=1 >/dev/null
-    sudo sysctl -w net.ipv4.conf.all.rp_filter=2 >/dev/null   # loose RPF (we masquerade)
-    sudo sysctl -w net.ipv4.conf.default.rp_filter=2 >/dev/null
-    sudo sysctl -w net.netfilter.nf_conntrack_udp_timeout_stream=600 >/dev/null 2>&1 || true
+    # Step 0: kernel knobs (idempotent, safe to set every run)
+    sudo sysctl -qw net.ipv4.ip_forward=1
+    sudo sysctl -qw net.ipv4.conf.all.rp_filter=2
+    sudo sysctl -qw net.ipv4.conf.default.rp_filter=2
     _u_info "✓ ip_forward=1, rp_filter=loose"
 
-    # ---------- collect rows ----------
-    local rows
-    rows=$(_parse_topo "$topo")
+    # Local docker bridges (so PREROUTING only catches container-originated traffic)
+    local bridges
+    bridges=$(ip -o link show type bridge 2>/dev/null | awk -F': ' '/br-/{print $2}' | tr '\n' ' ')
+    _u_info "Local bridges: ${bridges:-<none>}"
+
+    # Step 1: clear stale rules from previous runs
+    _u_stage "Step 1: removing stale UDPFIX rules"
+    for chain in PREROUTING OUTPUT POSTROUTING; do
+        _nft_del_matching "ip nat" "$chain" 'comment "UDPFIX'
+    done
+
+    # Step 2: parse + install
+    _u_stage "Step 2: installing rules for endpoints owned by other roles"
+    local rows; rows=$(_parse_topo "$topo")
     [ -z "$rows" ] && _u_err "no endpoints parsed from $topo" && return 1
 
-    # Build list of OUR docker bridges (so DNAT only catches container-originated traffic)
-    local local_bridges
-    local_bridges=$(ip -o link show type bridge | awk -F': ' '/br-/{print $2}' | tr '\n' ' ')
-    _u_info "Local docker bridges: ${local_bridges:-<none>}"
-
-    # ---------- clean previously-installed UDP cross-host rules ----------
-    _u_stage "Step 1: removing stale cross-host UDP DNAT rules (marker: UDPFIX)"
-    _nft_del_matching "ip nat" "PREROUTING"  "comment \"UDPFIX\""
-    _nft_del_matching "ip nat" "POSTROUTING" "comment \"UDPFIX\""
-
-    # ---------- install rules for REMOTE endpoints ----------
-    _u_stage "Step 2: installing DNAT rules for remote endpoints"
-    local installed=0
-    while IFS=$'\t' read -r owner lan_ip name cip cport hport; do
+    local installed=0 skipped_local=0
+    while IFS=$'\t' read -r owner lan name cip cport hport; do
         [ -z "$owner" ] && continue
         if [ "$owner" = "$my_role" ]; then
-            _u_detail "skip local endpoint $name ($cip:$cport)"
-            continue
+            skipped_local=$((skipped_local+1)); continue
         fi
-        _u_info "  → $name : DNAT $cip:$cport → $lan_ip:$hport (owner=$owner)"
+        _u_info "  → $name : $cip:$cport ⇒ $lan:$hport (owner=$owner)"
 
-        # PREROUTING DNAT for packets coming FROM local docker bridges
-        for br in $local_bridges; do
+        # PREROUTING (from local bridges)
+        for br in $bridges; do
             sudo nft add rule ip nat PREROUTING \
                 iifname "\"$br\"" ip daddr "$cip" udp dport "$cport" \
-                counter dnat to "${lan_ip}:${hport}" \
-                comment "\"UDPFIX:${name}:${br}\""
+                counter dnat to "${lan}:${hport}" \
+                comment "\"UDPFIX:${name}:${br}\"" 2>/dev/null || true
         done
-
-        # Also catch packets originated by the host itself (rare but cheap insurance)
+        # OUTPUT (host-originated)
         sudo nft add rule ip nat OUTPUT \
             ip daddr "$cip" udp dport "$cport" \
-            counter dnat to "${lan_ip}:${hport}" \
+            counter dnat to "${lan}:${hport}" \
             comment "\"UDPFIX:${name}:host\"" 2>/dev/null || true
-
-        # MASQUERADE on POSTROUTING so reply comes back to us (not to the bridge IP)
+        # POSTROUTING masquerade so reply path comes back
         sudo nft add rule ip nat POSTROUTING \
-            ip daddr "$lan_ip" udp dport "$hport" \
+            ip daddr "$lan" udp dport "$hport" \
             counter masquerade \
-            comment "\"UDPFIX:${name}\""
-
+            comment "\"UDPFIX:${name}\"" 2>/dev/null || true
         installed=$((installed+1))
     done <<< "$rows"
 
-    _u_info "✓ installed $installed remote DNAT rule(s)"
+    _u_info "✓ installed $installed remote rule-set(s); skipped $skipped_local local"
+    echo ""
+}
 
-    # ---------- verification ----------
-    _u_stage "Step 3: verification"
-    _u_info "UDPFIX rules in nat PREROUTING:"
-    sudo nft -a list chain ip nat PREROUTING 2>/dev/null | grep UDPFIX | sed 's/^/    /' || true
-    _u_info "UDPFIX rules in nat POSTROUTING:"
-    sudo nft -a list chain ip nat POSTROUTING 2>/dev/null | grep UDPFIX | sed 's/^/    /' || true
-
-    # Active reachability probe — for each remote endpoint, send a 0-byte UDP packet
-    # from a local docker bridge IP and watch tcpdump on the destination port (best-effort).
-    if command -v nc &>/dev/null; then
-        _u_info "probing remote endpoints (UDP nc, non-authoritative):"
-        while IFS=$'\t' read -r owner lan_ip name cip cport hport; do
-            [ "$owner" = "$my_role" ] && continue
-            if timeout 1 bash -c "echo > /dev/udp/${cip}/${cport}" 2>/dev/null; then
-                _u_detail "  → $cip:$cport (=$lan_ip:$hport) — no ICMP unreachable returned"
-            else
-                _u_detail "  → $cip:$cport — kernel rejected (check rules)"
-            fi
-        done <<< "$rows"
-    fi
-
-    _u_stage "UDP routing fix complete for role=$my_role"
+verify_udp_routing() {
+    local topo="${1:?topology.yaml}" my_role="${2:?role}"
+    _u_stage "Verifying UDPFIX rules (role=$my_role)"
+    local rows; rows=$(_parse_topo "$topo")
+    while IFS=$'\t' read -r owner lan name cip cport hport; do
+        [ "$owner" = "$my_role" ] && continue
+        local hits
+        hits=$(sudo nft list chain ip nat PREROUTING 2>/dev/null | grep -c "UDPFIX:${name}" || true)
+        if [ "${hits:-0}" -gt 0 ]; then
+            _u_detail "✓ $name : $hits PREROUTING rule(s)"
+        else
+            _u_warn "✗ $name : MISSING"
+        fi
+    done <<< "$rows"
+    echo ""
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    fix_udp_routing "${1:?topology.yaml}" "${2:-}"
+    fix_udp_routing "${1:?topology.yaml}" "${2:?role}"
 fi

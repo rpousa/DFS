@@ -207,6 +207,16 @@ echo ""
 fix_sctp_routing "$COMPOSE_FILE" "$EDGE_IP"
 echo ""
 
+# Stage 4.5/7: Cross-host UDP DNAT (self-contained)
+print_stage "Stage 4.5/7: Applying cross-host UDP DNAT..."
+if [ -f topology.yaml ] && [ -f fix-udp-routing.sh ]; then
+    source ./fix-udp-routing.sh
+    fix_udp_routing topology.yaml edge
+    verify_udp_routing topology.yaml edge
+else
+    print_warn "topology.yaml or fix-udp-routing.sh missing — skipping UDP fix"
+fi
+echo ""
 
 # Stage 5/7: UEs (connect to DU_e1)
 print_stage "Stage 5/7: Starting 10 UEs (→ DU_e1)..."
