@@ -273,7 +273,7 @@ services:
         ipv4_address: 172.18.0.9
         interface_name: eth0
     environment:
-      - EBPF_GW_SETUP=yes
+      - EBPF_GW_SETUP=no
       - EBPF_GW_N6_IP_ADDR=192.168.72.31
       - N6_IF_NAME=eth0
       - SGI_IF_NAME=eth2
@@ -285,7 +285,7 @@ services:
       - UE_IP_ADDRESS_POOL_3=14.1.1.0/24
       - SGI_DEMO_OAI_ADDR=172.18.0.1
       - N6_UPF_IP_ADDR=192.168.72.30
-    entrypoint: ["/bin/bash", "-c"]
+    entrypoint: ["/bin/bash", "-c", "/tmp/trfgen_entrypoint.sh"]
               #"iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE;"\
               #"ip route add 12.1.1.0/24 via 192.168.72.30 dev eth0;"\
               #"ip route add 13.1.1.0/24 via 192.168.72.30 dev eth0;"\
@@ -296,7 +296,7 @@ services:
       - ./configs/ext_dn:/tmp
     depends_on:
       - upf_core
-    # command: 
+    command: "sleep infinity"
     #   - |
     #     set -ex
     #     /tmp/trfgen_entrypoint.sh 
