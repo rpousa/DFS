@@ -99,21 +99,27 @@ fix_udp_routing() {
 
         # PREROUTING (from local bridges)
         for br in $bridges; do
-            sudo nft add rule ip nat PREROUTING \
-                iifname "\"$br\"" ip daddr "$cip" udp dport "$cport" \
-                counter dnat to "${lan}:${hport}" \
-                comment "\"UDPFIX:${name}:${br}\"" 2>/dev/null || true
+            if ! sudo nft add rule ip nat PREROUTING \
+                    iifname "$br" ip daddr "$cip" udp dport "$cport" \
+                    counter dnat to "${lan}:${hport}" \
+                    comment "UDPFIX:${name}:${br}"; then
+                _u_warn "    failed: PREROUTING iifname $br -> $cip:$cport"
+            fi
         done
         # OUTPUT (host-originated)
-        sudo nft add rule ip nat OUTPUT \
-            ip daddr "$cip" udp dport "$cport" \
-            counter dnat to "${lan}:${hport}" \
-            comment "\"UDPFIX:${name}:host\"" 2>/dev/null || true
+        if ! sudo nft add rule ip nat OUTPUT \
+                ip daddr "$cip" udp dport "$cport" \
+                counter dnat to "${lan}:${hport}" \
+                comment "UDPFIX:${name}:host"; then
+            _u_warn "    failed: OUTPUT $cip:$cport"
+        fi
         # POSTROUTING masquerade so reply path comes back
-        sudo nft add rule ip nat POSTROUTING \
-            ip daddr "$lan" udp dport "$hport" \
-            counter masquerade \
-            comment "\"UDPFIX:${name}\"" 2>/dev/null || true
+        if ! sudo nft add rule ip nat POSTROUTING \
+                ip daddr "$lan" udp dport "$hport" \
+                counter masquerade \
+                comment "UDPFIX:${name}"; then
+            _u_warn "    failed: POSTROUTING masq for $lan:$hport"
+        fi
         installed=$((installed+1))
     done <<< "$rows"
 
