@@ -54,7 +54,8 @@ services:
         --gNBs.[0].local_s_address 192.168.84.140
         --gNBs.[0].remote_s_address 0.0.0.0
         --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.81.140/26
-        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.84.140/26
+        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.81.140/26
+        --gNBs.[0].NETWORK_INTERFACES.GNB_PORT_FOR_NGU 2152
     command: >
       sh -c "sleep 20 &&
              /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-cuup -O /opt/oai-gnb/etc/gnb.conf 2>&1 |
