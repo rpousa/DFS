@@ -101,7 +101,7 @@ fix_udp_routing() {
         for br in $bridges; do
             if ! sudo nft add rule ip nat PREROUTING \
                     iifname "$br" ip daddr "$cip" udp dport "$cport" \
-                    counter dnat to "${lan}:${hport}" \
+                    counter dnat to  "$lan" : "$hport"  \
                     comment "UDPFIX_${name}_${br}"; then
                 _u_warn "    failed: PREROUTING iifname $br -> $cip:$cport"
             fi
@@ -109,7 +109,7 @@ fix_udp_routing() {
         # OUTPUT (host-originated)
         if ! sudo nft add rule ip nat OUTPUT \
                 ip daddr "$cip" udp dport "$cport" \
-                counter dnat to "${lan}:${hport}" \
+                counter dnat to  "$lan" : "$hport"  \
                 comment "UDPFIX_${name}_host"; then
             _u_warn "    failed: OUTPUT $cip:$cport"
         fi
