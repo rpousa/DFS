@@ -58,6 +58,7 @@ _nft_remove_all_matching() {
         ((removed++))
     done
     [ $removed -gt 0 ] && _print_detail "Removed $removed old rule(s) matching: $pattern"
+    return 0 
 }
 
 # ==========================================

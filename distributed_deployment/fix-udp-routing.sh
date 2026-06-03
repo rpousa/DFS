@@ -52,7 +52,10 @@ _nft_del_matching() {
         sudo nft delete rule "$table" "$chain" handle "$H" 2>/dev/null || break
         removed=$((removed+1))
     done
-    [ $removed -gt 0 ] && _u_detail "removed $removed rule(s) matching: $pat"
+    if [ "$removed" -gt 0 ]; then
+        _u_detail "removed $removed rule(s) matching: $pat"
+    fi
+    return 0          # ← critical: ensures function never returns non-zero
 }
 
 fix_udp_routing() {
@@ -116,6 +119,7 @@ fix_udp_routing() {
 
     _u_info "✓ installed $installed remote rule-set(s); skipped $skipped_local local"
     echo ""
+    return 0
 }
 
 verify_udp_routing() {
@@ -133,6 +137,7 @@ verify_udp_routing() {
         fi
     done <<< "$rows"
     echo ""
+    return 0  
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then

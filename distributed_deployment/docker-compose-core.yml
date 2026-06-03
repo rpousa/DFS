@@ -296,14 +296,14 @@ services:
       - ./configs/ext_dn:/tmp
     depends_on:
       - upf_core
-    command: "/tmp/trfgen_entrypoint.sh "
-    #   - |
-    #     set -ex
-    #     /tmp/trfgen_entrypoint.sh 
-    #     iperf3 -s -D -p 5201
-    #     iperf3 -s -D -p 5202
-    #     iperf3 -s -D -p 5203
-    #     sleep infinity
+    command:
+    # "/tmp/trfgen_entrypoint.sh "
+       - |
+         set -ex
+         /tmp/trfgen_entrypoint.sh 
+         iperf3 -s -D -p 5201
+         iperf3 -s -D -p 5202
+         iperf3 -s -D -p 5203
     healthcheck:
       test: /bin/bash -c "ping -c 2 192.168.72.30"
       start_period: 10s

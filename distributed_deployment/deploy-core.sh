@@ -205,8 +205,15 @@ echo ""
 print_stage "Stage 6.5/8: Applying cross-host UDP DNAT..."
 if [ -f topology.yaml ] && [ -f fix-udp-routing.sh ]; then
     source ./fix-udp-routing.sh
+    # Run with set +e to isolate UDP-fix failures from the deploy script
+    set +e
     fix_udp_routing topology.yaml core
+    udp_rc=$?
     verify_udp_routing topology.yaml core
+    set -e
+    if [ "$udp_rc" -ne 0 ]; then
+        print_warn "fix_udp_routing returned $udp_rc — continuing deploy, please investigate"
+    fi
 else
     print_warn "topology.yaml or fix-udp-routing.sh missing — skipping UDP fix"
 fi
