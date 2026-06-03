@@ -102,7 +102,7 @@ fix_udp_routing() {
             if ! sudo nft add rule ip nat PREROUTING \
                     iifname "$br" ip daddr "$cip" udp dport "$cport" \
                     counter dnat to "${lan}:${hport}" \
-                    comment "\"UDPFIX_${name}_${br}\""; then
+                    comment "UDPFIX_${name}_${br}"; then
                 _u_warn "    failed: PREROUTING iifname $br -> $cip:$cport"
             fi
         done
@@ -110,14 +110,14 @@ fix_udp_routing() {
         if ! sudo nft add rule ip nat OUTPUT \
                 ip daddr "$cip" udp dport "$cport" \
                 counter dnat to "${lan}:${hport}" \
-                comment "\"UDPFIX_${name}_host\""; then
+                comment "UDPFIX_${name}_host"; then
             _u_warn "    failed: OUTPUT $cip:$cport"
         fi
         # POSTROUTING masquerade
         if ! sudo nft add rule ip nat POSTROUTING \
                 ip daddr "$lan" udp dport "$hport" \
                 counter masquerade \
-                comment "\"UDPFIX_${name}\""; then
+                comment "UDPFIX_${name}"; then
             _u_warn "    failed: POSTROUTING masq for $lan:$hport"
         fi
         installed=$((installed+1))
