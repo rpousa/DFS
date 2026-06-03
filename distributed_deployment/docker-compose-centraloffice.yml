@@ -56,7 +56,8 @@ services:
         --gNBs.[0].local_s_address 192.168.74.140
         --gNBs.[0].remote_s_address 0.0.0.0
         --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.61.140/26
-        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.74.140/26
+        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.61.140/26
+        --gNBs.[0].NETWORK_INTERFACES.GNB_PORT_FOR_NGU 2152 
     command: >
       sh -c "sleep 20 &&
              /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-cuup -O /opt/oai-gnb/etc/gnb.conf 2>&1 |
@@ -84,7 +85,7 @@ services:
         interface_name: eth1
     ports:
       - "192.168.0.193:8085:8085/tcp"
-      - "192.168.0.193:8085:8805/udp"
+      - "192.168.0.193:8805:8805/udp"
       - "192.168.0.193:2152:2152/udp"       # GTP-U N3 (from CU-UP_co)
     devices:
       - /dev/net/tun:/dev/net/tun

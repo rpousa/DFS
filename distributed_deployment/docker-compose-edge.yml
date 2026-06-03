@@ -82,7 +82,7 @@ services:
         interface_name: eth1
     ports:
       - "192.168.0.243:8085:8085/tcp"
-      - "192.168.0.243:8085:8805/udp"
+      - "192.168.0.243:8805:8805/udp"
       - "192.168.0.243:2152:2152/udp"       # GTP-U N3 (from CU-UP_e)
     devices:
       - /dev/net/tun:/dev/net/tun
@@ -195,7 +195,7 @@ services:
         --gNBs.[0].servingCellConfigCommon.[0].physCellId 1
         --MACRLCs.[0].local_n_address 192.168.83.151
         --MACRLCs.[0].remote_n_address 192.168.0.200
-        --MACRLCs.[0].remote_n_portd 2153
+        --MACRLCs.[0].remote_n_portd 2155
         --MACRLCs.[0].remote_n_portc 38472
         --MACRLCs.[0].tr_s_preference local_L1
         --MACRLCs.[0].tr_n_preference f1
