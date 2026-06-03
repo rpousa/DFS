@@ -102,7 +102,7 @@ fix_udp_routing() {
             if ! sudo nft add rule ip nat PREROUTING \
                     iifname "$br" ip daddr "$cip" udp dport "$cport" \
                     counter dnat to "${lan}:${hport}" \
-                    comment "\"UDPFIX:${name}:${br}\""; then
+                    comment "\"UDPFIX_${name}_${br}\""; then
                 _u_warn "    failed: PREROUTING iifname $br -> $cip:$cport"
             fi
         done
@@ -110,14 +110,14 @@ fix_udp_routing() {
         if ! sudo nft add rule ip nat OUTPUT \
                 ip daddr "$cip" udp dport "$cport" \
                 counter dnat to "${lan}:${hport}" \
-                comment "\"UDPFIX:${name}:host\""; then
+                comment "\"UDPFIX_${name}_host\""; then
             _u_warn "    failed: OUTPUT $cip:$cport"
         fi
         # POSTROUTING masquerade
         if ! sudo nft add rule ip nat POSTROUTING \
                 ip daddr "$lan" udp dport "$hport" \
                 counter masquerade \
-                comment "\"UDPFIX:${name}\""; then
+                comment "\"UDPFIX_${name}\""; then
             _u_warn "    failed: POSTROUTING masq for $lan:$hport"
         fi
         installed=$((installed+1))
@@ -135,7 +135,7 @@ verify_udp_routing() {
     while IFS=$'\t' read -r owner lan name cip cport hport; do
         [ "$owner" = "$my_role" ] && continue
         local hits
-        hits=$(sudo nft list chain ip nat PREROUTING 2>/dev/null | grep -c "UDPFIX:${name}" || true)
+        hits=$(sudo nft list chain ip nat PREROUTING 2>/dev/null | grep -c "UDPFIX_${name}" || true)
         if [ "${hits:-0}" -gt 0 ]; then
             _u_detail "✓ $name : $hits PREROUTING rule(s)"
         else
