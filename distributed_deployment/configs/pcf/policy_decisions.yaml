@@ -1,0 +1,40 @@
+decision_supi1:
+  supi_imsi: "208950000000110"
+  pcc_rules:
+    - steering-rule-primary
+decision_supi2:
+  supi_imsi: "208950000000111"
+  pcc_rules:
+    - steering-rule-primary
+decision_supi3:
+  supi_imsi: "208950000000112"
+  pcc_rules:
+    - steering-rule-primary
+decision_supi4:
+  supi_imsi: "208950000000113"
+  pcc_rules:
+    - steering-rule-primary
+decision_supi5:
+  supi_imsi: "208950000000214"
+  pcc_rules:
+    - steering-rule-primary
+decision_supi6:
+  supi_imsi: "208950000000215"
+  pcc_rules:
+    - steering-rule-primary
+decision_supi7:
+  supi_imsi: "208950000000216"
+  pcc_rules:
+    - steering-rule-primary
+decision_supi8:
+  supi_imsi: "208950000000217"
+  pcc_rules:
+    - steering-rule-primary
+decision_supi9:
+  supi_imsi: "208950000000318"
+  pcc_rules:
+    - steering-rule-primary
+decision_supi10:
+  supi_imsi: "208950000000319"
+  pcc_rules:
+    - steering-rule-primary
