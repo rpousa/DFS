@@ -88,7 +88,7 @@ services:
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
-      - ./configs/upf_e:/openair-upf/etc
+      - ./configs/upf_e/upf_e_config.yaml:/openair-upf/etc/config.yaml
       - ./logs/upf_e:/openair-upf/logs
     depends_on:
       - cuup_e

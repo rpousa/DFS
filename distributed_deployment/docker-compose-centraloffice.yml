@@ -90,7 +90,7 @@ services:
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
-      - ./configs/upf_co:/openair-upf/etc
+      - ./configs/upf_co/upf_co_config.yaml:/openair-upf/etc/config.yaml
       - ./logs/upf_co:/openair-upf/logs
     depends_on:
       - cuup_co

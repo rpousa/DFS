@@ -50,7 +50,7 @@ services:
       - "192.168.0.200:8080:8080/tcp"
       - "192.168.0.200:9090:9090/tcp"
     volumes:
-      - ./configs/nrf:/openair-nrf/etc
+      - ./configs/nrf/nrf_config.yaml:/openair-nrf/etc/config.yaml
       - ./logs/nrf:/openair-nrf/logs
     depends_on:
       mysql:
@@ -74,7 +74,7 @@ services:
       - "192.168.0.200:9094:80/tcp"
       - "192.168.0.200:9104:8080/tcp"
     volumes:
-      - ./configs/amf:/openair-amf/etc
+      - ./configs/amf/amf_config.yaml:/openair-amf/etc/config.yaml
       - ./logs/amf:/openair-amf/logs
     depends_on:
       - nrf
@@ -98,7 +98,7 @@ services:
       - "192.168.0.200:9101:8080/tcp"
       - "192.168.0.200:8805:8805/udp"       # PFCP
     volumes:
-      - ./configs/smf:/openair-smf/etc
+      - ./configs/smf/smf_config.yaml:/openair-smf/etc/config.yaml
       - ./logs/smf:/openair-smf/logs
     depends_on:
       - nrf
@@ -120,8 +120,10 @@ services:
       - "192.168.0.200:9092:80/tcp"
       - "192.168.0.200:9102:9090/tcp"
     volumes:
-      - ./configs/pcf/config.yaml:/openair-pcf/etc/config.yaml
-      - ./configs/pcf/policies:/openair-pcf/policies
+      - ./configs/pcf/pcf_config.yaml:/openair-pcf/etc/config.yaml
+      - ./configs/pcf/policies/pcc_rules/pcc_rules.yaml:/openair-pcf/policies/pcc_rules/pcc_rules.yaml
+      - ./configs/pcf/policies/policy_decisions/policy_decisions.yaml:/openair-pcf/policies/policy_decisions/policy_decisions.yaml
+      - ./configs/pcf/policies/traffic_rules/traffic_rules.yaml:/openair-pcf/policies/traffic_rules/traffic_rules.yaml
       - ./logs/pcf:/openair-pcf/logs
     depends_on:
       - nrf
@@ -143,7 +145,8 @@ services:
       - "192.168.0.200:9093:80/tcp"
       - "192.168.0.200:9103:8080/tcp"
     volumes:
-      - ./configs/nssf:/openair-nssf/etc
+      - ./configs/nssf/nssf_config.yaml:/openair-nssf/etc/config.yaml
+      - ./configs/nssf/slice_selection_data.yaml:/openair-nssf/slice_selection_data.yaml  
       - ./logs/nssf:/openair-nssf/logs
     depends_on:
       - nrf
@@ -165,7 +168,7 @@ services:
       - "192.168.0.200:9095:80/tcp"
       - "192.168.0.200:9105:8080/tcp"
     volumes:
-      - ./configs/udm:/openair-udm/etc
+      - ./configs/udm/udm_config.yaml:/openair-udm/etc/config.yaml
       - ./logs/udm:/openair-udm/logs
     depends_on:
       - nrf
@@ -186,7 +189,7 @@ services:
     ports:
       - "192.168.0.200:9096:80/tcp"
     volumes:
-      - ./configs/udr:/openair-udr/etc
+      - ./configs/udr/udr_config.yaml:/openair-udr/etc/config.yaml
       - ./logs/udr:/openair-udr/logs
     depends_on:
       - nrf
@@ -208,7 +211,7 @@ services:
     ports:
       - "192.168.0.200:9097:80/tcp"
     volumes:
-      - ./configs/ausf:/openair-ausf/etc
+      - ./configs/ausf/ausf_config.yaml:/openair-ausf/etc/config.yaml
       - ./logs/ausf:/openair-ausf/logs
     depends_on:
       - nrf
@@ -243,7 +246,7 @@ services:
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
-      - ./configs/upf_core:/openair-upf/etc
+      - ./configs/upf_core/upf_core_config.yaml:/openair-upf/etc/config.yaml
       - ./logs/upf_core:/openair-upf/logs
     depends_on:
       - nrf
