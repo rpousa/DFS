@@ -126,7 +126,7 @@ services:
       - UE_IP_ADDRESS_POOL_3=14.1.1.0/24
       - SGI_DEMO_OAI_ADDR=172.18.2.1
       - N6_UPF_IP_ADDR=192.168.82.154
-    entrypoint: ["/bin/bash","-c"]
+    entrypoint: ["/bin/bash","-c","sleep infinity"]
         #      "iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE;"\
         #      "ip route add 12.1.1.0/24 via 192.168.82.154 dev eth0;"\
         #      "ip route add 13.1.1.0/24 via 192.168.82.154 dev eth0;"\
@@ -144,7 +144,6 @@ services:
         iperf3 -s -D -p 5201
         iperf3 -s -D -p 5202
         iperf3 -s -D -p 5203
-        sleep infinity
     healthcheck:
       test: /bin/bash -c "ping -c 2 192.168.82.154"
       start_period: 10s
