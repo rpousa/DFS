@@ -121,9 +121,9 @@ services:
       - "192.168.0.200:9102:9090/tcp"
     volumes:
       - ./configs/pcf/pcf_config.yaml:/openair-pcf/etc/config.yaml
-      - ./configs/pcf/policies/pcc_rules.yaml:/openair-pcf/policies/pcc_rules/pcc_rules.yaml
-      - ./configs/pcf/policies/policy_decisions.yaml:/openair-pcf/policies/policy_decisions/policy_decisions.yaml
-      - ./configs/pcf/policies/traffic_rules.yaml:/openair-pcf/policies/traffic_rules/traffic_rules.yaml
+      - ./configs/pcf/pcc_rules.yaml:/openair-pcf/policies/pcc_rules/pcc_rules.yaml
+      - ./configs/pcf/policy_decisions.yaml:/openair-pcf/policies/policy_decisions/policy_decisions.yaml
+      - ./configs/pcf/traffic_rules.yaml:/openair-pcf/policies/traffic_rules/traffic_rules.yaml
       - ./logs/pcf:/openair-pcf/logs
     depends_on:
       - nrf
