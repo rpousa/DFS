@@ -7,6 +7,10 @@
 #   source ./fix-udp-routing.sh
 #   fix_udp_routing topology.yaml core
 #   verify_udp_routing topology.yaml core
+if grep -q $'\r' "$0" "$1" 2>/dev/null; then
+    _u_err "CRLF detected in $0 or $1 — run: dos2unix $0 $1"
+    exit 1
+fi
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then set -euo pipefail; fi
 
@@ -91,6 +95,7 @@ fix_udp_routing() {
 
     local installed=0 skipped_local=0
     while IFS=$'\t' read -r owner lan name cip cport hport; do
+        hport=${hport%$'\r'}    
         [ -z "$owner" ] && continue
         if [ "$owner" = "$my_role" ]; then
             skipped_local=$((skipped_local+1)); continue
@@ -109,9 +114,9 @@ fix_udp_routing() {
         # OUTPUT (host-originated)
         if ! sudo nft add rule ip nat OUTPUT \
                 ip daddr "$cip" udp dport "$cport" \
-                counter dnat to  "$lan" : "$hport";  then
+                counter dnat to  "$lan" : "$hport" ;  then
 #                comment "UDPFIX_"${name}"_host"; then
-            _u_warn "    failed: OUTPUT $cip:$cport"
+            _u_warn "    failed: OUTPUT $cip:$cport -> $lan:$hport"
         fi
         # POSTROUTING masquerade
         if ! sudo nft add rule ip nat POSTROUTING \
