@@ -261,12 +261,12 @@ upf:
       - sNssai: *embb_slice1
         dnnUpfInfoList:
           - dnn: "oai"
-      - sNssai: *urllc_slice
-        dnnUpfInfoList:
-          - dnn: "oai.2"
-      - sNssai: *miot_slice
-        dnnUpfInfoList:
-          - dnn: "oai.2"
+      #- sNssai: *urllc_slice
+      #  dnnUpfInfoList:
+      #    - dnn: "oai.2"
+      #- sNssai: *miot_slice
+      #  dnnUpfInfoList:
+      #    - dnn: "oai.3"
 
 ## DNN configuration
 dnns:

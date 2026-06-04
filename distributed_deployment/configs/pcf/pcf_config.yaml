@@ -285,7 +285,7 @@ upf:
           - dnn: "oai.2"
       - sNssai: *miot_slice
         dnnUpfInfoList:
-          - dnn: "oai.2"
+          - dnn: "oai.3"
 
 ## DNN (Data Network Name) configuration
 ## IP pools for UE addresses

@@ -258,15 +258,15 @@ upf:
   #  - host: 192.168.71.133
   upf_info:
     sNssaiUpfInfoList:
-      - sNssai: *embb_slice1
-        dnnUpfInfoList:
-          - dnn: "oai"
-      - sNssai: *urllc_slice
-        dnnUpfInfoList:
-          - dnn: "oai.2"
-      - sNssai: *miot_slice
-        dnnUpfInfoList:
-          - dnn: "oai.3"
+      #- sNssai: *embb_slice1
+      #  dnnUpfInfoList:
+      #    - dnn: "oai"
+      #- sNssai: *urllc_slice
+      #  dnnUpfInfoList:
+      #    - dnn: "oai.2"
+      #- sNssai: *miot_slice
+      #  dnnUpfInfoList:
+      #    - dnn: "oai.3"
 
 ## DNN configuration
 dnns:
