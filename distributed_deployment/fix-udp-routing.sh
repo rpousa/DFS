@@ -129,36 +129,43 @@ fix_udp_routing() {
 
     local installed=0 skipped_local=0
     while IFS=$'\t' read -r owner lan name cip cport hport; do
-        hport=${hport%$'\r'}    
+        # Strip any stray CR from the last field (Windows-edited topology safety)
+        hport=${hport%$'\r'}
         [ -z "$owner" ] && continue
         if [ "$owner" = "$my_role" ]; then
             skipped_local=$((skipped_local+1)); continue
         fi
         _u_info "  → $name : $cip:$cport ⇒ $lan:$hport (owner=$owner)"
 
-        # PREROUTING (from local bridges)
+        # PREROUTING (from local bridges) — one rule per bridge
         for br in $bridges; do
             if ! sudo nft add rule ip nat PREROUTING \
                     iifname "$br" ip daddr "$cip" udp dport "$cport" \
-                    counter dnat to  "$lan" : "$hport" \ 
-                    comment "UDPFIX_"${name}"_"${br}; then 
-                _u_warn "    failed: PREROUTING iifname $br -> $cip:$cport $hport $lan "
+                    counter dnat to "${lan}:${hport}" \
+                    comment "\"UDPFIX_${name}_${br}\""
+            then
+                _u_warn "    failed: PREROUTING iifname $br -> $cip:$cport ⇒ $lan:$hport"
             fi
         done
-        # OUTPUT (host-originated)
+
+        # OUTPUT (host-originated traffic on this machine)
         if ! sudo nft add rule ip nat OUTPUT \
                 ip daddr "$cip" udp dport "$cport" \
-                counter dnat to  "$lan" : "$hport" \
-                comment "UDPFIX_"${name}"_host"; then
+                counter dnat to "${lan}:${hport}" \
+                comment "\"UDPFIX_${name}_host\""
+        then
             _u_warn "    failed: OUTPUT $cip:$cport -> $lan:$hport"
         fi
-        # POSTROUTING masquerade
+
+        # POSTROUTING masquerade (so reply path returns via this host)
         if ! sudo nft add rule ip nat POSTROUTING \
                 ip daddr "$lan" udp dport "$hport" \
-                counter masquerade \ 
-                comment "UDPFIX_"${name}; then
+                counter masquerade \
+                comment "\"UDPFIX_${name}\""
+        then
             _u_warn "    failed: POSTROUTING masq for $lan:$hport"
         fi
+
         installed=$((installed+1))
     done <<< "$rows"
 
