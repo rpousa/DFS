@@ -7,11 +7,6 @@
 #   source ./fix-udp-routing.sh
 #   fix_udp_routing topology.yaml core
 #   verify_udp_routing topology.yaml core
-if grep -q $'\r' "topology.yaml" 2>/dev/null; then
-    dosunix "topology.yaml" 2>/dev/null 
-    exit 1
-fi
-
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then set -euo pipefail; fi
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; CYAN='\033[0;36m'; NC='\033[0m'
