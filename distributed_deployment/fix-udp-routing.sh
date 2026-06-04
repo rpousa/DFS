@@ -7,8 +7,8 @@
 #   source ./fix-udp-routing.sh
 #   fix_udp_routing topology.yaml core
 #   verify_udp_routing topology.yaml core
-if grep -q $'\r' "$0" "$1" 2>/dev/null; then
-    _u_err "CRLF detected in $0 or $1 — run: dos2unix $0 $1"
+if grep -q $'\r' "topology.yaml" 2>/dev/null; then
+    dosunix "topology.yaml" 2>/dev/null 
     exit 1
 fi
 
@@ -66,6 +66,44 @@ fix_udp_routing() {
     local topo="${1:?need topology.yaml}" my_role="${2:?need role}"
     [ ! -f "$topo" ] && _u_err "topology not found: $topo" && return 1
 
+    # ── Preliminary check: detect & repair Windows CRLF line endings ──────────
+    # topology.yaml is often edited on Windows; stray \r in the last TSV field
+    # ($hport) breaks `nft add rule ... : "$hport"` with "unexpected junk".
+    if grep -q $'\r' "$topo"; then
+        _u_warn "CRLF line endings detected in $topo (edited on Windows?)"
+        if command -v dos2unix >/dev/null 2>&1; then
+            _u_info "  → running: dos2unix $topo"
+            if sudo dos2unix "$topo" >/dev/null 2>&1 || dos2unix "$topo" >/dev/null 2>&1; then
+                _u_info "  ✓ converted $topo to Unix line endings"
+            else
+                _u_err "  ✗ dos2unix failed on $topo"; return 1
+            fi
+        else
+            _u_warn "  dos2unix not installed — falling back to: sed -i 's/\\r\$//'"
+            if sed -i 's/\r$//' "$topo"; then
+                _u_info "  ✓ stripped CR from $topo via sed"
+            else
+                _u_err "  ✗ sed fallback failed; install dos2unix: sudo apt install -y dos2unix"
+                return 1
+            fi
+        fi
+        # Re-verify
+        if grep -q $'\r' "$topo"; then
+            _u_err "CRLF still present in $topo after conversion — aborting"
+            return 1
+        fi
+    else
+        _u_detail "✓ $topo has Unix line endings"
+    fi
+
+    # Belt-and-braces: also strip CRs from the script itself if it was edited on Windows
+    if grep -q $'\r' "${BASH_SOURCE[0]}" 2>/dev/null; then
+        _u_warn "CRLF detected in ${BASH_SOURCE[0]} itself — please run:"
+        _u_warn "    dos2unix ${BASH_SOURCE[0]}"
+        _u_warn "    then re-source this script."
+    fi
+    # ──────────────────────────────────────────────────────────────────────────
+
     echo ""
     _u_stage "═══════════════════════════════════════════════════"
     _u_stage "Cross-host UDP DNAT — role=$my_role  topo=$topo"
@@ -91,6 +129,7 @@ fix_udp_routing() {
     # Step 2: parse + install
     _u_stage "Step 2: installing rules for endpoints owned by other roles"
     local rows; rows=$(_parse_topo "$topo")
+    rows=${rows//$'\r'/}
     [ -z "$rows" ] && _u_err "no endpoints parsed from $topo" && return 1
 
     local installed=0 skipped_local=0
@@ -135,6 +174,12 @@ fix_udp_routing() {
 
 verify_udp_routing() {
     local topo="${1:?topology.yaml}" my_role="${2:?role}"
+
+    # Strip CRs in-memory in case topo wasn't converted yet
+    if grep -q $'\r' "$topo" 2>/dev/null; then
+        _u_warn "CRLF detected in $topo — run: dos2unix $topo"
+    fi
+
     _u_stage "Verifying UDPFIX rules (role=$my_role)"
     local rows; rows=$(_parse_topo "$topo")
     while IFS=$'\t' read -r owner lan name cip cport hport; do
