@@ -310,10 +310,11 @@ nrf:
   suspended_nf_interval: 20           # Interval to check suspended NFs
 
 pcf:
-  local_policy:
-    policy_decisions_path: /openair-pcf/policies/policy_decisions
-    pcc_rules_path: /openair-pcf/policies/pcc_rules
-    traffic_rules_path: /openair-pcf/policies/traffic_rules
+  enable_policy_provisioning_api: yes
+  #local_policy:
+  #  policy_decisions_path: /openair-pcf/policies/policy_decisions
+  #  pcc_rules_path: /openair-pcf/policies/pcc_rules
+  #  traffic_rules_path: /openair-pcf/policies/traffic_rules
 
 nssf:
   slice_config_path: /openair-nssf/etc/nssf_slice_config.yaml
