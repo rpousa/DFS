@@ -146,7 +146,7 @@ services:
       - "192.168.0.200:9103:8080/tcp"
     volumes:
       - ./configs/nssf/nssf_config.yaml:/openair-nssf/etc/config.yaml
-      - ./configs/nssf/slice_selection_data.yaml:/openair-nssf/slice_selection_data.yaml  
+      - ./configs/nssf/slice_selection_data.yaml:/openair-nssf/etc/nssf_slice_config.yaml  
       - ./logs/nssf:/openair-nssf/logs
     depends_on:
       - nrf
