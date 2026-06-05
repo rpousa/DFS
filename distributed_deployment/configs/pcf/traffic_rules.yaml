@@ -1,20 +1,31 @@
+# steering-scenario-primary:
+#   routeToLocs:
+#     - dnai: access
+#     - dnai: internet-primary
+# steering-scenario-secondary:
+#   routeToLocs:
+#     - dnai: access
+#     - dnai: internet-secondary
+# steering-scenario-embb:
+#   routeToLocs:
+#     - dnai: access
+#     - dnai: internet-co
+# steering-scenario-urllc:
+#   routeToLocs:
+#     - dnai: access
+#     - dnai: internet-edge
+# steering-scenario-miot:
+#   routeToLocs:
+#     - dnai: access
+#     - dnai: internet-primary
+
 steering-scenario-primary:
-  routeToLocs:
-    - dnai: access
-    - dnai: internet-primary
+  routeToLocs: []
 steering-scenario-secondary:
-  routeToLocs:
-    - dnai: access
-    - dnai: internet-secondary
+  routeToLocs: []
 steering-scenario-embb:
-  routeToLocs:
-    - dnai: access
-    - dnai: internet-co
+  routeToLocs: []
 steering-scenario-urllc:
-  routeToLocs:
-    - dnai: access
-    - dnai: internet-edge
+  routeToLocs: []
 steering-scenario-miot:
-  routeToLocs:
-    - dnai: access
-    - dnai: internet-primary
+  routeToLocs: []
