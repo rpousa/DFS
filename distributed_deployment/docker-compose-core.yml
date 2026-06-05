@@ -271,10 +271,10 @@ services:
     networks:
       ext_net:
         ipv4_address: 192.168.72.31
-        interface_name: eth1
+        interface_name: eth0
       sgi_net:
         ipv4_address: 172.18.0.9
-        interface_name: eth0
+        interface_name: eth1
     environment:
       - EBPF_GW_SETUP=no
       - EBPF_GW_N6_IP_ADDR=192.168.72.31
@@ -300,13 +300,16 @@ services:
     depends_on:
       - upf_core
     command:
-    # "/tmp/trfgen_entrypoint.sh "
-       - |
-         set -ex
-         /tmp/trfgen_entrypoint.sh 
-         iperf3 -s -D -p 5201
-         iperf3 -s -D -p 5202
-         iperf3 -s -D -p 5203
+      - |
+        set -ex
+        iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+        ip route add 12.1.1.0/24 via 192.168.72.30 dev eth0 || true
+        ip route add 13.1.1.0/24 via 192.168.72.30 dev eth0 || true
+        ip route add 14.1.1.0/24 via 192.168.72.30 dev eth0 || true
+        /tmp/trfgen_entrypoint.sh 
+        iperf3 -s -D -p 5201
+        iperf3 -s -D -p 5202
+        iperf3 -s -D -p 5203
     healthcheck:
       test: /bin/bash -c "ping -c 2 192.168.72.30"
       start_period: 10s

@@ -250,9 +250,9 @@ upf:
     enable_bpf_datapath: off    # If "on": BPF is used as datapath else simpleswitch is used, DEFAULT= off
     enable_qos: off  # Only supported for BPF datapath. If "on" we use qdiscs to manage the QoS
     enable_snat: off           # If "on": Source natting is done for UE, DEFAULT= off
-  #config:
+  config:
   #  enable_usage_reporting: yes
-  #  enable_dl_pdr_in_pfcp_session_establishment: yes
+    enable_dl_pdr_in_pfcp_session_establishment: yes
   remote_n6_gw: 192.168.72.161      # Dummy host since simple-switch does not use N6 GW
   #smfs:
   #  - host: 192.168.71.133
@@ -264,6 +264,7 @@ upf:
       - sNssai: *urllc_slice
         dnnUpfInfoList:
           - dnn: "oai.2"
+            dnaiList: ["access", "internet-edge"]
       #- sNssai: *miot_slice
       #  dnnUpfInfoList:
       #    - dnn: "oai.3"

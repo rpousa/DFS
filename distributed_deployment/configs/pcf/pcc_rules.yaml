@@ -10,3 +10,20 @@ steering-rule-secondary:
   precedence: 10
   refTcData:
     - steering-scenario-secondary
+rule-embb:
+  flowInfos:
+    - flowDescription: permit out ip from any to assigned
+  precedence: 10
+  refTcData: [steering-scenario-embb]
+
+rule-urllc:
+  flowInfos:
+    - flowDescription: permit out ip from any to assigned
+  precedence: 10
+  refTcData: [steering-scenario-urllc]
+
+rule-miot:
+  flowInfos:
+    - flowDescription: permit out ip from any to assigned
+  precedence: 10
+  refTcData: [steering-scenario-miot]

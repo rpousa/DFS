@@ -63,7 +63,7 @@ nfs:
       port: 8805                      # Exposed on 192.168.0.193:8805 for Machine 2 UPF
 
   upf:
-    host: 192.168.0.193              # Primary UPF on Machine 1 (Docker IP)
+    host: 192.168.0.200              # Primary UPF on Machine 1 (Docker IP)
     sbi:
       port: 8086
       api_version: v1
