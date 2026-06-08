@@ -178,12 +178,12 @@ services:
     networks:
       f1c_net:
         ipv4_address: 192.168.73.141
-      f1u_net:
-        ipv4_address: 192.168.74.141
       ran_net:
         ipv4_address: 192.168.80.10
       core_net:
         ipv4_address: 192.168.61.141
+#      f1u_net:
+#        ipv4_address: 192.168.74.141
     ports:
       - "192.168.0.193:500:500/sctp"         # F1-C local SCTP port
       - "192.168.0.193:2162:2152/udp"        # F1-U local GTP-U port
@@ -216,7 +216,7 @@ services:
         --rfsimulator.[0].serverport 4043
         --log_config.phy_log_level info
         --log_config.mac_log_level info
-        --MACRLCs.[0].local_n_address_f1u 192.168.74.141
+        --MACRLCs.[0].local_n_address_f1u 192.168.61.141
         --MACRLCs.[0].local_n_portd 2152
 #        --MACRLCs.[0].local_n_port_f1u 2156
 #        --MACRLCs.[0].remote_n_address_f1u 192.168.74.140
@@ -260,14 +260,14 @@ networks:
     driver_opts:
       com.docker.network.bridge.name: br-f1c
 
-  f1u_net:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 192.168.74.128/26
-          gateway: 192.168.74.129
-    driver_opts:
-      com.docker.network.bridge.name: br-f1u
+  # f1u_net:
+  #   driver: bridge
+  #   ipam:
+  #     config:
+  #       - subnet: 192.168.74.128/26
+  #         gateway: 192.168.74.129
+  #   driver_opts:
+  #     com.docker.network.bridge.name: br-f1u
 
   ran_net:
     driver: bridge

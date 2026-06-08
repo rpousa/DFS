@@ -121,10 +121,10 @@ services:
         ipv4_address: 192.168.81.140
         priority: 900
         interface_name: eth0
-      f1u_net:
-        ipv4_address: 192.168.84.140
-        priority: 800
-        interface_name: eth1
+      #f1u_net:
+      #  ipv4_address: 192.168.84.140
+      #  priority: 800
+      #  interface_name: eth1
     ports:
       - "192.168.0.243:2153:2153/udp"       # GTP-U F1-U (inbound from DU_e2 local)
       - "192.168.0.243:2155:2155/udp"       # GTP-U N3 (towards UPF_e)
@@ -177,15 +177,15 @@ services:
     networks:
       f1c_net:
         ipv4_address: 192.168.83.151
-      f1u_net:
-        ipv4_address: 192.168.84.151
       ran_net:
         ipv4_address: 192.168.80.151
       core_net:
         ipv4_address: 192.168.81.151
+      #f1u_net:
+      #  ipv4_address: 192.168.84.151
     ports:
       - "192.168.0.243:500:500/sctp"         # F1-C local SCTP port
-      - "192.168.0.243:2162:2156/udp"        # F1-U local GTP-U port
+      - "192.168.0.243:2162:2152/udp"        # F1-U local GTP-U port
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
@@ -215,7 +215,7 @@ services:
         --rfsimulator.[0].serverport 4043
         --log_config.phy_log_level info
         --log_config.mac_log_level info
-        --MACRLCs.[0].local_n_address_f1u 192.168.84.151
+        --MACRLCs.[0].local_n_address_f1u 192.168.81.151
         --MACRLCs.[0].local_n_portd 2152
       #  --MACRLCs.[0].local_n_port_f1u 2156
 # --gNBs.[0].TIMERS.t301 2000
@@ -246,12 +246,12 @@ services:
     networks:
       f1c_net:
         ipv4_address: 192.168.83.161
-      f1u_net:
-        ipv4_address: 192.168.84.161
       ran_net:
         ipv4_address: 192.168.80.161
       core_net:
         ipv4_address: 192.168.81.161
+      #f1u_net:
+      #  ipv4_address: 192.168.84.161
     ports:
       - "192.168.0.243:501:501/sctp"         # F1-C local SCTP port (different from DU_e1)
       - "192.168.0.243:2163:2152/udp"        # F1-U local GTP-U port
@@ -284,7 +284,7 @@ services:
         --rfsimulator.[0].serverport 4044
         --log_config.phy_log_level info
         --log_config.mac_log_level info
-        --MACRLCs.[0].local_n_address_f1u 192.168.84.161
+        --MACRLCs.[0].local_n_address_f1u 192.168.81.161
         --MACRLCs.[0].local_n_portd 2152       
 #        --MACRLCs.[0].local_n_port_f1u 2157
 # --gNBs.[0].TIMERS.t301 2000
@@ -366,14 +366,14 @@ networks:
     driver_opts:
       com.docker.network.bridge.name: br-f1c
 
-  f1u_net:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 192.168.84.128/26
-          gateway: 192.168.84.129
-    driver_opts:
-      com.docker.network.bridge.name: br-f1u
+  # f1u_net:
+  #   driver: bridge
+  #   ipam:
+  #     config:
+  #       - subnet: 192.168.84.128/26
+  #         gateway: 192.168.84.129
+  #   driver_opts:
+  #     com.docker.network.bridge.name: br-f1u
 
   ran_net:
     driver: bridge
