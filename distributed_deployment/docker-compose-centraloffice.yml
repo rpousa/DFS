@@ -33,7 +33,7 @@ services:
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
-      - ./configs/cuup_co/gnb-cuup.sa.f1.conf:/opt/oai-gnb/etc/gnb.conf
+      - ./configs/cuup_co/gnb-cuup-co.sa.f1.conf:/opt/oai-gnb/etc/gnb.conf
       - ./logs/cuup_co:/opt/oai-gnb/logs
     environment:
       USE_ADDITIONAL_OPTIONS: >-
