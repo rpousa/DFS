@@ -216,7 +216,8 @@ services:
         --log_config.phy_log_level info
         --log_config.mac_log_level info
         --MACRLCs.[0].local_n_address_f1u 192.168.84.151
-        --MACRLCs.[0].local_n_port_f1u 2156
+        --MACRLCs.[0].local_n_portd 2156
+      #  --MACRLCs.[0].local_n_port_f1u 2156
 # --gNBs.[0].TIMERS.t301 2000
 # --gNBs.[0].TIMERS.t310 2000
 # --gNBs.[0].TIMERS.t311 30000
@@ -284,7 +285,8 @@ services:
         --log_config.phy_log_level info
         --log_config.mac_log_level info
         --MACRLCs.[0].local_n_address_f1u 192.168.84.161
-        --MACRLCs.[0].local_n_port_f1u 2157
+        --MACRLCs.[0].local_n_portd 2157       
+#        --MACRLCs.[0].local_n_port_f1u 2157
 # --gNBs.[0].TIMERS.t301 2000
 # --gNBs.[0].TIMERS.t310 2000
 # --gNBs.[0].TIMERS.t311 30000

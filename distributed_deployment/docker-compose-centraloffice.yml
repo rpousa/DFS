@@ -217,7 +217,8 @@ services:
         --log_config.phy_log_level info
         --log_config.mac_log_level info
         --MACRLCs.[0].local_n_address_f1u 192.168.74.141
-        --MACRLCs.[0].local_n_port_f1u 2156
+        --MACRLCs.[0].local_n_portd 2156
+#        --MACRLCs.[0].local_n_port_f1u 2156
 #        --MACRLCs.[0].remote_n_address_f1u 192.168.74.140
     depends_on:
       - cuup_co
