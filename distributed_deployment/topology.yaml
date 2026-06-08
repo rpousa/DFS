@@ -11,7 +11,6 @@ hosts:
     lan_ip: 192.168.0.193
     udp_endpoints:
       - { name: cuup_co_f1u,    container_ip: 192.168.61.140, container_port: 2153, host_port: 2153 }
-      - { name: cuup_co_n3,     container_ip: 192.168.61.140, container_port: 2155, host_port: 2155 }
       - { name: upf_co_n3,      container_ip: 192.168.61.144, container_port: 2152, host_port: 2152 }
       - { name: upf_co_pfcp,    container_ip: 192.168.61.144, container_port: 8805, host_port: 8805 }
       - { name: du_co_f1u,      container_ip: 192.168.61.141, container_port: 2152, host_port: 2162 }
@@ -19,7 +18,6 @@ hosts:
     lan_ip: 192.168.0.243
     udp_endpoints:
       - { name: cuup_e_f1u,     container_ip: 192.168.81.140, container_port: 2153, host_port: 2153 }
-      - { name: cuup_e_n3,      container_ip: 192.168.81.140, container_port: 2155, host_port: 2155 }
       - { name: upf_e_n3,       container_ip: 192.168.81.154, container_port: 2152, host_port: 2152 }
       - { name: upf_e_pfcp,     container_ip: 192.168.81.154, container_port: 8805, host_port: 8805 }
       - { name: du_e1_f1u,      container_ip: 192.168.81.151, container_port: 2152, host_port: 2162 }

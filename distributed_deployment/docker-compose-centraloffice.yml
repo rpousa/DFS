@@ -7,63 +7,6 @@
 
 services:
   # ==========================================
-  # CU-UP Centraloffice (gNB_CU_UP_ID=0xe01)
-  # Serves: DU_co (local) + DU_e1 (edge, cross-machine)
-  # ==========================================
-
-  cuup_co:
-    image: cuup:comnetsemu
-    container_name: cuup_co
-    hostname: cuup_co
-    cap_add:
-      - SYS_NICE
-      - NET_ADMIN
-    networks:
-      core_net:
-        ipv4_address: 192.168.61.140
-        priority: 900
-        interface_name: eth0
-      # f1u_net:
-      #   ipv4_address: 192.168.74.140
-      #   priority: 800
-      #   interface_name: eth1
-    ports:
-      - "192.168.0.193:2153:2153/udp"       # GTP-U F1-U (inbound from DU_co local + DU_e1 cross-machine)
-      - "192.168.0.193:2155:2155/udp"       # GTP-U N3 (towards UPF_co)
-    devices:
-      - /dev/net/tun:/dev/net/tun
-    volumes:
-      - ./configs/cuup_co/gnb-cuup-co.sa.f1.conf:/opt/oai-gnb/etc/gnb.conf
-      - ./logs/cuup_co:/opt/oai-gnb/logs
-    environment:
-      USE_ADDITIONAL_OPTIONS: >-
-        -E --sa
-        --log_config.global_log_options level,nocolor,time
-        --log_config.global_log_level info
-        --log_config.e1ap_log_level debug
-        --log_config.f1u_log_level debug
-        --log_config.gtpu_log_level debug
-        --e2_agent.near_ric_ip_addr 192.168.0.200
-        --e2_agent.sm_dir /usr/local/lib/flexric/
-        --telnetsrv --telnetsrv.shrmod ci
-        --gNBs.[0].gNB_ID 0xe00
-        --gNBs.[0].gNB_CU_UP_ID 0xe01
-        --gNBs.[0].E1_INTERFACE.[0].type up
-        --gNBs.[0].E1_INTERFACE.[0].ipv4_cucp 192.168.0.200
-        --gNBs.[0].E1_INTERFACE.[0].ipv4_cuup 192.168.61.140
-        --gNBs.[0].tr_s_preference f1
-        --gNBs.[0].local_s_portd 2153
-        --gNBs.[0].local_s_address 192.168.61.140
-        --gNBs.[0].remote_s_address 0.0.0.0
-        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.61.140/26
-        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.61.140/26
-        --gNBs.[0].NETWORK_INTERFACES.GNB_PORT_FOR_NGU 2155 
-    command: >
-      sh -c "sleep 20 &&
-             /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-cuup -O /opt/oai-gnb/etc/gnb.conf 2>&1 |
-             stdbuf -oL tee /opt/oai-gnb/logs/cuup_co_stdout.log"
-
-  # ==========================================
   # UPF Centraloffice — Slice 2 (SST=1, SD=2)
   # ==========================================
 
@@ -226,6 +169,62 @@ services:
       sh -c "sleep 25 &&
              /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem 2>&1"
 # stdbuf -oL tee /opt/oai-gnb/logs/du_co_stdout.log"
+  # ==========================================
+  # CU-UP Centraloffice (gNB_CU_UP_ID=0xe01)
+  # Serves: DU_co (local) + DU_e1 (edge, cross-machine)
+  # ==========================================
+
+  cuup_co:
+    image: cuup:comnetsemu
+    container_name: cuup_co
+    hostname: cuup_co
+    cap_add:
+      - SYS_NICE
+      - NET_ADMIN
+    networks:
+      core_net:
+        ipv4_address: 192.168.61.140
+        priority: 900
+        interface_name: eth0
+      # f1u_net:
+      #   ipv4_address: 192.168.74.140
+      #   priority: 800
+      #   interface_name: eth1
+    ports:
+      - "192.168.0.193:2153:2153/udp"       # GTP-U F1-U (inbound from DU_co local + DU_e1 cross-machine)
+    #  - "192.168.0.193:2155:2155/udp"       # GTP-U N3 (towards UPF_co)
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    volumes:
+      - ./configs/cuup_co/gnb-cuup-co.sa.f1.conf:/opt/oai-gnb/etc/gnb.conf
+      - ./logs/cuup_co:/opt/oai-gnb/logs
+    environment:
+      USE_ADDITIONAL_OPTIONS: >-
+        -E --sa
+        --log_config.global_log_options level,nocolor,time
+        --log_config.global_log_level info
+        --log_config.e1ap_log_level debug
+        --log_config.f1u_log_level debug
+        --log_config.gtpu_log_level debug
+        --e2_agent.near_ric_ip_addr 192.168.0.200
+        --e2_agent.sm_dir /usr/local/lib/flexric/
+        --telnetsrv --telnetsrv.shrmod ci
+        --gNBs.[0].gNB_ID 0xe00
+        --gNBs.[0].gNB_CU_UP_ID 0xe01
+        --gNBs.[0].E1_INTERFACE.[0].type up
+        --gNBs.[0].E1_INTERFACE.[0].ipv4_cucp 192.168.0.200
+        --gNBs.[0].E1_INTERFACE.[0].ipv4_cuup 192.168.61.140
+        --gNBs.[0].tr_s_preference f1
+        --gNBs.[0].local_s_portd 2153
+        --gNBs.[0].local_s_address 192.168.61.140
+        --gNBs.[0].remote_s_address 0.0.0.0
+        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.61.140/26
+        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.61.140/26
+      #  --gNBs.[0].NETWORK_INTERFACES.GNB_PORT_FOR_NGU 2155 
+    command: >
+      sh -c "sleep 20 &&
+             /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-cuup -O /opt/oai-gnb/etc/gnb.conf 2>&1 |
+             stdbuf -oL tee /opt/oai-gnb/logs/cuup_co_stdout.log"
 
 
 # ==========================================
