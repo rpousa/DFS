@@ -23,10 +23,10 @@ services:
         ipv4_address: 192.168.61.140
         priority: 900
         interface_name: eth0
-      f1u_net:
-        ipv4_address: 192.168.74.140
-        priority: 800
-        interface_name: eth1
+      # f1u_net:
+      #   ipv4_address: 192.168.74.140
+      #   priority: 800
+      #   interface_name: eth1
     ports:
       - "192.168.0.193:2153:2153/udp"       # GTP-U F1-U (inbound from DU_co local + DU_e1 cross-machine)
       - "192.168.0.193:2155:2155/udp"       # GTP-U N3 (towards UPF_co)
