@@ -186,7 +186,7 @@ services:
         ipv4_address: 192.168.61.141
     ports:
       - "192.168.0.193:500:500/sctp"         # F1-C local SCTP port
-      - "192.168.0.193:2156:2152/udp"        # F1-U local GTP-U port
+      - "192.168.0.193:2156:2156/udp"        # F1-U local GTP-U port
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
@@ -206,7 +206,7 @@ services:
         --gNBs.[0].servingCellConfigCommon.[0].physCellId 0
         --MACRLCs.[0].local_n_address 192.168.73.141
         --MACRLCs.[0].remote_n_address 192.168.0.200
-        --MACRLCs.[0].remote_n_portd 2153
+        --MACRLCs.[0].remote_n_portd 2156
         --MACRLCs.[0].remote_n_portc 38472
         --MACRLCs.[0].tr_s_preference local_L1
         --MACRLCs.[0].tr_n_preference f1
