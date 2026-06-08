@@ -20,12 +20,12 @@
 #     - dnai: internet-primary
 
 steering-scenario-primary:
-  routeToLocs: []
+  routeToLocs: [dnai: internet-primary]
 steering-scenario-secondary:
-  routeToLocs: []
+  routeToLocs: [dnai: internet-secondary]
 steering-scenario-embb:
-  routeToLocs: []
+  routeToLocs: [dnai: internet-embb]
 steering-scenario-urllc:
-  routeToLocs: []
+  routeToLocs: [dnai: internet-urllc]
 steering-scenario-miot:
-  routeToLocs: []
+  routeToLocs: [dnai: internet-miot]
