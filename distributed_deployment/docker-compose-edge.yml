@@ -27,7 +27,7 @@ services:
         interface_name: eth1
     ports:
       - "192.168.0.243:2153:2153/udp"       # GTP-U F1-U (inbound from DU_e2 local)
-      - "192.168.0.243:2155:2152/udp"       # GTP-U N3 (towards UPF_e)
+      - "192.168.0.243:2155:2155/udp"       # GTP-U N3 (towards UPF_e)
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
@@ -55,7 +55,7 @@ services:
         --gNBs.[0].remote_s_address 0.0.0.0
         --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.81.140/26
         --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.81.140/26
-        --gNBs.[0].NETWORK_INTERFACES.GNB_PORT_FOR_NGU 2152
+        --gNBs.[0].NETWORK_INTERFACES.GNB_PORT_FOR_NGU 2155
     command: >
       sh -c "sleep 20 &&
              /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-cuup -O /opt/oai-gnb/etc/gnb.conf 2>&1 |
@@ -184,7 +184,7 @@ services:
         ipv4_address: 192.168.81.151
     ports:
       - "192.168.0.243:500:500/sctp"         # F1-C local SCTP port
-      - "192.168.0.243:2156:2152/udp"        # F1-U local GTP-U port
+      - "192.168.0.243:2156:2156/udp"        # F1-U local GTP-U port
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
@@ -204,7 +204,7 @@ services:
         --gNBs.[0].servingCellConfigCommon.[0].physCellId 1
         --MACRLCs.[0].local_n_address 192.168.83.151
         --MACRLCs.[0].remote_n_address 192.168.0.200
-        --MACRLCs.[0].remote_n_portd 2155
+        --MACRLCs.[0].remote_n_portd 2156
         --MACRLCs.[0].remote_n_portc 38472
         --MACRLCs.[0].tr_s_preference local_L1
         --MACRLCs.[0].tr_n_preference f1
@@ -251,7 +251,7 @@ services:
         ipv4_address: 192.168.81.161
     ports:
       - "192.168.0.243:501:501/sctp"         # F1-C local SCTP port (different from DU_e1)
-      - "192.168.0.243:2157:2152/udp"        # F1-U local GTP-U port
+      - "192.168.0.243:2157:2157/udp"        # F1-U local GTP-U port
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
@@ -271,7 +271,7 @@ services:
         --gNBs.[0].servingCellConfigCommon.[0].physCellId 2
         --MACRLCs.[0].local_n_address 192.168.83.161
         --MACRLCs.[0].remote_n_address 192.168.0.200  
-        --MACRLCs.[0].remote_n_portd 2153
+        --MACRLCs.[0].remote_n_portd 2157
         --MACRLCs.[0].remote_n_portc 38472
         --MACRLCs.[0].tr_s_preference local_L1
         --MACRLCs.[0].tr_n_preference f1
