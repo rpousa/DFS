@@ -121,7 +121,7 @@ services:
       - EBPF_GW_SETUP=yes
       - EBPF_GW_N6_IP_ADDR=192.168.72.135
       - N6_IF_NAME=eth0
-      - SGI_IF_NAME=eth1
+      - SGI_IF_NAME=eth2
       - GW_SGI_IP_ADDR=172.18.1.9
       - N3_IF_NAME=eth1
       - GW_N3_IP_ADDR=192.168.72.135
