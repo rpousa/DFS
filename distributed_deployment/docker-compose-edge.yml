@@ -185,7 +185,7 @@ services:
         ipv4_address: 192.168.81.151
     ports:
       - "192.168.0.243:500:500/sctp"         # F1-C local SCTP port
-      - "192.168.0.243:2156:2156/udp"        # F1-U local GTP-U port
+      - "192.168.0.243:2162:2156/udp"        # F1-U local GTP-U port
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
@@ -216,7 +216,7 @@ services:
         --log_config.phy_log_level info
         --log_config.mac_log_level info
         --MACRLCs.[0].local_n_address_f1u 192.168.84.151
-        --MACRLCs.[0].local_n_portd 2156
+        --MACRLCs.[0].local_n_portd 2152
       #  --MACRLCs.[0].local_n_port_f1u 2156
 # --gNBs.[0].TIMERS.t301 2000
 # --gNBs.[0].TIMERS.t310 2000
@@ -254,7 +254,7 @@ services:
         ipv4_address: 192.168.81.161
     ports:
       - "192.168.0.243:501:501/sctp"         # F1-C local SCTP port (different from DU_e1)
-      - "192.168.0.243:2157:2157/udp"        # F1-U local GTP-U port
+      - "192.168.0.243:2162:2152/udp"        # F1-U local GTP-U port
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
@@ -285,7 +285,7 @@ services:
         --log_config.phy_log_level info
         --log_config.mac_log_level info
         --MACRLCs.[0].local_n_address_f1u 192.168.84.161
-        --MACRLCs.[0].local_n_portd 2157       
+        --MACRLCs.[0].local_n_portd 2152       
 #        --MACRLCs.[0].local_n_port_f1u 2157
 # --gNBs.[0].TIMERS.t301 2000
 # --gNBs.[0].TIMERS.t310 2000
