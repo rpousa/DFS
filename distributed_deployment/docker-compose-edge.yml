@@ -140,6 +140,8 @@ services:
     depends_on:
       - upf_e
     command: 
+      - /bin/bash
+      - -c
       - |
         set -ex
         iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE

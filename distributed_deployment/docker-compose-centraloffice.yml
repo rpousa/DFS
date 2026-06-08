@@ -141,7 +141,9 @@ services:
       - ./configs/ext_dn:/tmp
     depends_on:
       - upf_co
-    command: 
+    command:
+      - /bin/bash
+      - -c 
       - |
         set -ex
         iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE

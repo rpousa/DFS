@@ -300,8 +300,10 @@ services:
     depends_on:
       - upf_core
     command:
+      - /bin/bash
+      - -c
       - |
-        set -ex
+        set -ex 
         iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
         ip route add 12.1.1.0/24 via 192.168.72.30 dev eth0 || true
         ip route add 13.1.1.0/24 via 192.168.72.30 dev eth0 || true
