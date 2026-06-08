@@ -206,7 +206,7 @@ services:
         --gNBs.[0].servingCellConfigCommon.[0].physCellId 0
         --MACRLCs.[0].local_n_address 192.168.73.141
         --MACRLCs.[0].remote_n_address 192.168.0.200
-        --MACRLCs.[0].remote_n_portd 2156
+        --MACRLCs.[0].remote_n_portd 2153
         --MACRLCs.[0].remote_n_portc 38472
         --MACRLCs.[0].tr_s_preference local_L1
         --MACRLCs.[0].tr_n_preference f1
@@ -217,6 +217,7 @@ services:
         --log_config.phy_log_level info
         --log_config.mac_log_level info
         --MACRLCs.[0].local_n_address_f1u 192.168.74.141
+        --MACRLCs.[0].local_n_port_f1u 2156
 #        --MACRLCs.[0].remote_n_address_f1u 192.168.74.140
     depends_on:
       - cuup_co
