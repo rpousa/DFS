@@ -254,7 +254,7 @@ services:
         ipv4_address: 192.168.81.161
     ports:
       - "192.168.0.243:501:501/sctp"         # F1-C local SCTP port (different from DU_e1)
-      - "192.168.0.243:2162:2152/udp"        # F1-U local GTP-U port
+      - "192.168.0.243:2163:2152/udp"        # F1-U local GTP-U port
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
