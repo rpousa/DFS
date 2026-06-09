@@ -25,6 +25,10 @@ services:
     environment:
       - MYSQL_ROOT_PASSWORD=linux
       - MYSQL_DATABASE=oai_db
+    cpuset: "0-1"
+    cpus: 1.0
+    cpu_shares: 256
+    oom_score_adj: 200
     command: >
       sh -c "rm -rf /var/lib/mysql/* &&
              mysqld -u test --initialize-insecure --init-file=/docker-entrypoint-initdb.d/oai_db.sql &&
@@ -55,6 +59,9 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+    cpuset: "0-1"
+    cpus: 0.5
+    cpu_shares: 512
     command: >
       sh -c "sleep 5 &&
              /openair-nrf/bin/oai_nrf -c /openair-nrf/etc/config.yaml -o"
@@ -79,6 +86,14 @@ services:
     depends_on:
       - nrf
       - smf
+    cpuset: "2-3"
+    cpus: 1.0
+    cpu_shares: 2048
+    oom_score_adj: -200
+    ulimits:
+      rtprio: 99
+      memlock: -1
+      nofile: 1048576
     command: >
       sh -c "sleep 5 &&
              /openair-amf/bin/oai_amf -c /openair-amf/etc/config.yaml -o"
@@ -102,6 +117,14 @@ services:
       - ./logs/smf:/openair-smf/logs
     depends_on:
       - nrf
+    cpuset: "2-3"
+    cpus: 1.0
+    cpu_shares: 2048
+    oom_score_adj: -200
+    ulimits:
+      rtprio: 99
+      memlock: -1
+      nofile: 1048576
     command: >
       sh -c "sleep 5 &&
              /openair-smf/bin/oai_smf -c /openair-smf/etc/config.yaml -o"
@@ -127,6 +150,9 @@ services:
       - ./logs/pcf:/openair-pcf/logs
     depends_on:
       - nrf
+    cpuset: "0-1"
+    cpus: 0.3
+    cpu_shares: 256
     command: >
       sh -c "sleep 5 &&
              /openair-pcf/bin/oai_pcf -c /openair-pcf/etc/config.yaml -o"
@@ -150,6 +176,9 @@ services:
       - ./logs/nssf:/openair-nssf/logs
     depends_on:
       - nrf
+    cpuset: "0-1"
+    cpus: 0.3
+    cpu_shares: 512
     command: >
       sh -c "sleep 5 &&
              /openair-nssf/bin/oai_nssf -c /openair-nssf/etc/config.yaml -o"
@@ -172,6 +201,9 @@ services:
       - ./logs/udm:/openair-udm/logs
     depends_on:
       - nrf
+    cpuset: "0-1"
+    cpus: 0.3
+    cpu_shares: 256
     command: >
       sh -c "sleep 5 &&
              /openair-udm/bin/oai_udm -c /openair-udm/etc/config.yaml -o"
@@ -193,6 +225,9 @@ services:
       - ./logs/udr:/openair-udr/logs
     depends_on:
       - nrf
+    cpuset: "0-1"
+    cpus: 0.3
+    cpu_shares: 256
     command: >
       sh -c "sleep 5 &&
              /openair-udr/bin/oai_udr -c /openair-udr/etc/config.yaml -o"
@@ -215,6 +250,9 @@ services:
       - ./logs/ausf:/openair-ausf/logs
     depends_on:
       - nrf
+    cpuset: "0-1"
+    cpus: 0.3
+    cpu_shares: 256
     command: >
       sh -c "sleep 5 &&
              /openair-ausf/bin/oai_ausf -c /openair-ausf/etc/config.yaml -o"
@@ -254,6 +292,17 @@ services:
     environment:
       - ETH0_IP=192.168.71.134
       - ETH1_IP=192.168.72.30
+    cpuset: "2-3"
+    cpus: 1.5
+    cpu_shares: 4096
+    oom_score_adj: -500
+    ulimits:
+      rtprio: 99
+      memlock: -1
+      nofile: 1048576
+    sysctls:
+      - net.core.rmem_max=33554432
+      - net.core.wmem_max=33554432
     entrypoint: [""]
     command: >
       sh -c "sysctl -w net.ipv4.ip_forward=1 &&
@@ -282,7 +331,7 @@ services:
       - SGI_IF_NAME=eth2
       - N3_IF_NAME=eth1
       - GW_SGI_IP_ADDR=172.18.0.9
-      - GW_N3_IP_ADDR=192.168.72.31
+      - GW_N3_IP_ADDR=0.0.0.0
       - UE_IP_ADDRESS_POOL_1=12.1.1.0/24
       - UE_IP_ADDRESS_POOL_2=13.1.1.0/24
       - UE_IP_ADDRESS_POOL_3=14.1.1.0/24
@@ -299,6 +348,9 @@ services:
       - ./configs/ext_dn:/tmp
     depends_on:
       - upf_core
+    cpuset: "0-3"
+    cpus: 0.5
+    cpu_shares: 256
     command:
       - /bin/bash
       - -c
@@ -348,6 +400,9 @@ services:
       - ./flexric_volumes/topology.py:/usr/local/flexric/xApp/python3/topology.py
       - ./flexric_volumes/xapp_functs.py:/usr/local/flexric/xApp/python3/xapp_functs.py
       - ./flexric_volumes/xapp_test.py:/usr/local/flexric/xApp/python3/xapp.py
+    cpuset: "0-1"
+    cpus: 0.5
+    cpu_shares: 512
     command: >
       sh -c "sleep 5 &&
              /usr/local/bin/event_ric_watchdog.sh"
@@ -397,6 +452,17 @@ services:
         --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.71.140/26
     depends_on:
       - amf
+    cpuset: "2-3"
+    cpus: 1.5
+    cpu_shares: 8192            # highest priority on this host
+    oom_score_adj: -700
+    ulimits:
+      rtprio: 99
+      memlock: -1
+      nofile: 1048576
+    sysctls:
+      - net.core.rmem_max=33554432
+      - net.core.wmem_max=33554432
     command: >
       sh -c "sleep 15 &&
              exec /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem 2>&1 |
@@ -429,6 +495,9 @@ services:
       - --web.listen-address=0.0.0.0:9080
     depends_on:
       - flexric
+    cpuset: "0-1"
+    cpus: 0.5
+    cpu_shares: 128
     restart: unless-stopped
 
   # ==========================================
@@ -462,6 +531,9 @@ services:
       - GF_LOG_LEVEL=info
     depends_on:
       - prometheus
+    cpuset: "0-1"
+    cpus: 0.5
+    cpu_shares: 128
     restart: unless-stopped
 
 networks:

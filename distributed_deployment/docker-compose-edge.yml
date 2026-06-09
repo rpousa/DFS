@@ -37,7 +37,18 @@ services:
       - cuup_e
     environment:
       - ETH0_IP=192.168.81.154
-      - ETH1_IP=192.168.82.154  
+      - ETH1_IP=192.168.82.154
+    cpuset: "22-24"
+    cpus: 3.0
+    cpu_shares: 2048
+    oom_score_adj: -500
+    ulimits:
+      rtprio: 99
+      memlock: -1
+      nofile: 1048576
+    sysctls:
+      - net.core.rmem_max=33554432
+      - net.core.wmem_max=33554432  
     entrypoint: [""]
     command: >
       sh -c "sysctl -w net.ipv4.ip_forward=1 &&
@@ -65,7 +76,7 @@ services:
       - SGI_IF_NAME=eth2
       - GW_SGI_IP_ADDR=172.18.2.9
       - N3_IF_NAME=eth1
-      - GW_N3_IP_ADDR=192.168.82.135
+      - GW_N3_IP_ADDR=0.0.0.0
       - UE_IP_ADDRESS_POOL_1=12.1.1.0/24
       - UE_IP_ADDRESS_POOL_2=13.1.1.0/24
       - UE_IP_ADDRESS_POOL_3=14.1.1.0/24
@@ -82,6 +93,9 @@ services:
       - ./configs/ext_dn:/tmp
     depends_on:
       - upf_e
+    cpuset: "25-27"
+    cpus: 1.0
+    cpu_shares: 512
     command: 
       - /bin/bash
       - -c
@@ -156,6 +170,17 @@ services:
         --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.81.140/26
         --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.81.140/26
     #    --gNBs.[0].NETWORK_INTERFACES.GNB_PORT_FOR_NGU 2155
+    cpuset: "18-21"
+    cpus: 4.0
+    cpu_shares: 4096
+    oom_score_adj: -600
+    ulimits:
+      rtprio: 99
+      memlock: -1
+      nofile: 1048576
+    sysctls:
+      - net.core.rmem_max=33554432
+      - net.core.wmem_max=33554432
     command: >
       sh -c "sleep 20 &&
              /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-cuup -O /opt/oai-gnb/etc/gnb.conf 2>&1 |
@@ -225,6 +250,17 @@ services:
 #        --MACRLCs.[0].remote_n_address_f1u 192.168.0.193
     depends_on:
       - cuup_e
+    cpuset: "4-9"
+    cpus: 6.0
+    cpu_shares: 8192            # absolute top priority — RFSim server
+    oom_score_adj: -700
+    ulimits:
+      rtprio: 99
+      memlock: -1
+      nofile: 1048576
+    sysctls:
+      - net.core.rmem_max=33554432
+      - net.core.wmem_max=33554432
     command: >
       sh -c "sleep 25 &&
              /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem 2>&1 "
@@ -292,6 +328,17 @@ services:
 # --gNBs.[0].TIMERS.t311 30000
 # --gNBs.[0].TIMERS.t319 2000
 #      --MACRLCs.[0].remote_n_address_f1u 192.168.84.140
+    cpuset: "10-13"
+    cpus: 4.0
+    cpu_shares: 4096
+    oom_score_adj: -700
+    ulimits:
+      rtprio: 99
+      memlock: -1
+      nofile: 1048576
+    sysctls:
+      - net.core.rmem_max=33554432
+      - net.core.wmem_max=33554432
     depends_on:
       - cuup_e
     command: >
@@ -329,6 +376,14 @@ services:
         --log_config.global_log_level info
     depends_on:
       - du_e1
+    cpuset: "14-17"
+    cpus: 4.0
+    cpu_shares: 4096
+    oom_score_adj: -600
+    ulimits:
+      rtprio: 99
+      memlock: -1
+      nofile: 1048576
     command: >
       sh -c "sleep 45 &&
              /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem 2>&1 "
