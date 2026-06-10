@@ -186,20 +186,20 @@ cleanup_custom_nft_rules() {
     print_info "  [1/7] NAT DOCKER: SCTP DNAT rules"
     local n
     n=$(nft_remove_all_matching "ip nat" "DOCKER" "sctp")
-    [ "$n" -gt 0 ] && print_info "    Removed $n SCTP DNAT rule(s)" && total_cleaned=$((total_cleaned + n))
+    [ "${n:-0}" -gt 0 ] && print_info "    Removed $n SCTP DNAT rule(s)" && total_cleaned=$((total_cleaned + n))
 
     # --- 2. NAT DOCKER: UDP DNAT rules for ports in compose ---
     print_info "  [2/7] NAT DOCKER: UDP DNAT rules (compose ports)"
     for port in $UDP_PORTS; do
         n=$(nft_remove_all_matching "ip nat" "DOCKER" "udp dport ${port}")
-        [ "$n" -gt 0 ] && print_info "    Removed $n UDP/${port} DNAT rule(s)" && total_cleaned=$((total_cleaned + n))
+        [ "${n:-0}" -gt 0 ] && print_info "    Removed $n UDP/${port} DNAT rule(s)" && total_cleaned=$((total_cleaned + n))
     done
 
     # --- 3. NAT PREROUTING: stray UDP rules (PFCP, GTP-U) ---
     print_info "  [3/7] NAT PREROUTING: UDP DNAT rules"
     for port in $UDP_PORTS; do
         n=$(nft_remove_all_matching "ip nat" "PREROUTING" "udp dport ${port}")
-        [ "$n" -gt 0 ] && print_info "    Removed $n PREROUTING UDP/${port} rule(s)" && total_cleaned=$((total_cleaned + n))
+        [ "${n:-0}" -gt 0 ] && print_info "    Removed $n PREROUTING UDP/${port} rule(s)" && total_cleaned=$((total_cleaned + n))
     done
 
     # --- 4. NAT POSTROUTING: MASQUERADE for each compose subnet ---
@@ -209,7 +209,7 @@ cleanup_custom_nft_rules() {
         local esc_subnet
         esc_subnet=$(echo "$subnet" | sed 's/\./\\./g')
         n=$(nft_remove_all_matching "ip nat" "POSTROUTING" "${esc_subnet}.*masquerade")
-        [ "$n" -gt 0 ] && print_info "    Removed $n MASQUERADE rule(s) for ${subnet}" && total_cleaned=$((total_cleaned + n))
+        [ "${n:-0}" -gt 0 ] && print_info "    Removed $n MASQUERADE rule(s) for ${subnet}" && total_cleaned=$((total_cleaned + n))
     done
 
     # Also clean any host-IP-scoped MASQUERADE for our SCTP/UDP ports
@@ -218,19 +218,19 @@ cleanup_custom_nft_rules() {
             local esc_host
             esc_host=$(echo "$HOST_IP" | sed 's/\./\\./g')
             n=$(nft_remove_all_matching "ip nat" "POSTROUTING" "${esc_host}.*${port}")
-            [ "$n" -gt 0 ] && print_info "    Removed $n MASQUERADE rule(s) for ${HOST_IP}:${port}" && total_cleaned=$((total_cleaned + n))
+            [ "${n:-0}" -gt 0 ] && print_info "    Removed $n MASQUERADE rule(s) for ${HOST_IP}:${port}" && total_cleaned=$((total_cleaned + n))
         done
     fi
 
     # --- 5. Filter DOCKER: SCTP FORWARD rules ---
     print_info "  [5/7] Filter DOCKER: SCTP FORWARD rules"
     n=$(nft_remove_all_matching "ip filter" "DOCKER" "sctp")
-    [ "$n" -gt 0 ] && print_info "    Removed $n SCTP FORWARD rule(s)" && total_cleaned=$((total_cleaned + n))
+    [ "${n:-0}" -gt 0 ] && print_info "    Removed $n SCTP FORWARD rule(s)" && total_cleaned=$((total_cleaned + n))
 
     # Also UDP FORWARD rules for our ports
     for port in $UDP_PORTS; do
         n=$(nft_remove_all_matching "ip filter" "DOCKER" "udp.*${port}")
-        [ "$n" -gt 0 ] && print_info "    Removed $n UDP/${port} FORWARD rule(s)" && total_cleaned=$((total_cleaned + n))
+        [ "${n:-0}" -gt 0 ] && print_info "    Removed $n UDP/${port} FORWARD rule(s)" && total_cleaned=$((total_cleaned + n))
     done
 
     # --- 6. DOCKER-BRIDGE: duplicate jumps per bridge ---
@@ -258,13 +258,13 @@ cleanup_custom_nft_rules() {
     print_info "  [7/7] DOCKER-ISOLATION-STAGE-1: SCTP bypass rules"
     if sudo nft list chain ip filter DOCKER-ISOLATION-STAGE-1 > /dev/null 2>&1; then
         n=$(nft_remove_all_matching "ip filter" "DOCKER-ISOLATION-STAGE-1" "sctp.*accept")
-        [ "$n" -gt 0 ] && print_info "    Removed $n SCTP isolation bypass rule(s)" && total_cleaned=$((total_cleaned + n))
+        [ "${n:-0}" -gt 0 ] && print_info "    Removed $n SCTP isolation bypass rule(s)" && total_cleaned=$((total_cleaned + n))
     fi
 
     print_info "  [8/8] Cross-host UDP DNAT (UDPFIX rules)"
     for chain in PREROUTING OUTPUT POSTROUTING; do
         n=$(nft_remove_all_matching "ip nat" "$chain" 'comment "UDPFIX')
-        [ "$n" -gt 0 ] && print_info "    Removed $n UDPFIX rule(s) from $chain" \
+        [ "${n:-0}" -gt 0 ] && print_info "    Removed $n UDPFIX rule(s) from $chain" \
                     && total_cleaned=$((total_cleaned + n))
     done
 

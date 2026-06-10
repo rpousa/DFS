@@ -78,7 +78,7 @@ services:
       - SGI_IF_NAME=eth2
       - GW_SGI_IP_ADDR=172.18.1.9
       - N3_IF_NAME=eth1
-      - GW_N3_IP_ADDR=0.0.0.0
+      - GW_N3_IP_ADDR=192.168.72.135
       - UE_IP_ADDRESS_POOL_1=12.1.1.0/24
       - UE_IP_ADDRESS_POOL_2=13.1.1.0/24
       - UE_IP_ADDRESS_POOL_3=14.1.1.0/24
