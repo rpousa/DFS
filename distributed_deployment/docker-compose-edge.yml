@@ -3,7 +3,14 @@
 # Components: CU-UP_e + UPF_e + ext_dn_e + DU_e1 + DU_e2 + UE_1
 
 services:
-
+  cir-generator:
+    image: oaisoftwarealliance/cir-generator:v0.0.1
+    container_name: cir_gen_edge
+    environment:
+      GENERATOR_ARGS: "--demo"
+      OUTPUT: "--out /opt/output/cir_db.bin"
+    volumes:
+      - cirdb_data:/opt/output
   # ==========================================
   # UPF Edge — Slice 3 (SST=1, SD=3)
   # ==========================================
@@ -215,15 +222,18 @@ services:
       - "192.168.0.243:2162:2152/udp"        # F1-U local GTP-U port
     devices:
       - /dev/net/tun:/dev/net/tun
+    ipc: host
     volumes:
-      - ./configs/du_e1/gnb-du.sa.band78.106prb.rfsim.conf:/opt/oai-gnb/etc/gnb.conf
+      - ./configs/du_e1/gnb-du.sa.band78.106prb.gnb-du.sa.band78.106prb.vrtsim.2x2.yaml:/opt/oai-gnb/etc/gnb.conf
       - ./logs/du_e1:/opt/oai-gnb/logs
+      - tmp_data:/tmp/            # shared shm descriptor
+      - cirdb_data:/cirdb:ro      # CIR database
     environment:
       USE_ADDITIONAL_OPTIONS: >-
         --e2_agent.near_ric_ip_addr 192.168.0.200
         --e2_agent.sm_dir /usr/local/lib/flexric/
         --telnetsrv --telnetsrv.shrmod ci
-        -E --rfsim --Active_gNBs gNB-OAI
+        --Active_gNBs gNB-OAI
         --gNBs.[0].gNB_ID 0xe00
         --gNBs.[0].gNB_DU_ID 0xe01
         --gNBs.[0].gNB_name gNB-OAI
@@ -237,9 +247,7 @@ services:
         --MACRLCs.[0].tr_s_preference local_L1
         --MACRLCs.[0].tr_n_preference f1
         --MACRLCs.[0].stats_max_ue 32
-        --gNBs.[0].TIMERS.t300 1000       
-        --rfsimulator.[0].serveraddr server
-        --rfsimulator.[0].serverport 4043
+        --gNBs.[0].TIMERS.t300 1000
         --log_config.phy_log_level info
         --log_config.mac_log_level info
         --MACRLCs.[0].local_n_address_f1u 192.168.81.151
@@ -247,14 +255,23 @@ services:
         --L1s.[0].L1_tx_thread_core 4
         --L1s.[0].L1_rx_thread_core 5
         --thread-pool 6,7,8,9
-      #  --MACRLCs.[0].local_n_port_f1u 2156
-# --gNBs.[0].TIMERS.t301 2000
-# --gNBs.[0].TIMERS.t310 2000
-# --gNBs.[0].TIMERS.t311 30000
-# --gNBs.[0].TIMERS.t319 2000
-#        --MACRLCs.[0].remote_n_address_f1u 192.168.0.193
+        -E --device.name vrtsim
+        --vrtsim.role server
+        --vrtsim.cirdb 1
+        --vrtsim.num_ues 4
+        --vrtsim.timescale 1.0
+      #  -E --rfsim        
+      #  --rfsimulator.[0].serveraddr server
+      #  --rfsimulator.[0].serverport 4043
+    #  --MACRLCs.[0].local_n_port_f1u 2156
+    # --gNBs.[0].TIMERS.t301 2000
+    # --gNBs.[0].TIMERS.t310 2000
+    # --gNBs.[0].TIMERS.t311 30000
+    # --gNBs.[0].TIMERS.t319 2000
+    # --MACRLCs.[0].remote_n_address_f1u 192.168.0.193
     depends_on:
       - cuup_e
+      - cir-generator
     cpuset: "4-9"
     cpus: 6.0
     cpu_shares: 8192            # absolute top priority — RFSim server
@@ -372,16 +389,21 @@ services:
         ipv4_address: 192.168.80.168
     devices:
       - /dev/net/tun:/dev/net/tun
+    ipc: host
     volumes:
-      - ./configs/ue_1/nrue.rfsim.conf:/opt/oai-nr-ue/etc/nr-ue.conf
+      - ./configs/ue_1/nrue.nrue.vrtsim.yaml:/opt/oai-nr-ue/etc/nr-ue.conf
       - ./logs/ue_1:/opt/oai-nr-ue/logs
+      - tmp_data:/tmp/
     environment:
       USE_ADDITIONAL_OPTIONS: >-
-        -E --rfsim --num-ues 4
+        -E --device.name vrtsim
+        --vrtsim.role client
+        --vrtsim.ue_id 0
         -r 106 --numerology 1 --band 78 -C 3619200000
         --ssb 516
         --log_config.global_log_options level,nocolor,time
         --log_config.global_log_level info
+# -E --rfsim --num-ues 4
     depends_on:
       - du_e1
     cpuset: "14-17"
@@ -393,7 +415,7 @@ services:
       memlock: -1
       nofile: 1048576
     command: >
-      sh -c "sleep 45 &&
+      sh -c "sleep 20 &&
              /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem 2>&1 "
  #            stdbuf -oL tee /opt/oai-nr-ue/logs/ue_1_stdout.log"
 
@@ -455,3 +477,6 @@ networks:
           gateway: 172.18.2.1
     driver_opts:
       com.docker.network.bridge.name: br-sgi
+volumes:
+  cirdb_data:
+  tmp_data:
