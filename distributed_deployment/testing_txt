@@ -1,0 +1,4 @@
+ docker exec -t ue_1 ping -I oaitun_ue2 192.168.82.135  # URLLC edge ext_dn
+ docker exec -t ue_1 ping -I oaitun_ue1 192.168.72.135  # EMBB centraloffice ext_dn
+ docker exec -t ue_1 ping -I oaitun_ue3 192.168.72.31   # MIOT core ext_dn
+

@@ -175,6 +175,9 @@ services:
         --log_config.mac_log_level info
         --MACRLCs.[0].local_n_address_f1u 192.168.61.141
         --MACRLCs.[0].local_n_portd 2152
+        --L1s.[0].L1_tx_thread_core 4
+        --L1s.[0].L1_rx_thread_core 5
+        --thread-pool 6,7,8,9
 #        --MACRLCs.[0].local_n_port_f1u 2156
 #        --MACRLCs.[0].remote_n_address_f1u 192.168.74.140
     depends_on:
@@ -258,7 +261,7 @@ services:
     #   - net.core.rmem_max=33554432
     #   - net.core.wmem_max=33554432 
     command: >
-      sh -c "sleep 20 &&
+      sh -c "sleep 1 &&
              /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-cuup -O /opt/oai-gnb/etc/gnb.conf 2>&1 |
              stdbuf -oL tee /opt/oai-gnb/logs/cuup_co_stdout.log"
 
