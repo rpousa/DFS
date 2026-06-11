@@ -224,7 +224,7 @@ services:
       - /dev/net/tun:/dev/net/tun
     ipc: host
     volumes:
-      - ./configs/du_e1/gnb-du.sa.band78.106prb.gnb-du.sa.band78.106prb.vrtsim.2x2.yaml:/opt/oai-gnb/etc/gnb.conf
+      - ./configs/du_e1/gnb-du.sa.band78.106prb.vrtsim.2x2.yaml:/opt/oai-gnb/etc/gnb.conf
       - ./logs/du_e1:/opt/oai-gnb/logs
       - tmp_data:/tmp/            # shared shm descriptor
       - cirdb_data:/cirdb:ro      # CIR database
