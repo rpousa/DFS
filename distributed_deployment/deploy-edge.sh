@@ -176,6 +176,15 @@ sleep 15
 docker exec cuup_e ss -Slnp 2>/dev/null | grep -iE "sctp|2153" || print_warn "CU-UP_e not yet listening"
 echo ""
 
+# Stage 1.5/7: Cir (Cir generator)
+print_stage "Stage 1.5/7: Starting Cir_generator..."
+docker compose -f "$COMPOSE_FILE" up -d cir-generator
+wait_for_service "cir-generator" 30
+print_info "Waiting for Cir_generator to start..."
+sleep 15
+echo ""
+
+
 # Stage 2/7: UPF_e + ext_dn_e
 print_stage "Stage 2/7: Starting UPF_e and ext_dn_e..."
 docker compose -f "$COMPOSE_FILE" up -d upf_e ext_dn_e
