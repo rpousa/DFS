@@ -181,7 +181,7 @@ print_stage "Stage 1.5/7: Starting Cir_generator..."
 docker compose -f "$COMPOSE_FILE" up -d cir-generator
 #wait_for_service "cir-generator" 30
 print_info "Waiting for Cir_generator to start..."
-sleep 15
+sleep 5
 echo ""
 
 
