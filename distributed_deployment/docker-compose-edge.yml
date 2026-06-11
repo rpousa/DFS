@@ -391,7 +391,7 @@ services:
       - /dev/net/tun:/dev/net/tun
     ipc: host
     volumes:
-      - ./configs/ue_1/nrue.nrue.vrtsim.yaml:/opt/oai-nr-ue/etc/nr-ue.conf
+      - ./configs/ue_1/nrue.vrtsim.yaml:/opt/oai-nr-ue/etc/nr-ue.conf
       - ./logs/ue_1:/opt/oai-nr-ue/logs
       - tmp_data:/tmp/
     environment:
