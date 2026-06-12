@@ -285,7 +285,7 @@ services:
     #   - net.core.wmem_max=33554432
     command: >
       sh -c "sleep 25 &&
-             /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem -O /opt/oai-gnb/etc/gnb.yaml 2>&1 "
+             /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem 2>&1 "
 #             stdbuf -oL tee /opt/oai-gnb/logs/du_e1_stdout.log"
 
   # ==========================================
