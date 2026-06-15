@@ -257,7 +257,7 @@ services:
         --thread-pool 6,7,8,9
         -E --device.name vrtsim
         --vrtsim.role server
-        --vrtsim.timescale 2.0
+        --vrtsim.timescale 0.7
 #        --vrtsim.cirdb 1
 #        --vrtsim.num_ues 4
       #  -E --rfsim        

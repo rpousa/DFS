@@ -283,7 +283,7 @@ print_stage "Stage 6.5/7: Starting observability agents..."
 
 # Stage 7/7: UE connection verification
 print_stage "Stage 7/7: Verifying UE connections..."
-if check_ue_connections; then
+if check_ues_connection ; then
     print_info "✓ All 4 UEs connected!"
 else
     print_warn "Only $CONNECTED_UES/4 UEs connected"
@@ -291,7 +291,7 @@ else
         echo "Options: [w]ait+recheck  [p]roceed  [q]uit"
         read -p "Choice: " -n 1 -r; echo
         case $REPLY in
-            [Ww]) sleep 10; check_ue_connections && break ;;
+            [Ww]) sleep 10; check_ues_connection  && break ;;
             [Pp]) print_info "Proceeding with $CONNECTED_UES UE(s)"; break ;;
             [Qq]) break ;;
             *) print_error "Invalid" ;;
