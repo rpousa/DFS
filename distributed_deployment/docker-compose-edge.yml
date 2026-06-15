@@ -427,7 +427,7 @@ services:
     privileged: true
     networks:
       ran_net:
-        ipv4_address: 192.168.80.168
+        ipv4_address: 192.168.80.169
     devices:
       - /dev/net/tun:/dev/net/tun
     ipc: host
@@ -467,7 +467,7 @@ services:
     privileged: true
     networks:
       ran_net:
-        ipv4_address: 192.168.80.168
+        ipv4_address: 192.168.80.170
     devices:
       - /dev/net/tun:/dev/net/tun
     ipc: host
@@ -507,7 +507,7 @@ services:
     privileged: true
     networks:
       ran_net:
-        ipv4_address: 192.168.80.168
+        ipv4_address: 192.168.80.171
     devices:
       - /dev/net/tun:/dev/net/tun
     ipc: host

@@ -12,7 +12,7 @@
 #   DU_e1: F1-C → Core CU-CP, F1-U → CU-UP_co @ Centraloffice (CROSS-MACHINE)
 #   DU_e2: F1-C → Core CU-CP, F1-U → CU-UP_e local
 #
-# All UEs (10) connect to DU_e1 per requirement
+# All UEs (4) connect to DU_e1 per requirement
 
 set -e
 
@@ -228,8 +228,8 @@ fi
 echo ""
 
 # Stage 5/7: UEs (connect to DU_e1)
-print_stage "Stage 5/7: Starting 10 UEs (→ DU_e1)..."
-docker compose -f "$COMPOSE_FILE" up -d ue_1
+print_stage "Stage 5/7: Starting 4 UEs (→ DU_e1)..."
+docker compose -f "$COMPOSE_FILE" up -d ue_1 ue_2 ue_3 ue_4
 wait_for_service "ue_1" 30
 print_info "Waiting 30s for UE attach + PDU session..."
 sleep 30
@@ -300,7 +300,7 @@ print_info "  DU_e1   → CO CU-UP:    F1-U → ${CO_IP}:2153/udp  (CROSS-MACHIN
 print_info "  DU_e1/e2/CU-UP_e → FlexRIC: E2AP → ${CORE_IP}:36421/sctp"
 print_info "  Metrics → Core Grafana: http://${CORE_IP}:3000"
 echo ""
-print_info "UE summary: ${UES_WITH_IP:-0}/${CONNECTED_UES:-0}/10 UEs attached to DU_e1"
+print_info "UE summary: ${UES_WITH_IP:-0}/${CONNECTED_UES:-0}/4 UEs attached to DU_e1"
 echo ""
 print_info "Logs:  docker compose -f $COMPOSE_FILE logs -f"
 print_info "Stop:  docker compose -f $COMPOSE_FILE down"
