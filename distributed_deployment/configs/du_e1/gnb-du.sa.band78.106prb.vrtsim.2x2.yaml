@@ -198,8 +198,9 @@ vrtsim:
   # Channel mode: exactly one of the three modes below should be active.
   #
   # No channel - plain passthrough, no impairments:
-  # cirdb: 0
-  # chanmod: 0
+  cirdb: 0
+  chanmod: 0
+  num_ues: 1
   #
   # Built-in channel model defined in the channelmod: section above:
   # chanmod: 1
@@ -225,8 +226,8 @@ vrtsim:
       ds_ns: 1.0        # RMS delay spread in ns
       speed_mps: 0      # UE speed in m/s
       # aoa_deg: 0.0    # angle of arrival in degrees; TDL-D/E only
-    - antennas: "1x2"   
-      model_id: 0
-      ds_ns: 1.0
-      speed_mps: 0
+#    - antennas: "1x2"   
+#      model_id: 0
+#      ds_ns: 1.0
+#      speed_mps: 0
       # aoa_deg: 0.0    
