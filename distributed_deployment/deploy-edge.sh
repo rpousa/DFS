@@ -96,12 +96,12 @@ check_ues_connection() {
         if docker exec "$container" ip addr show 2>/dev/null | grep -q oaitun_ue1; then
             ((connected++))
             local ip
-            ip=$(docker exec ue_1 ip addr show "$iface" 2>/dev/null | grep -oP 'inet \K[\d.]+' || echo "")
+            ip=$(docker exec "$container" ip addr show oaitun_ue1 2>/dev/null | grep -oP 'inet \K[\d.]+' || echo "")
             if [ -n "$ip" ]; then
-                print_info "✓ UE$i — $iface — $ip"
-                UE_IPS+=("$ip"); UE_INTERFACES+=("$iface"); ((with_ip++))
+                print_info "✓ UE$i  — $ip"
+                UE_IPS+=("$ip"); UE_INTERFACES+=("oaitun_ue1"); ((with_ip++))
             else
-                print_warn "⚠ UE$i — $iface — no IP yet"
+                print_warn "⚠ UE$i — oaitun_ue1 — no IP yet"
             fi
         fi
     done
