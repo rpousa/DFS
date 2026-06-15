@@ -1,0 +1,40 @@
+# eMBB  SST 1  Slice suitable for the handling of 5G enhanced Mobile Broadband. 5QI 9
+# URLLC SST 2 Slice suitable for the handling of ultra- reliable low latency communications. 5QI 86 
+# MIoT SST 3 Slice suitable for the handling of massive IoT. 5QI 76
+# V2X SST 4 Slice suitable for the handling of V2X services. 5QI 79
+
+uicc2:
+  imsi: "208950000000318"
+  key: "0C0A34601D4F07677303652C0462535B"
+  opc: "63bfa50ee6523365ff14c1f45f88737d"
+  pdu_sessions:     
+    - dnn: oai.3 
+      nssai_sst: 3
+      nssai_sd: 1
+
+thread-pool: "-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1"
+
+log_config :
+  global_log_level: info
+  hw_log_level: info
+  phy_log_level: info
+  mac_log_level: info
+  rlc_log_level: info
+  pdcp_log_level: info
+  rrc_log_level: info
+  f1ap_log_level: info
+  ngap_log_level: info
+
+channelmod:
+  max_chan: 10
+  modellist: DefaultChannelList
+  DefaultChannelList:
+   - model_name: client_tx_channel_model
+     type: AWGN
+     ploss_dB: 0
+     noise_power_dB: -100
+     forgetfact: 0
+     offset: 0
+     ds_tdl: 0
+
+
