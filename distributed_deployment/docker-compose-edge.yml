@@ -399,9 +399,10 @@ services:
         -E --device.name vrtsim
         --vrtsim.role client
         -r 106 --numerology 1 --band 78 -C 3319680000 
-        --ssb 516 --client-num-rx-antennas 2 --client-num-tx-antennas 2
+        --ssb 516 
         --log_config.global_log_options level,nocolor,time
         --log_config.global_log_level info
+#       --client-num-rx-antennas 2 --client-num-tx-antennas 2
 # -E --rfsim --num-ues 4
     depends_on:
       - du_e1
