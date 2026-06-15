@@ -398,9 +398,8 @@ services:
       USE_ADDITIONAL_OPTIONS: >-
         -E --device.name vrtsim
         --vrtsim.role client
-        --vrtsim.ue_id 0
         -r 106 --numerology 1 --band 78 -C 3319680000 
-        --ssb 516
+        --ssb 516 --ue-nb-ant-tx 2 --ue-nb-ant-rx 2
         --log_config.global_log_options level,nocolor,time
         --log_config.global_log_level info
 # -E --rfsim --num-ues 4
@@ -416,7 +415,7 @@ services:
       nofile: 1048576
     command: >
       sh -c "sleep 20 &&
-             /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem -O /opt/oai-nr-ue/etc/nr-ue.yaml 2>&1 "
+             /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem 2>&1 "
  #            stdbuf -oL tee /opt/oai-nr-ue/logs/ue_1_stdout.log"
 
 # ==========================================
