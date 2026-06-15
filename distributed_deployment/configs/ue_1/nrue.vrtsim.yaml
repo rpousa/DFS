@@ -4,7 +4,7 @@
 # V2X SST 4 Slice suitable for the handling of V2X services. 5QI 79
 
 uicc0:
-  imsi: "208950000000110";
+  imsi: "208950000000110"
   key: "0C0A34601D4F07677303652C0462535B"
   opc: "63bfa50ee6523365ff14c1f45f88737d"
   pdu_sessions:     
