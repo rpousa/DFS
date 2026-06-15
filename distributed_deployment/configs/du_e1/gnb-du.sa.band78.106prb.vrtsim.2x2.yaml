@@ -24,8 +24,8 @@ gNBs:
     nr_cellid: 12345678
     ##### Physical parameters:
     min_rxtxtime: 6
-    pusch_AntennaPorts: 2
-    pdsch_AntennaPorts_XP: 2
+    pusch_AntennaPorts: 1
+    pdsch_AntennaPorts_XP: 1
 
     servingCellConfigCommon:
       #spCellConfigCommon
@@ -160,8 +160,8 @@ L1s:
 
 RUs:
   - local_rf: yes
-    nb_tx: 2
-    nb_rx: 2
+    nb_tx: 1
+    nb_rx: 1
     att_tx: 0
     att_rx: 0
     bands: [78]
