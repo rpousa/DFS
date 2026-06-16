@@ -406,7 +406,7 @@ services:
 # -E --rfsim --num-ues 4
     depends_on:
       - du_e1
-    cpuset: "0,14"
+    cpuset: "10,11"
     cpus: 2.0
     cpu_shares: 4096
     oom_score_adj: -600
@@ -446,7 +446,7 @@ services:
 
     depends_on:
       - du_e1
-    cpuset: "1,15"
+    cpuset: "12,13"
     cpus: 2.0
     cpu_shares: 4096
     oom_score_adj: -600
@@ -486,7 +486,7 @@ services:
 
     depends_on:
       - du_e1
-    cpuset: "2,16"
+    cpuset: "14,15"
     cpus: 2.0
     cpu_shares: 4096
     oom_score_adj: -600
@@ -527,7 +527,7 @@ services:
 # -E --rfsim --num-ues 4
     depends_on:
       - du_e1
-    cpuset: "3,17"
+    cpuset: "16,17"
     cpus: 2.0
     cpu_shares: 4096
     oom_score_adj: -600

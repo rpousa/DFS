@@ -221,10 +221,10 @@ sleep 5
 echo ""
 
 # Stage 3/7: DU_e1 (F1-U cross-machine to CO) + DU_e2 (F1-U local)
-print_stage "Stage 3/7: Starting DU_e1 and DU_e2..."
-docker compose -f "$COMPOSE_FILE" up -d du_e1 du_e2
+print_stage "Stage 3/7: Starting DU_e1 ..."
+docker compose -f "$COMPOSE_FILE" up -d du_e1 
 wait_for_service "du_e1" 30
-wait_for_service "du_e2" 30
+#wait_for_service "du_e2" 30
 print_info "Waiting for DUs to initialize SCTP + RFSim servers..."
 sleep 20
 
