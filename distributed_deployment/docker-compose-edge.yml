@@ -398,6 +398,7 @@ services:
       USE_ADDITIONAL_OPTIONS: >-
         -E --device.name vrtsim
         --vrtsim.role client
+        --vrtsim.ue_id 0
         -r 106 --numerology 1 --band 78 -C 3319680000 
         --ssb 516 
         --log_config.global_log_options level,nocolor,time
@@ -439,6 +440,7 @@ services:
       USE_ADDITIONAL_OPTIONS: >-
         -E --device.name vrtsim
         --vrtsim.role client
+        --vrtsim.ue_id 1
         -r 106 --numerology 1 --band 78 -C 3319680000 
         --ssb 516 
         --log_config.global_log_options level,nocolor,time
@@ -479,6 +481,7 @@ services:
       USE_ADDITIONAL_OPTIONS: >-
         -E --device.name vrtsim
         --vrtsim.role client
+        --vrtsim.ue_id 2
         -r 106 --numerology 1 --band 78 -C 3319680000 
         --ssb 516 
         --log_config.global_log_options level,nocolor,time
@@ -519,6 +522,7 @@ services:
       USE_ADDITIONAL_OPTIONS: >-
         -E --device.name vrtsim
         --vrtsim.role client
+        --vrtsim.ue_id 3
         -r 106 --numerology 1 --band 78 -C 3319680000 
         --ssb 516 
         --log_config.global_log_options level,nocolor,time
