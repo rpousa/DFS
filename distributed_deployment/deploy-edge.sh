@@ -229,10 +229,10 @@ print_info "Waiting for DUs to initialize SCTP + RFSim servers..."
 sleep 20
 
 for du in du_e1 du_e2; do
-    if docker logs "$du" 2>&1 | grep -q "Running as server"; then
-        print_info "✓ $du RFSimulator server listening"
+    if docker logs "$du" 2>&1 | grep -q "rf device ready"; then
+        print_info "✓ $du server listening"
     else
-        print_warn "⚠ $du RFSimulator status unclear"
+        print_warn "⚠ $du status unclear"
     fi
 done
 echo ""
@@ -273,7 +273,7 @@ if [ -f docker-compose-observability.yml ]; then
 fi
 
 # Stage 6.5/7: F1-U cross-machine routing setup (Edge → CO)
-print_stage "Stage 6.5/7: Starting observability agents..."
+#print_stage "Stage 6.5/7: Starting observability agents..."
 # setup_f1u_routes_edge
 # echo ""
 # setup_n3_routes_edge
