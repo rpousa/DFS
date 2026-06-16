@@ -333,7 +333,6 @@ services:
         --MACRLCs.[0].local_n_address 192.168.83.161
         --MACRLCs.[0].remote_n_address 192.168.0.200  
         --MACRLCs.[0].remote_n_portd 2153
-        --MACRLCs.[0].remote_n_portc 38472
         --MACRLCs.[0].tr_s_preference local_L1
         --MACRLCs.[0].tr_n_preference f1
         --MACRLCs.[0].stats_max_ue 32
