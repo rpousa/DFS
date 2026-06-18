@@ -7,7 +7,7 @@ services:
     image: oaisoftwarealliance/cir-generator:v0.0.1
     container_name: cir_gen_edge
     environment:
-      GENERATOR_ARGS: "--antennas 1"
+      GENERATOR_ARGS: "--models TDL-A --antennas 1x1 --delay-spreads 1.0 --speeds 0 --fs-hz 46080000 --fc-hz 3319680000"
       OUTPUT: "--out /opt/output/cir_db.bin"
     volumes:
       - cirdb_data:/opt/output
@@ -228,7 +228,7 @@ services:
       - ./configs/du_e1/gnb-du.sa.band78.106prb.vrtsim.yaml:/opt/oai-gnb/etc/gnb.yaml
       - ./logs/du_e1:/opt/oai-gnb/logs
       - tmp_data:/tmp/            # shared shm descriptor
-      #- cirdb_data:/cirdb:ro      # CIR database
+      - cirdb_data:/cirdb:ro      # CIR database
     environment:
       USE_ADDITIONAL_OPTIONS: >-
         --e2_agent.near_ric_ip_addr 192.168.0.200
