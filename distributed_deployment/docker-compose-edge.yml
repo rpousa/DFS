@@ -258,8 +258,8 @@ services:
         -E --device.name vrtsim
         --vrtsim.role server
         --vrtsim.timescale 1
-#        --vrtsim.cirdb 1
-#        --vrtsim.num_ues 4
+        --vrtsim.cirdb 1
+        --vrtsim.num_ues 4
       #  -E --rfsim        
       #  --rfsimulator.[0].serveraddr server
       #  --rfsimulator.[0].serverport 4043
