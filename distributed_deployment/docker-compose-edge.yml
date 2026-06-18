@@ -402,7 +402,7 @@ services:
         --ssb 516 
         --log_config.global_log_options level,nocolor,time
         --log_config.global_log_level info
-        --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
+        --ue-nb-ant-tx 4 --ue-nb-ant-rx 4
         --client-num-rx-antennas 1 --client-num-tx-antennas 1
 # -E --rfsim --num-ues 4
     depends_on:
@@ -445,7 +445,7 @@ services:
         --ssb 516 
         --log_config.global_log_options level,nocolor,time
         --log_config.global_log_level info
-        --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
+        --ue-nb-ant-tx 4 --ue-nb-ant-rx 4
         --client-num-rx-antennas 1 --client-num-tx-antennas 1
 
     depends_on:
@@ -484,7 +484,7 @@ services:
         -E --device.name vrtsim
         --vrtsim.role client
         --vrtsim.ue_id 2
-        --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
+        --ue-nb-ant-tx 4 --ue-nb-ant-rx 4
         -r 106 --numerology 1 --band 78 -C 3319680000 
         --ssb 516 
         --log_config.global_log_options level,nocolor,time
@@ -531,7 +531,7 @@ services:
         --ssb 516 
         --log_config.global_log_options level,nocolor,time
         --log_config.global_log_level info
-        --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
+        --ue-nb-ant-tx 4 --ue-nb-ant-rx 4
         --client-num-rx-antennas 1 --client-num-tx-antennas 1
 
 #       --client-num-rx-antennas 2 --client-num-tx-antennas 2
