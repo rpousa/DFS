@@ -11,6 +11,7 @@ services:
       OUTPUT: "--out /opt/output/cir_db.bin"
     volumes:
       - cirdb_data:/opt/output
+    command: ["sh", "-c", "echo Hello Docker! && sleep infinity" ]
   # ==========================================
   # UPF Edge — Slice 3 (SST=1, SD=3)
   # ==========================================
