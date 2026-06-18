@@ -366,7 +366,7 @@ services:
     depends_on:
       - cuup_e
     command: >
-      sh -c "sleep 25 &&
+      sh -c "sleep 5 &&
              /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem 2>&1"
   #           stdbuf -oL tee /opt/oai-gnb/logs/du_e2_stdout.log"
 
@@ -416,7 +416,7 @@ services:
       memlock: -1
       nofile: 1048576
     command: >
-      sh -c "sleep 20 &&
+      sh -c "sleep 1 &&
              /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem 2>&1 "
   ue_1:
     image: ue:comnetsemu
@@ -459,7 +459,7 @@ services:
       memlock: -1
       nofile: 1048576
     command: >
-      sh -c "sleep 20 &&
+      sh -c "sleep 1 &&
              /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem 2>&1 "
   ue_2:
     image: ue:comnetsemu
@@ -490,7 +490,6 @@ services:
         --log_config.global_log_options level,nocolor,time
         --log_config.global_log_level info
         --client-num-rx-antennas 1 --client-num-tx-antennas 1
-
     depends_on:
       - du_e1
     cpuset: "14,15"
@@ -502,7 +501,7 @@ services:
       memlock: -1
       nofile: 1048576
     command: >
-      sh -c "sleep 20 &&
+      sh -c "sleep 1 &&
              /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem 2>&1 "
   ue_3:
     image: ue:comnetsemu
@@ -533,7 +532,6 @@ services:
         --log_config.global_log_level info
         --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
         --client-num-rx-antennas 1 --client-num-tx-antennas 1
-
 #       --client-num-rx-antennas 2 --client-num-tx-antennas 2
 # -E --rfsim --num-ues 4
     depends_on:
@@ -547,7 +545,7 @@ services:
       memlock: -1
       nofile: 1048576
     command: >
-      sh -c "sleep 20 &&
+      sh -c "sleep 1 &&
              /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem 2>&1 "
  #            stdbuf -oL tee /opt/oai-nr-ue/logs/ue_1_stdout.log"
 
