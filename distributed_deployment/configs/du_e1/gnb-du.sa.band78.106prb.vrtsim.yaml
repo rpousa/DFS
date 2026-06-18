@@ -198,9 +198,9 @@ vrtsim:
   # Channel mode: exactly one of the three modes below should be active.
   #
   # No channel - plain passthrough, no impairments:
-  cirdb: 0
-  chanmod: 0
-  num_ues: 4
+  #cirdb: 0
+  #chanmod: 0
+  #num_ues: 4
   #
   # Built-in channel model defined in the channelmod: section above:
   # chanmod: 1
