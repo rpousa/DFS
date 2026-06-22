@@ -404,7 +404,7 @@ services:
         --log_config.global_log_options level,nocolor,time
         --log_config.global_log_level info
         --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
-        --client-num-rx-antennas 1 --client-num-tx-antennas 1
+#        --client-num-rx-antennas 1 --client-num-tx-antennas 1
 # -E --rfsim --num-ues 4
     depends_on:
       - du_e1
@@ -448,7 +448,7 @@ services:
         --log_config.global_log_options level,nocolor,time
         --log_config.global_log_level info
         --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
-        --client-num-rx-antennas 1 --client-num-tx-antennas 1
+#        --client-num-rx-antennas 1 --client-num-tx-antennas 1
 
     depends_on:
       - du_e1
@@ -492,7 +492,7 @@ services:
         --ssb 516 
         --log_config.global_log_options level,nocolor,time
         --log_config.global_log_level info
-        --client-num-rx-antennas 1 --client-num-tx-antennas 1
+#        --client-num-rx-antennas 1 --client-num-tx-antennas 1
     depends_on:
       - du_e1
     cpuset: "14,15"
@@ -535,7 +535,7 @@ services:
         --log_config.global_log_options level,nocolor,time
         --log_config.global_log_level info
         --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
-        --client-num-rx-antennas 1 --client-num-tx-antennas 1
+#        --client-num-rx-antennas 1 --client-num-tx-antennas 1
 #       --client-num-rx-antennas 2 --client-num-tx-antennas 2
 # -E --rfsim --num-ues 4
     depends_on:
