@@ -94,7 +94,7 @@ MACHINE_ROLE="unknown"
 case "$COMPOSE_FILE" in
     *core*)          MACHINE_ROLE="CORE (192.168.0.200)" ;;
     *centraloffice*) MACHINE_ROLE="CENTRALOFFICE (192.168.0.193)" ;;
-    *edge*)          MACHINE_ROLE="EDGE (192.168.0.243)" ;;
+    *edge*)          MACHINE_ROLE="EDGE (192.168.0.243)" REMOVE_VOLUMES=true ;;
 esac
 print_info "Machine role: $MACHINE_ROLE"
 echo ""
