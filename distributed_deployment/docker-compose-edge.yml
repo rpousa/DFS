@@ -257,7 +257,7 @@ services:
         --thread-pool 6,7,8,9
         -E --device.name vrtsim
         --vrtsim.role server
-        --vrtsim.timescale 2
+        --vrtsim.timescale 1.5
         --vrtsim.cirdb 1
         --vrtsim.num_ues 4
       #  -E --rfsim        
@@ -499,10 +499,10 @@ services:
     cpus: 2.0
     cpu_shares: 4096
     oom_score_adj: -600
-    # ulimits:
+    ulimits:
     #   rtprio: 99
     #   memlock: -1
-    #   nofile: 1048576
+       nofile: 1048576
     command: >
       sh -c "sleep 1 &&
              /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem 2>&1 "
