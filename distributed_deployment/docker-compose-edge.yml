@@ -380,9 +380,10 @@ services:
     container_name: ue_0
     hostname: ue_0
     cap_add:
-      - SYS_NICE
       - NET_ADMIN
-    privileged: true
+      - NET_RAW
+    #  - SYS_NICE
+    #privileged: true
     networks:
       ran_net:
         ipv4_address: 192.168.80.168
@@ -411,10 +412,10 @@ services:
     cpus: 2.0
     cpu_shares: 4096
     oom_score_adj: -600
-    ulimits:
-      rtprio: 99
-      memlock: -1
-      nofile: 1048576
+    #ulimits:
+    #  rtprio: 99
+    #  memlock: -1
+    #  nofile: 1048576
     command: >
       sh -c "sleep 1 &&
              /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem 2>&1 "
@@ -423,9 +424,10 @@ services:
     container_name: ue_1
     hostname: ue_1
     cap_add:
-      - SYS_NICE
       - NET_ADMIN
-    privileged: true
+      - NET_RAW
+    #  - SYS_NICE
+    #privileged: true
     networks:
       ran_net:
         ipv4_address: 192.168.80.169
@@ -454,10 +456,10 @@ services:
     cpus: 2.0
     cpu_shares: 4096
     oom_score_adj: -600
-    ulimits:
-      rtprio: 99
-      memlock: -1
-      nofile: 1048576
+    # ulimits:
+    #   rtprio: 99
+    #   memlock: -1
+    #   nofile: 1048576
     command: >
       sh -c "sleep 1 &&
              /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem 2>&1 "
@@ -466,9 +468,10 @@ services:
     container_name: ue_2
     hostname: ue_2
     cap_add:
-      - SYS_NICE
       - NET_ADMIN
-    privileged: true
+      - NET_RAW
+    #  - SYS_NICE
+    #privileged: true
     networks:
       ran_net:
         ipv4_address: 192.168.80.170
@@ -496,10 +499,10 @@ services:
     cpus: 2.0
     cpu_shares: 4096
     oom_score_adj: -600
-    ulimits:
-      rtprio: 99
-      memlock: -1
-      nofile: 1048576
+    # ulimits:
+    #   rtprio: 99
+    #   memlock: -1
+    #   nofile: 1048576
     command: >
       sh -c "sleep 1 &&
              /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem 2>&1 "
@@ -508,9 +511,10 @@ services:
     container_name: ue_3
     hostname: ue_3
     cap_add:
-      - SYS_NICE
       - NET_ADMIN
-    privileged: true
+      - NET_RAW
+    #  - SYS_NICE
+    #privileged: true
     networks:
       ran_net:
         ipv4_address: 192.168.80.171
@@ -540,10 +544,10 @@ services:
     cpus: 2.0
     cpu_shares: 4096
     oom_score_adj: -600
-    ulimits:
-      rtprio: 99
-      memlock: -1
-      nofile: 1048576
+    # ulimits:
+    #   rtprio: 99
+    #   memlock: -1
+    #   nofile: 1048576
     command: >
       sh -c "sleep 1 &&
              /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem 2>&1 "
