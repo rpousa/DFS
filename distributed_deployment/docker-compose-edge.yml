@@ -408,10 +408,10 @@ services:
 # -E --rfsim --num-ues 4
     depends_on:
       - du_e1
-    cpuset: "10,11"
-    cpus: 2.0
-    cpu_shares: 4096
-    oom_score_adj: -600
+    # cpuset: "10,11"
+    # cpus: 2.0
+    # cpu_shares: 4096
+    # oom_score_adj: -600
     #ulimits:
     #  rtprio: 99
     #  memlock: -1
@@ -452,10 +452,10 @@ services:
 
     depends_on:
       - du_e1
-    cpuset: "12,13"
-    cpus: 2.0
-    cpu_shares: 4096
-    oom_score_adj: -600
+    # cpuset: "12,13"
+    # cpus: 2.0
+    # cpu_shares: 4096
+    # oom_score_adj: -600
     # ulimits:
     #   rtprio: 99
     #   memlock: -1
@@ -495,10 +495,10 @@ services:
 #        --client-num-rx-antennas 1 --client-num-tx-antennas 1
     depends_on:
       - du_e1
-    cpuset: "14,15"
-    cpus: 2.0
-    cpu_shares: 4096
-    oom_score_adj: -600
+    # cpuset: "14,15"
+    # cpus: 2.0
+    # cpu_shares: 4096
+    # oom_score_adj: -600
     # ulimits:
     #   rtprio: 99
     #   memlock: -1
@@ -540,10 +540,10 @@ services:
 # -E --rfsim --num-ues 4
     depends_on:
       - du_e1
-    cpuset: "16,17"
-    cpus: 2.0
-    cpu_shares: 4096
-    oom_score_adj: -600
+    # cpuset: "16,17"
+    # cpus: 2.0
+    # cpu_shares: 4096
+    # oom_score_adj: -600
     # ulimits:
     #   rtprio: 99
     #   memlock: -1
