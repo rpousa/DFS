@@ -17,7 +17,7 @@ thread-pool: "-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1"
 #thread-pool: "-1,-1"
 
 log_config :
-  global_log_level: info
+  global_log_level: debug
   hw_log_level: debug
   phy_log_level: debug
   mac_log_level: info
