@@ -404,8 +404,6 @@ services:
         --log_config.global_log_options level,nocolor,time
         --log_config.global_log_level info
         --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
-#        --client-num-rx-antennas 1 --client-num-tx-antennas 1
-# -E --rfsim --num-ues 4
     depends_on:
       - du_e1
     cpuset: "10,11"
@@ -448,18 +446,16 @@ services:
         --log_config.global_log_options level,nocolor,time
         --log_config.global_log_level info
         --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
-#        --client-num-rx-antennas 1 --client-num-tx-antennas 1
-
     depends_on:
       - du_e1
     cpuset: "12,13"
     cpus: 2.0
     cpu_shares: 4096
     oom_score_adj: -600
-    # ulimits:
+    ulimits:
+       memlock: -1
+       nofile: 1048576
     #   rtprio: 99
-    #   memlock: -1
-    #   nofile: 1048576
     command: >
       sh -c "sleep 1 &&
              /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem 2>&1 "
@@ -492,7 +488,6 @@ services:
         --ssb 516 
         --log_config.global_log_options level,nocolor,time
         --log_config.global_log_level info
-#        --client-num-rx-antennas 1 --client-num-tx-antennas 1
     depends_on:
       - du_e1
     cpuset: "14,15"
@@ -500,9 +495,9 @@ services:
     cpu_shares: 4096
     oom_score_adj: -600
     ulimits:
-    #   rtprio: 99
-    #   memlock: -1
-       nofile: 1048576
+      memlock: -1
+      nofile: 1048576
+      #   rtprio: 99
     command: >
       sh -c "sleep 1 &&
              /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem 2>&1 "
@@ -535,19 +530,16 @@ services:
         --log_config.global_log_options level,nocolor,time
         --log_config.global_log_level info
         --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
-#        --client-num-rx-antennas 1 --client-num-tx-antennas 1
-#       --client-num-rx-antennas 2 --client-num-tx-antennas 2
-# -E --rfsim --num-ues 4
     depends_on:
       - du_e1
     cpuset: "16,17"
     cpus: 2.0
     cpu_shares: 4096
     oom_score_adj: -600
-    # ulimits:
+    ulimits:
+      memlock: -1
+      nofile: 1048576
     #   rtprio: 99
-    #   memlock: -1
-    #   nofile: 1048576
     command: >
       sh -c "sleep 1 &&
              /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem 2>&1 "
