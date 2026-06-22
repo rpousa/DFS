@@ -239,7 +239,6 @@ services:
         --gNBs.[0].gNB_DU_ID 0xe01
         --gNBs.[0].gNB_name gNB-OAI
         --gNBs.[0].nr_cellid 22222222
-        --gNBs.[0].min_rxtxtime 6
         --gNBs.[0].servingCellConfigCommon.[0].physCellId 1
         --MACRLCs.[0].local_n_address 192.168.83.151
         --MACRLCs.[0].remote_n_address 192.168.0.200
@@ -260,6 +259,7 @@ services:
         --vrtsim.timescale 1
         --vrtsim.cirdb 1
         --vrtsim.num_ues 4
+#        --gNBs.[0].min_rxtxtime 6
       #  -E --rfsim        
       #  --rfsimulator.[0].serveraddr server
       #  --rfsimulator.[0].serverport 4043
