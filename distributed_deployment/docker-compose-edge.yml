@@ -259,6 +259,9 @@ services:
         --vrtsim.timescale 1
         --vrtsim.cirdb 1
         --vrtsim.num_ues 4
+        --L1s.[0].max_ldpc_iterations 2
+        --MACRLCs.[0].ul_max_mcs 2
+        --MACRLCs.[0].ulsch_max_frame_inactivity 0
 #        --gNBs.[0].min_rxtxtime 6
       #  -E --rfsim        
       #  --rfsimulator.[0].serveraddr server
