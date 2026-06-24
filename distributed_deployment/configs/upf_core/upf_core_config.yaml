@@ -267,7 +267,7 @@ upf:
       - sNssai: *miot_slice
         dnnUpfInfoList:
           - dnn: "oai.3"
-            dnai_list: ["access", "internet-primary"]
+            dnai_list: ["access", "internet-primary", "internet-miot"]
 
 ## DNN configuration
 dnns:

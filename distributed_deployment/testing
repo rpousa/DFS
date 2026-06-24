@@ -1,11 +1,12 @@
+# testing all ues same container:
  docker exec -t ue_1 ping -I oaitun_ue2 192.168.82.135  # URLLC edge ext_dn
  docker exec -t ue_1 ping -I oaitun_ue1 192.168.72.135  # EMBB centraloffice ext_dn
  docker exec -t ue_1 ping -I oaitun_ue3 192.168.72.31   # MIOT core ext_dn
 
 
 #testing with 4 UEs:
- docker exec -t ue_0 ping -I oaitun_ue1 192.168.72.135 # EMBB centraloffice ext_dn
- docker exec -t ue_1 ping -I oaitun_ue1 192.168.82.135 # URLLC edge ext_dn 
- docker exec -t ue_2 ping -I oaitun_ue1 192.168.72.31  # MIOT core ext_dn
- docker exec -t ue_3 ping -I oaitun_ue1 192.168.72.135 # EMBB centraloffice ext_dn
+ docker exec -t ue_0 ping -I oaitun_ue1 192.168.72.135 # EMBB centraloffice ext_dn 12.1.1.0
+ docker exec -t ue_1 ping -I oaitun_ue1 192.168.82.135 # URLLC edge ext_dn   13.1.1.0
+ docker exec -t ue_2 ping -I oaitun_ue1 192.168.72.31  # MIOT core ext_dn   14.1.1.0
+ docker exec -t ue_3 ping -I oaitun_ue1 192.168.72.135 # EMBB centraloffice ext_dn 12.1.1.0
  

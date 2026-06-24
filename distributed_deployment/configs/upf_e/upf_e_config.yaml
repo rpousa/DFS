@@ -264,7 +264,7 @@ upf:
       - sNssai: *urllc_slice
         dnnUpfInfoList:
           - dnn: "oai.2"
-            dnaiList: ["access", "internet-edge"]
+            dnaiList: ["access", "internet-edge", "internet-urllc"]
       #- sNssai: *miot_slice
       #  dnnUpfInfoList:
       #    - dnn: "oai.3"

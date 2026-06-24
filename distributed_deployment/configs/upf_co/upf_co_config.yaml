@@ -261,7 +261,7 @@ upf:
       - sNssai: *embb_slice1
         dnnUpfInfoList:
           - dnn: "oai"
-            dnaiList: ["access", "internet-co"]
+            dnaiList: ["access", "internet-embb", "internet-co"]
       #- sNssai: *urllc_slice
       #  dnnUpfInfoList:
       #    - dnn: "oai.2"
