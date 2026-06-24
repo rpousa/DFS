@@ -1,4 +1,5 @@
-FROM oaisoftwarealliance/oai-nrf:v2.1.0
+#FROM oaisoftwarealliance/oai-nrf:v2.1.0
+FROM oaisoftwarealliance/oai-nrf:v2.2.1
 
 HEALTHCHECK --interval=10s --timeout=5s --retries=5 CMD pgrep oai_nrf || exit 1
 

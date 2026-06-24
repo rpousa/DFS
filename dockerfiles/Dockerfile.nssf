@@ -1,4 +1,5 @@
-FROM oaisoftwarealliance/oai-nssf:v2.0.1
+#FROM oaisoftwarealliance/oai-nssf:v2.0.1
+FROM oaisoftwarealliance/oai-nssf:v2.2.1
 
 HEALTHCHECK --interval=10s --timeout=5s --retries=5 CMD pgrep oai_nssf || exit 1
 

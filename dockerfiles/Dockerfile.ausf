@@ -1,4 +1,5 @@
-FROM oaisoftwarealliance/oai-ausf:v2.0.1
+#FROM oaisoftwarealliance/oai-ausf:v2.0.1
+FROM oaisoftwarealliance/oai-ausf:v2.2.1
 
 HEALTHCHECK --interval=10s --timeout=5s --retries=5 CMD pgrep oai_ausf || exit 1
 
