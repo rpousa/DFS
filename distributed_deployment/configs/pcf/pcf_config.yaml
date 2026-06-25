@@ -315,7 +315,17 @@ pcf:
     policy_decisions_path: /openair-pcf/policies/policy_decisions
     pcc_rules_path: /openair-pcf/policies/pcc_rules
     traffic_rules_path: /openair-pcf/policies/traffic_rules
-
+  pcf_info:
+    sNssaiPcfInfoList:
+      - sNssai: *embb_slice1
+        dnnPcfInfoList:
+          - dnn: "oai"
+      - sNssai: *urllc_slice
+        dnnPcfInfoList:
+          - dnn: "oai.2"
+      - sNssai: *miot_slice
+        dnnPcfInfoList:
+          - dnn: "oai.3"
 nssf:
   slice_config_path: /openair-nssf/etc/nssf_slice_config.yaml
 
