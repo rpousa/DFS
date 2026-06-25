@@ -21,13 +21,13 @@ services:
       - "192.168.0.200:3306:3306/tcp"
       - "192.168.0.200:33060:33060/tcp"
     volumes:
-      - ./configs/mysql/oai_db.sql:/docker-entrypoint-initdb.d/oai_db.sql
-      - ./configs/pcf/dbs/DnnPolicyDecision.sql:/docker-entrypoint-initdb.d/DnnPolicyDecision.sql
-      - ./configs/pcf/dbs/SupiPolicyDecision.sql:/docker-entrypoint-initdb.d/SupiPolicyDecision.sql
-      - ./configs/pcf/dbs/SlicePolicyDecision.sql:/docker-entrypoint-initdb.d/SlicePolicyDecision.sql
-      - ./configs/pcf/dbs/QosData.sql:/docker-entrypoint-initdb.d/QosData.sql
-      - ./configs/pcf/dbs/TrafficControlDataODB.sql:/docker-entrypoint-initdb.d/TrafficControlDataODB.sql
-      - ./configs/pcf/dbs/PccRuleODB.sql:/docker-entrypoint-initdb.d/PccRuleODB.sql
+      - ./configs/mysql/oai_db_w_pcf.sql:/docker-entrypoint-initdb.d/oai_db.sql
+      # - ./configs/pcf/dbs/DnnPolicyDecision.sql:/docker-entrypoint-initdb.d/DnnPolicyDecision.sql
+      # - ./configs/pcf/dbs/SupiPolicyDecision.sql:/docker-entrypoint-initdb.d/SupiPolicyDecision.sql
+      # - ./configs/pcf/dbs/SlicePolicyDecision.sql:/docker-entrypoint-initdb.d/SlicePolicyDecision.sql
+      # - ./configs/pcf/dbs/QosData.sql:/docker-entrypoint-initdb.d/QosData.sql
+      # - ./configs/pcf/dbs/TrafficControlDataODB.sql:/docker-entrypoint-initdb.d/TrafficControlDataODB.sql
+      # - ./configs/pcf/dbs/PccRuleODB.sql:/docker-entrypoint-initdb.d/PccRuleODB.sql
     environment:
       - MYSQL_ROOT_PASSWORD=linux
       - MYSQL_DATABASE=oai_db
@@ -39,7 +39,7 @@ services:
     oom_score_adj: 200
     command: >
       sh -c "rm -rf /var/lib/mysql/* &&
-             mysqld -u test --initialize-insecure --init-file=/docker-entrypoint-initdb.d/oai_db.sql &&
+             mysqld -u test --initialize-insecure --init-file=/docker-entrypoint-initdb.d/oai_db.sql --log-error-verbosity=3 &&
              mysqld -u test"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
