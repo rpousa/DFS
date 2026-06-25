@@ -188,3 +188,22 @@ CREATE INDEX `object_id_i`
 CREATE INDEX `index_i`
   ON `PccRuleODB_RefQosMon` (`index`);
 
+INSERT INTO `PccRuleODB` (
+  `FlowInfos`,`FlowInfosIsSet`,`AppId`,`AppIdIsSet`,`AppDescriptor`,`AppDescriptorIsSet`,
+  `ContVer`,`ContVerIsSet`,`PccRuleId`,`Precedence`,`PrecedenceIsSet`,
+  `AfSigProtocol`,`AfSigProtocolIsSet`,`AppReloc`,`AppRelocIsSet`,
+  `RefQosDataIsSet`,`RefAltQosParamsIsSet`,`RefTcDataIsSet`,`RefChgDataIsSet`,
+  `RefChgN3gDataIsSet`,`RefUmDataIsSet`,`RefUmN3gDataIsSet`,
+  `RefCondData`,`RefCondDataIsSet`,`RefQosMonIsSet`,
+  `AddrPreserInd`,`AddrPreserIndIsSet`,`TscaiInputDl`,`TscaiInputDlIsSet`,
+  `TscaiInputUl`,`TscaiInputUlIsSet`,`DdNotifCtrl`,`DdNotifCtrlIsSet`,
+  `DdNotifCtrl2`,`DdNotifCtrl2IsSet`,`DisUeNotif`,`DisUeNotifIsSet`
+) VALUES
+('[{"flowDescription":"permit out ip from any to assigned"}]',1,'',0,'',0,0,0,'rule-embb', 10,1,'',0,0,0,0,0,1,0,0,0,0,'',0,0,0,0,'',0,'',0,'',0,'',0,0,0),
+('[{"flowDescription":"permit out ip from any to assigned"}]',1,'',0,'',0,0,0,'rule-urllc',10,1,'',0,0,0,0,0,1,0,0,0,0,'',0,0,0,0,'',0,'',0,'',0,'',0,0,0),
+('[{"flowDescription":"permit out ip from any to assigned"}]',1,'',0,'',0,0,0,'rule-miot', 10,1,'',0,0,0,0,0,1,0,0,0,0,'',0,0,0,0,'',0,'',0,'',0,'',0,0,0);
+
+INSERT INTO `PccRuleODB_RefTcData` (`object_id`, `index`, `value`) VALUES
+('rule-embb',  0, 'steering-scenario-embb'),
+('rule-urllc', 0, 'steering-scenario-urllc'),
+('rule-miot',  0, 'steering-scenario-miot');

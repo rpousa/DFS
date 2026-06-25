@@ -28,3 +28,17 @@ CREATE INDEX `object_id_i`
 CREATE INDEX `index_i`
   ON `SupiPolicyDecision_PccRuleIds` (`index`);
 
+
+INSERT INTO `SupiPolicyDecision` (`Supi`, `SupiIsSet`, `PccRuleIdsIsSet`) VALUES
+('208950000000110', 1, 1), ('208950000000111', 1, 1),
+('208950000000112', 1, 1), ('208950000000113', 1, 1),
+('208950000000214', 1, 1), ('208950000000215', 1, 1),
+('208950000000216', 1, 1), ('208950000000217', 1, 1),
+('208950000000318', 1, 1), ('208950000000319', 1, 1);
+
+INSERT INTO `SupiPolicyDecision_PccRuleIds` (`object_id`, `index`, `value`) VALUES
+('208950000000110', 0, 'rule-embb'),  ('208950000000111', 0, 'rule-embb'),
+('208950000000112', 0, 'rule-embb'),  ('208950000000113', 0, 'rule-embb'),
+('208950000000214', 0, 'rule-urllc'), ('208950000000215', 0, 'rule-urllc'),
+('208950000000216', 0, 'rule-urllc'), ('208950000000217', 0, 'rule-urllc'),
+('208950000000318', 0, 'rule-miot'),  ('208950000000319', 0, 'rule-miot');

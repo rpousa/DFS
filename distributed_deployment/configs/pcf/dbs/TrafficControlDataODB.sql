@@ -33,3 +33,17 @@ CREATE TABLE `TrafficControlDataODB` (
   `MulAccCtrl` TEXT NOT NULL,
   `MulAccCtrlIsSet` TINYINT(1) NOT NULL)
  ENGINE=InnoDB;
+
+ INSERT INTO `TrafficControlDataODB` (
+  `TcId`,`FlowStatus`,`FlowStatusIsSet`,`RedirectInfo`,`RedirectInfoIsSet`,
+  `AddRedirectInfo`,`AddRedirectInfoIsSet`,`MuteNotif`,`MuteNotifIsSet`,
+  `TrafficSteeringPolIdDl`,`TrafficSteeringPolIdDlIsSet`,
+  `TrafficSteeringPolIdUl`,`TrafficSteeringPolIdUlIsSet`,
+  `RouteToLocs`,`RouteToLocsIsSet`,`TraffCorreInd`,`TraffCorreIndIsSet`,
+  `UpPathChgEvent`,`UpPathChgEventIsSet`,`SteerFun`,`SteerFunIsSet`,
+  `SteerModeDl`,`SteerModeDlIsSet`,`SteerModeUl`,`SteerModeUlIsSet`,
+  `MulAccCtrl`,`MulAccCtrlIsSet`
+) VALUES
+('steering-scenario-embb', '',0,'',0,'',0,0,0,'',0,'',0,'[{"dnai":"internet-embb"}]', 1,0,0,'',0,'',0,'',0,'',0,'',0),
+('steering-scenario-urllc','',0,'',0,'',0,0,0,'',0,'',0,'[{"dnai":"internet-urllc"}]',1,0,0,'',0,'',0,'',0,'',0,'',0),
+('steering-scenario-miot', '',0,'',0,'',0,0,0,'',0,'',0,'[{"dnai":"internet-miot"}]', 1,0,0,'',0,'',0,'',0,'',0,'',0);
