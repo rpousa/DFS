@@ -261,8 +261,8 @@ services:
         --MACRLCs.[0].ul_max_mcs 6
         --MACRLCs.[0].ulsch_max_frame_inactivity 0
         --log_config.hw_log_level debug
-        --log_config.phy_log_level debug
-        --log_config.mac_log_level debug
+# --log_config.phy_log_level debug
+# --log_config.mac_log_level debug
 #        --gNBs.[0].min_rxtxtime 6
       #  -E --rfsim        
       #  --rfsimulator.[0].serveraddr server
