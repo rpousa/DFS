@@ -1,5 +1,5 @@
 #FROM oaisoftwarealliance/oai-pcf:v2.0.1
-FROM oaisoftwarealliance/oai-pcf:v2.2.1
+FROM oai-pcf:v2.2.1-dnnpatch
 
 HEALTHCHECK --interval=10s --timeout=5s --retries=5 CMD /openair-pcf/bin/healthcheck.sh
 
