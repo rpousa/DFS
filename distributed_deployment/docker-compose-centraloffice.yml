@@ -40,14 +40,14 @@ services:
     environment:
       - ETH0_IP=192.168.61.144
       - ETH1_IP=192.168.72.144
-    cpuset: "14-17"
-    cpus: 4.0
-    cpu_shares: 2048
-    oom_score_adj: -500
-    ulimits:
-      rtprio: 99
-      memlock: -1
-      nofile: 1048576
+    # cpuset: "14-17"
+    # cpus: 4.0
+    # cpu_shares: 2048
+    # oom_score_adj: -500
+    # ulimits:
+    #   rtprio: 99
+    #   memlock: -1
+    #   nofile: 1048576
     # sysctls:
     #   - net.core.rmem_max=33554432
     #   - net.core.wmem_max=33554432 
@@ -95,9 +95,9 @@ services:
       - ./configs/ext_dn:/tmp
     depends_on:
       - upf_co
-    cpuset: "18-19"
-    cpus: 1.0
-    cpu_shares: 512
+    # cpuset: "18-19"
+    # cpus: 1.0
+    # cpu_shares: 512
     command:
       - /bin/bash
       - -c 
@@ -184,14 +184,14 @@ services:
 #        --MACRLCs.[0].remote_n_address_f1u 192.168.74.140
     depends_on:
       - cuup_co
-    cpuset: "4-9"
-    cpus: 6.0
-    cpu_shares: 8192            
-    oom_score_adj: -700
-    ulimits:
-      rtprio: 99
-      memlock: -1
-      nofile: 1048576
+    # cpuset: "4-9"
+    # cpus: 6.0
+    # cpu_shares: 8192            
+    # oom_score_adj: -700
+    # ulimits:
+    #   rtprio: 99
+    #   memlock: -1
+    #   nofile: 1048576
     # sysctls:
     #   - net.core.rmem_max=33554432
     #   - net.core.wmem_max=33554432
@@ -251,14 +251,14 @@ services:
         --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.61.140/26
         --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.61.140/26
       #  --gNBs.[0].NETWORK_INTERFACES.GNB_PORT_FOR_NGU 2155
-    cpuset: "10-13"
-    cpus: 4.0
-    cpu_shares: 4096
-    oom_score_adj: -600
-    ulimits:
-      rtprio: 99
-      memlock: -1
-      nofile: 1048576
+    # cpuset: "10-13"
+    # cpus: 4.0
+    # cpu_shares: 4096
+    # oom_score_adj: -600
+    # ulimits:
+    #   rtprio: 99
+    #   memlock: -1
+    #   nofile: 1048576
     # sysctls:
     #   - net.core.rmem_max=33554432
     #   - net.core.wmem_max=33554432 
