@@ -33,6 +33,12 @@ for arg in "$@"; do
     full)
       MODE="full"
       ;;
+    edge)
+      MODE="edeg"
+      ;;
+    co)
+      MODE="centraloffice"
+      ;;
     *)
       echo "Unknown option: $arg"
       ;;
@@ -42,6 +48,10 @@ done
 # ---- define image sets ----
 if [ "$MODE" == "core" ]; then
   IMAGES=(ext_dn mysql amf smf nrf ausf udm udr upf nssf pcf cucp cu gnb comnetsemu_flexric)
+elif [ "$MODE" == "edge" ]; then
+  IMAGES=(ext_dn upf  gnb ue cu du cuup )
+elif [ "$MODE" == "full" ]; then
+  IMAGES=(ext_dn mysql amf smf nrf ausf udm udr upf nssf pcf gnb ue cu du cuup cucp onos proxy_l2 comnetsemu_flexric)
 elif [ "$MODE" == "full" ]; then
   IMAGES=(ext_dn mysql amf smf nrf ausf udm udr upf nssf pcf gnb ue cu du cuup cucp onos proxy_l2 comnetsemu_flexric)
 else
