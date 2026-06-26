@@ -79,16 +79,16 @@ CREATE TABLE `AccessAndMobilitySubscriptionData` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 INSERT INTO `AccessAndMobilitySubscriptionData` (`ueid`, `servingPlmnid`, `nssai`) VALUES
-('208950000000110', '20895','{\"defaultSingleNssais\": [{\"sst\": 1, \"sd\": \"1\"}]}'),
-('208950000000111', '20895','{\"defaultSingleNssais\": [{\"sst\": 1, \"sd\": \"1\"}]}'),
-('208950000000112', '20895','{\"defaultSingleNssais\": [{\"sst\": 1, \"sd\": \"1\"}]}'),
-('208950000000113', '20895','{\"defaultSingleNssais\": [{\"sst\": 1, \"sd\": \"1\"}]}'),
-('208950000000214', '20895','{\"defaultSingleNssais\": [{\"sst\": 2, \"sd\": \"1\"}]}'),
-('208950000000215', '20895','{\"defaultSingleNssais\": [{\"sst\": 2, \"sd\": \"1\"}]}'),
-('208950000000216', '20895','{\"defaultSingleNssais\": [{\"sst\": 2, \"sd\": \"1\"}]}'),
-('208950000000217', '20895','{\"defaultSingleNssais\": [{\"sst\": 2, \"sd\": \"1\"}]}'),
-('208950000000318', '20895','{\"defaultSingleNssais\": [{\"sst\": 3, \"sd\": \"1\"}]}'),
-('208950000000319', '20895','{\"defaultSingleNssais\": [{\"sst\": 3, \"sd\": \"1\"}]}');
+('208950000000110', '20895','{\"defaultSingleNssais\": [{\"sst\": 1, \"sd\": \"000001\"}]}'),
+('208950000000111', '20895','{\"defaultSingleNssais\": [{\"sst\": 1, \"sd\": \"000001\"}]}'),
+('208950000000112', '20895','{\"defaultSingleNssais\": [{\"sst\": 1, \"sd\": \"000001\"}]}'),
+('208950000000113', '20895','{\"defaultSingleNssais\": [{\"sst\": 1, \"sd\": \"000001\"}]}'),
+('208950000000214', '20895','{\"defaultSingleNssais\": [{\"sst\": 2, \"sd\": \"000001\"}]}'),
+('208950000000215', '20895','{\"defaultSingleNssais\": [{\"sst\": 2, \"sd\": \"000001\"}]}'),
+('208950000000216', '20895','{\"defaultSingleNssais\": [{\"sst\": 2, \"sd\": \"000001\"}]}'),
+('208950000000217', '20895','{\"defaultSingleNssais\": [{\"sst\": 2, \"sd\": \"000001\"}]}'),
+('208950000000318', '20895','{\"defaultSingleNssais\": [{\"sst\": 3, \"sd\": \"000001\"}]}'),
+('208950000000319', '20895','{\"defaultSingleNssais\": [{\"sst\": 3, \"sd\": \"000001\"}]}');
 -- --------------------------------------------------------
 
 --
