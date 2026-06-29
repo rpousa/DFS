@@ -233,9 +233,10 @@ else
 fi
 
 # Prometheus + Grafana from main compose
-docker compose -f "$COMPOSE_FILE" up -d prometheus grafana
+docker compose -f "$COMPOSE_FILE" up -d prometheus grafana pushgateway
 wait_for_service "prometheus" 30
 wait_for_service "grafana" 30
+wait_for_service "pushgateway" 30
 sleep 5
 
 # Probe cross-machine scrape reachability (warning-only)

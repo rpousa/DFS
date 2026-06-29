@@ -3,17 +3,6 @@
 # Exposes node + container metrics to Prometheus on Core (192.168.0.200:9090).
 
 services:
-  pushgateway:
-    image: prom/pushgateway:v1.9.0
-    container_name: pushgateway
-    networks:
-      core_net:
-        ipv4_address: 192.168.71.182
-    command: ["--web.listen-address=:9092"]     
-    ports:
-      - "192.168.0.200:9092:9092/tcp"
-    restart: unless-stopped
-  
   node_exporter:
     image: prom/node-exporter:v1.8.2
     container_name: node_exporter

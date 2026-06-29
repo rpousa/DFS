@@ -45,5 +45,6 @@ scrape_configs:
   # --- Iperf Slicing  ---
   - job_name: 'slice_iperf'
     honor_labels: true
+    scrape_interval: 2s  
     static_configs:
-      - targets: ['192.168.71.182:9092']
+      - targets: ['192.168.71.182:9091']

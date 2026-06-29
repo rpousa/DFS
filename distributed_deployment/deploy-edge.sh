@@ -325,10 +325,10 @@ else
         && print_info "  ✓ mIoT  → ext_dn_core(Core)" || print_warn "  ✗ mIoT  datapath (cross-machine to Core)"
 
     # Gate 4: pushgateway reachable from Edge
-    if timeout 3 bash -c "echo > /dev/tcp/${CORE_IP}/9092" 2>/dev/null; then
-        print_info "✓ Pushgateway reachable at ${CORE_IP}:9092"
+    if timeout 3 bash -c "echo > /dev/tcp/${CORE_IP}/9099" 2>/dev/null; then
+        print_info "✓ Pushgateway reachable at ${CORE_IP}:9099"
     else
-        print_warn "✗ Pushgateway ${CORE_IP}:9092 unreachable — metrics won't reach Prometheus"
+        print_warn "✗ Pushgateway ${CORE_IP}:9099 unreachable — metrics won't reach Prometheus"
     fi
 
     read -p "Run slice stress test now? (y/N): " -n 1 -r; echo
