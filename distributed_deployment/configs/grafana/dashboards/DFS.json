@@ -211,6 +211,31 @@
           "refId": "B"
         }
       ]
+    },
+    {
+      "id": 15, "type": "timeseries", "title": "Slice throughput (bps)",
+      "gridPos": { "x": 0, "y": 47, "w": 12, "h": 8 },
+      "targets": [ { "expr": "slice_throughput_bps", "legendFormat": "{{slice}}" } ],
+      "fieldConfig": { "defaults": { "unit": "bps" } }
+    },
+    {
+      "id": 16, "type": "timeseries", "title": "URLLC jitter (ms) & packet loss (%)",
+      "gridPos": { "x": 12, "y": 47, "w": 12, "h": 8 },
+      "targets": [
+        { "expr": "slice_jitter_ms",   "legendFormat": "jitter {{slice}}" },
+        { "expr": "slice_loss_percent","legendFormat": "loss {{slice}}" }
+      ]
+    },
+    {
+      "id": 17, "type": "stat", "title": "Latest throughput per slice",
+      "gridPos": { "x": 0, "y": 55, "w": 12, "h": 6 },
+      "targets": [ { "expr": "slice_throughput_bps", "legendFormat": "{{slice}}", "instant": true } ],
+      "fieldConfig": { "defaults": { "unit": "bps" } }
+    },
+    {
+      "id": 18, "type": "timeseries", "title": "eMBB TCP retransmits",
+      "gridPos": { "x": 12, "y": 55, "w": 12, "h": 6 },
+      "targets": [ { "expr": "slice_tcp_retransmits", "legendFormat": "{{slice}}" } ]
     }
   ]
 }

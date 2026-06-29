@@ -300,6 +300,55 @@ else
 fi
 
 # ==========================================
+# Stage 8/8: Slice stress test (optional)
+# ==========================================
+print_stage "Stage 8/8: Slice stress test..."
+
+# Gate 1: need at least the tunnels up
+if [ "${UES_WITH_IP:-0}" -lt 1 ]; then
+    print_warn "No UEs with IP — skipping stress test"
+else
+    # Gate 2: local URLLC iperf server (ext_dn_e) must be listening
+    if docker exec ext_dn_e ss -lntu 2>/dev/null | grep -qE '5202'; then
+        print_info "✓ ext_dn_e iperf servers listening (5201/5202/5203)"
+    else
+        print_warn "✗ ext_dn_e iperf servers not up — check trfgen_entrypoint.sh blocking"
+    fi
+
+    # Gate 3: data-plane reachability probes (per slice, through the tunnel)
+    print_info "Probing per-slice datapaths..."
+    docker exec ue_0 ping -c2 -W2 -I oaitun_ue1 192.168.72.135 >/dev/null 2>&1 \
+        && print_info "  ✓ eMBB  → ext_dn_co  (CO)"   || print_warn "  ✗ eMBB  datapath (cross-machine to CO)"
+    docker exec ue_1 ping -c2 -W2 -I oaitun_ue1 192.168.82.135 >/dev/null 2>&1 \
+        && print_info "  ✓ URLLC → ext_dn_e   (local)" || print_warn "  ✗ URLLC datapath"
+    docker exec ue_2 ping -c2 -W2 -I oaitun_ue1 192.168.72.31  >/dev/null 2>&1 \
+        && print_info "  ✓ mIoT  → ext_dn_core(Core)" || print_warn "  ✗ mIoT  datapath (cross-machine to Core)"
+
+    # Gate 4: pushgateway reachable from Edge
+    if timeout 3 bash -c "echo > /dev/tcp/${CORE_IP}/9092" 2>/dev/null; then
+        print_info "✓ Pushgateway reachable at ${CORE_IP}:9092"
+    else
+        print_warn "✗ Pushgateway ${CORE_IP}:9092 unreachable — metrics won't reach Prometheus"
+    fi
+
+    read -p "Run slice stress test now? (y/N): " -n 1 -r; echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        if [ -f ./slice_stress.sh ]; then
+            chmod +x ./slice_stress.sh
+            read -p "Test duration in seconds [60]: " DUR; DUR=${DUR:-60}
+            ./slice_stress.sh "$DUR"
+            print_info "✓ Stress test complete — raw JSON in ./results/"
+            print_info "  Grafana → http://172.31.54.33:3000  (panels: Slice throughput / URLLC jitter)"
+        else
+            print_error "slice_stress.sh not found in $(pwd)"
+        fi
+    else
+        print_info "Skipped. Run later with: ./slice_stress.sh 60"
+    fi
+fi
+echo ""
+
+# ==========================================
 # Final Verification
 # ==========================================
 echo ""
