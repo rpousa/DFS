@@ -41,3 +41,9 @@ scrape_configs:
   - job_name: prometheus
     static_configs:
       - targets: ['192.168.0.200:9080']
+
+  # --- Iperf Slicing  ---
+  - job_name: 'slice_iperf'
+    honor_labels: true
+    static_configs:
+      - targets: ['192.168.71.182:9092']

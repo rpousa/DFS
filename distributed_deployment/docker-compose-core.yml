@@ -546,6 +546,15 @@ services:
     # cpu_shares: 128
     restart: unless-stopped
 
+  pushgateway:
+    image: prom/pushgateway:v1.9.0
+    container_name: pushgateway
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.182
+    ports:
+      - "192.168.0.200:9092:9092/tcp"
+
 networks:
   core_net:
     driver: bridge
