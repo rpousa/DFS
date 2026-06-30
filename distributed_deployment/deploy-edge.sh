@@ -22,18 +22,19 @@ EDGE_IP="192.168.0.243"
 COMPOSE_FILE="docker-compose-edge.yml"
 
 echo "================================================"
-echo "Edge: CU-UP + UPF + 2×DU + UEs"
+#echo "Edge: CU-UP + UPF + 2×DU + UEs"
+echo "Edge: CU-UP + UPF + DU + UEs"
 echo "================================================"
 echo "Core machine:           $CORE_IP"
 echo "Centraloffice machine:  $CO_IP"
 echo "Edge (this):            $EDGE_IP"
 echo ""
 echo "Components on this machine:"
-echo "  - CU-UP_e  (gNB_CU_UP_ID=0xe02, E1→Core, F1-U from DU_e2)"
+echo "  - CU-UP_e  (gNB_CU_UP_ID=0xe02, E1→Core)"
 echo "  - UPF_e    (Slice SST=1/SD=3)"
 echo "  - ext_dn_e"
 echo "  - DU_e1    (CellID=22222222, PCI=1, F1-C→Core, F1-U→CU-UP_co@CO)"
-echo "  - DU_e2    (CellID=33333333, PCI=2, F1-C→Core, F1-U→CU-UP_e local)"
+#echo "  - DU_e2    (CellID=33333333, PCI=2, F1-C→Core, F1-U→CU-UP_e local)"
 echo "  - UE_1     (4 UEs → DU_e1 via RFSim)"
 echo ""
 
@@ -228,7 +229,7 @@ wait_for_service "du_e1" 30
 print_info "Waiting for DUs to initialize SCTP + RFSim servers..."
 sleep 20
 
-for du in du_e1 du_e2; do
+for du in du_e1 ; do
     if docker logs "$du" 2>&1 | grep -q "rf device ready"; then
         print_info "✓ $du server listening"
     else
@@ -364,13 +365,13 @@ print_info "================================================"
 echo ""
 print_info "SCTP/UDP ports exposed on $EDGE_IP:"
 print_info "  DU_e1 F1-C:     ${EDGE_IP}:500/sctp"
-print_info "  DU_e2 F1-C:     ${EDGE_IP}:501/sctp"
+#print_info "  DU_e2 F1-C:     ${EDGE_IP}:501/sctp"
 print_info "  CU-UP_e F1-U:   ${EDGE_IP}:2153/udp"
 echo ""
 print_info "Outbound connections this machine initiates:"
 print_info "  CU-UP_e → Core CU-CP:  E1   → ${CORE_IP}:38462/sctp"
 print_info "  DU_e1   → Core CU-CP:  F1-C → ${CORE_IP}:38472/sctp"
-print_info "  DU_e2   → Core CU-CP:  F1-C → ${CORE_IP}:38472/sctp"
+#print_info "  DU_e2   → Core CU-CP:  F1-C → ${CORE_IP}:38472/sctp"
 print_info "  DU_e1   → CO CU-UP:    F1-U → ${CO_IP}:2153/udp  (CROSS-MACHINE GTP-U)"
 print_info "  DU_e1/e2/CU-UP_e → FlexRIC: E2AP → ${CORE_IP}:36421/sctp"
 print_info "  Metrics → Core Grafana: http://${CORE_IP}:3000"
