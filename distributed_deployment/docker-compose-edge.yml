@@ -208,7 +208,7 @@ services:
     hostname: du_e1
     cap_add:
       - NET_ADMIN
-#      - SYS_NICE
+      - SYS_NICE
     networks:
       f1c_net:
         ipv4_address: 192.168.83.151
@@ -258,7 +258,7 @@ services:
         --vrtsim.num_ues 4
         --L1s.[0].max_ldpc_iterations 2
         --MACRLCs.[0].ulsch_max_frame_inactivity 0
-        --MACRLCs.[0].ul_max_mcs 6
+        --MACRLCs.[0].ul_max_mcs 8
         --gNBs.[0].min_rxtxtime 6
 #        --log_config.hw_log_level debug
 #  --vrtsim.cirdb 1
@@ -277,14 +277,14 @@ services:
     depends_on:
       - cuup_e
       - cir-generator
-    # cpuset: "4-9"
-    # cpus: 6.0
-    # cpu_shares: 8192            # absolute top priority — RFSim server
-    # oom_score_adj: -700
-    # ulimits:
-    #   rtprio: 99
-    #   memlock: -1
-    #   nofile: 1048576
+    cpuset: "4-9"
+    cpus: 6.0
+    cpu_shares: 8192            # absolute top priority — RFSim server
+    oom_score_adj: -700
+    ulimits:
+      rtprio: 99
+      memlock: -1
+      nofile: 1048576
     # sysctls:
     #   - net.core.rmem_max=33554432
     #   - net.core.wmem_max=33554432
