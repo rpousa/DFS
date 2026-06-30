@@ -411,14 +411,14 @@ services:
         --ue-nb-ant-tx 2 --ue-nb-ant-rx 2
     depends_on:
       - du_e1
-    cpuset: "10,11"
-    cpus: 2.0
-    cpu_shares: 4096
-    oom_score_adj: -600
-    ulimits:
+    # cpuset: "10,11"
+    # cpus: 2.0
+    # cpu_shares: 4096
+    # oom_score_adj: -600
+    # ulimits:
+    #   memlock: -1
+    #   nofile: 1048576
     #  rtprio: 97
-      memlock: -1
-      nofile: 1048576
     command: >
       sh -c "sleep 1 &&
              /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem 2>&1 "
@@ -453,13 +453,13 @@ services:
         --ue-nb-ant-tx 2 --ue-nb-ant-rx 2
     depends_on:
       - du_e1
-    cpuset: "12,13"
-    cpus: 2.0
-    cpu_shares: 4096
-    oom_score_adj: -600
-    ulimits:
-       memlock: -1
-       nofile: 1048576
+    # cpuset: "12,13"
+    # cpus: 2.0
+    # cpu_shares: 4096
+    # oom_score_adj: -600
+    # ulimits:
+    #    memlock: -1
+    #    nofile: 1048576
     #   rtprio: 97
     command: >
       sh -c "sleep 1 &&
@@ -495,13 +495,13 @@ services:
         --log_config.global_log_level info
     depends_on:
       - du_e1
-    cpuset: "14,15"
-    cpus: 2.0
-    cpu_shares: 4096
-    oom_score_adj: -600
-    ulimits:
-      memlock: -1
-      nofile: 1048576
+    # cpuset: "14,15"
+    # cpus: 2.0
+    # cpu_shares: 4096
+    # oom_score_adj: -600
+    # ulimits:
+    #   memlock: -1
+    #   nofile: 1048576
     #  rtprio: 97
     command: >
       sh -c "sleep 1 &&
@@ -537,13 +537,13 @@ services:
         --ue-nb-ant-tx 2 --ue-nb-ant-rx 2
     depends_on:
       - du_e1
-    cpuset: "16,17"
-    cpus: 2.0
-    cpu_shares: 4096
-    oom_score_adj: -600
-    ulimits:
-      memlock: -1
-      nofile: 1048576
+    # cpuset: "16,17"
+    # cpus: 2.0
+    # cpu_shares: 4096
+    # oom_score_adj: -600
+    # ulimits:
+    #   memlock: -1
+    #   nofile: 1048576
     #  rtprio: 97
     command: >
       sh -c "sleep 1 &&
