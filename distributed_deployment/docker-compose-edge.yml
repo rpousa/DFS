@@ -207,8 +207,8 @@ services:
     container_name: du_e1
     hostname: du_e1
     cap_add:
-      - SYS_NICE
       - NET_ADMIN
+#      - SYS_NICE
     networks:
       f1c_net:
         ipv4_address: 192.168.83.151
@@ -277,14 +277,14 @@ services:
     depends_on:
       - cuup_e
       - cir-generator
-    cpuset: "4-9"
-    cpus: 6.0
-    cpu_shares: 8192            # absolute top priority — RFSim server
-    oom_score_adj: -700
-    ulimits:
-      rtprio: 99
-      memlock: -1
-      nofile: 1048576
+    # cpuset: "4-9"
+    # cpus: 6.0
+    # cpu_shares: 8192            # absolute top priority — RFSim server
+    # oom_score_adj: -700
+    # ulimits:
+    #   rtprio: 99
+    #   memlock: -1
+    #   nofile: 1048576
     # sysctls:
     #   - net.core.rmem_max=33554432
     #   - net.core.wmem_max=33554432
