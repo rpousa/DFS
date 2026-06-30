@@ -416,6 +416,12 @@ services:
     command: >
       sh -c "sleep 5 &&
              /usr/local/bin/event_ric_watchdog.sh"
+    healthcheck:
+      test: ["CMD-SHELL", "ss -Sln | grep -q ':36421' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   # ==========================================
   # CU-CP (Control Plane only)
@@ -509,6 +515,12 @@ services:
     # cpus: 0.5
     # cpu_shares: 128
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9080/-/healthy"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   # ==========================================
   # Observability: Grafana (dashboards)
@@ -545,6 +557,12 @@ services:
     # cpus: 0.5
     # cpu_shares: 128
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 25s
 
   pushgateway:
     image: prom/pushgateway:v1.9.0
@@ -556,7 +574,12 @@ services:
     ports:
       - "192.168.0.200:9099:9091/tcp"
     restart: unless-stopped
-
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9091/-/healthy"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 networks:
   core_net:
