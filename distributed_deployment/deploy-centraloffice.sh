@@ -158,18 +158,18 @@ sleep 5
 echo ""
 
 # Stage 3/5: DU_co (F1-C to Core, F1-U to local CU-UP_co)
-print_stage "Stage 3/5: Starting DU_co..."
-docker compose -f "$COMPOSE_FILE" up -d du_co
-wait_for_service "du_co" 30
-print_info "Waiting for DU_co to initialize SCTP F1-C + RFSimulator server..."
-sleep 20
+# print_stage "Stage 3/5: Starting DU_co..."
+# docker compose -f "$COMPOSE_FILE" up -d du_co
+# wait_for_service "du_co" 30
+# print_info "Waiting for DU_co to initialize SCTP F1-C + RFSimulator server..."
+# sleep 20
 
-if docker logs du_co 2>&1 | grep -q "Running as server"; then
-    print_info "✓ DU_co RFSimulator server listening"
-else
-    print_warn "⚠ DU_co RFSimulator status unclear — check logs"
-fi
-echo ""
+# if docker logs du_co 2>&1 | grep -q "Running as server"; then
+#     print_info "✓ DU_co RFSimulator server listening"
+# else
+#     print_warn "⚠ DU_co RFSimulator status unclear — check logs"
+# fi
+# echo ""
 
 # Stage 4/5: Dynamic SCTP Routing Fix
 print_stage "Stage 4/5: Applying dynamic SCTP and F1u routing fix..."
