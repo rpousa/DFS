@@ -257,11 +257,10 @@ services:
         --vrtsim.timescale 1
         --vrtsim.num_ues 4
         --L1s.[0].max_ldpc_iterations 2
-      
         --MACRLCs.[0].ulsch_max_frame_inactivity 0
-        --log_config.hw_log_level debug
-      #  --MACRLCs.[0].ul_max_mcs 10
-      #  --gNBs.[0].min_rxtxtime 8
+        --MACRLCs.[0].ul_max_mcs 10
+        --gNBs.[0].min_rxtxtime 10
+#        --log_config.hw_log_level debug
 #  --vrtsim.cirdb 1
 # --log_config.phy_log_level debug
 # --log_config.mac_log_level debug
