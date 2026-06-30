@@ -334,7 +334,6 @@ else
     read -p "Run slice stress test now? (y/N): " -n 1 -r; echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         if [ -f ./slice_stress.sh ]; then
-            chmod +x ./slice_stress.sh
             read -p "Test duration in seconds [60]: " DUR; DUR=${DUR:-60}
             ./slice_stress.sh "$DUR"
             print_info "✓ Stress test complete — raw JSON in ./results/"
