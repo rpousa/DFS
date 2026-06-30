@@ -258,8 +258,8 @@ services:
         --vrtsim.num_ues 4
         --L1s.[0].max_ldpc_iterations 2
         --MACRLCs.[0].ulsch_max_frame_inactivity 0
-      #  --MACRLCs.[0].ul_max_mcs 8
-      #  --gNBs.[0].min_rxtxtime 6
+        --MACRLCs.[0].ul_max_mcs 8
+        --gNBs.[0].min_rxtxtime 6
 #        --log_config.hw_log_level debug
 #  --vrtsim.cirdb 1
 # --log_config.phy_log_level debug
@@ -411,13 +411,13 @@ services:
         --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
     depends_on:
       - du_e1
-    # cpuset: "10,11"
-    # cpus: 2.0
-    # cpu_shares: 4096
-    # oom_score_adj: -600
-    # ulimits:
-    #   memlock: -1
-    #   nofile: 1048576
+    cpuset: "10,11"
+    cpus: 2.0
+    cpu_shares: 4096
+    oom_score_adj: -600
+    ulimits:
+       memlock: -1
+       nofile: 1048576
     #  rtprio: 97
     command: >
       sh -c "sleep 1 &&
@@ -453,13 +453,13 @@ services:
         --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
     depends_on:
       - du_e1
-    # cpuset: "12,13"
-    # cpus: 2.0
-    # cpu_shares: 4096
-    # oom_score_adj: -600
-    # ulimits:
-    #    memlock: -1
-    #    nofile: 1048576
+    cpuset: "12,13"
+    cpus: 2.0
+    cpu_shares: 4096
+    oom_score_adj: -600
+    ulimits:
+        memlock: -1
+        nofile: 1048576
     #   rtprio: 97
     command: >
       sh -c "sleep 1 &&
@@ -495,13 +495,13 @@ services:
         --log_config.global_log_level info
     depends_on:
       - du_e1
-    # cpuset: "14,15"
-    # cpus: 2.0
-    # cpu_shares: 4096
-    # oom_score_adj: -600
-    # ulimits:
-    #   memlock: -1
-    #   nofile: 1048576
+    cpuset: "14,15"
+    cpus: 2.0
+    cpu_shares: 4096
+    oom_score_adj: -600
+    ulimits:
+       memlock: -1
+       nofile: 1048576
     #  rtprio: 97
     command: >
       sh -c "sleep 1 &&
@@ -537,13 +537,13 @@ services:
         --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
     depends_on:
       - du_e1
-    # cpuset: "16,17"
-    # cpus: 2.0
-    # cpu_shares: 4096
-    # oom_score_adj: -600
-    # ulimits:
-    #   memlock: -1
-    #   nofile: 1048576
+    cpuset: "16,17"
+    cpus: 2.0
+    cpu_shares: 4096
+    oom_score_adj: -600
+    ulimits:
+      memlock: -1
+      nofile: 1048576
     #  rtprio: 97
     command: >
       sh -c "sleep 1 &&

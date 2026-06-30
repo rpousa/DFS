@@ -12,8 +12,8 @@ uicc0:
       nssai_sst: 1
       nssai_sd: 1
 
-thread-pool: "-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1"
-#thread-pool: "-1,-1"
+#thread-pool: "-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1"
+thread-pool: "-1,-1"
 
 log_config :
   global_log_level: info
