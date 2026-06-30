@@ -41,7 +41,9 @@ services:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
       - ${DOCKER_ROOT_DIR:-/var/lib/docker}:/var/lib/docker:ro
       - /dev/disk:/dev/disk:ro
+      - /var/lib/docker/:/var/lib/docker:ro 
     command:
+      - --docker_only=true
       - --port=8081
       - --housekeeping_interval=5s
       - --docker_only=true
