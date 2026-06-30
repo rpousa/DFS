@@ -7,7 +7,7 @@ services:
     image: oaisoftwarealliance/cir-generator:v0.0.1
     container_name: cir_gen_edge
     environment:
-      GENERATOR_ARGS: "--models TDL-A --antennas 1x1 --delay-spreads 1.0 --speeds 0 --fs-hz 46080000 --fc-hz 3319680000"
+      GENERATOR_ARGS: "--models TDL-A --antennas 2x2 --delay-spreads 1.0 --speeds 0 --fs-hz 46080000 --fc-hz 3319680000"
       OUTPUT: "--out /opt/output/cir_db.bin"
     volumes:
       - cirdb_data:/opt/output
@@ -408,7 +408,7 @@ services:
         --ssb 516 
         --log_config.global_log_options level,nocolor,time
         --log_config.global_log_level info
-        --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
+        --ue-nb-ant-tx 2 --ue-nb-ant-rx 2
     depends_on:
       - du_e1
     cpuset: "10,11"
@@ -450,7 +450,7 @@ services:
         --ssb 516 
         --log_config.global_log_options level,nocolor,time
         --log_config.global_log_level info
-        --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
+        --ue-nb-ant-tx 2 --ue-nb-ant-rx 2
     depends_on:
       - du_e1
     cpuset: "12,13"
@@ -488,7 +488,7 @@ services:
         -E --device.name vrtsim
         --vrtsim.role client
         --vrtsim.ue_id 2
-        --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
+        --ue-nb-ant-tx 2 --ue-nb-ant-rx 2
         -r 106 --numerology 1 --band 78 -C 3319680000 
         --ssb 516 
         --log_config.global_log_options level,nocolor,time
@@ -534,7 +534,7 @@ services:
         --ssb 516 
         --log_config.global_log_options level,nocolor,time
         --log_config.global_log_level info
-        --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
+        --ue-nb-ant-tx 2 --ue-nb-ant-rx 2
     depends_on:
       - du_e1
     cpuset: "16,17"
