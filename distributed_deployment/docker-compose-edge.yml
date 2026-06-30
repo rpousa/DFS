@@ -258,8 +258,8 @@ services:
         --vrtsim.num_ues 4
         --L1s.[0].max_ldpc_iterations 2
         --MACRLCs.[0].ulsch_max_frame_inactivity 0
-        --MACRLCs.[0].ul_max_mcs 8
-        --gNBs.[0].min_rxtxtime 6
+      #  --MACRLCs.[0].ul_max_mcs 8
+      #  --gNBs.[0].min_rxtxtime 6
 #        --log_config.hw_log_level debug
 #  --vrtsim.cirdb 1
 # --log_config.phy_log_level debug
