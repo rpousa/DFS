@@ -24,8 +24,8 @@ gNBs:
     nr_cellid: 12345678
     ##### Physical parameters:
     min_rxtxtime: 6
-    pusch_AntennaPorts: 1
-    pdsch_AntennaPorts_XP: 1
+    pusch_AntennaPorts: 2
+    pdsch_AntennaPorts_XP: 2
 
     servingCellConfigCommon:
       #spCellConfigCommon
