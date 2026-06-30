@@ -198,9 +198,9 @@ vrtsim:
   # Channel mode: exactly one of the three modes below should be active.
   #
   # No channel - plain passthrough, no impairments:
-  #cirdb: 0
-  #chanmod: 0
-  #num_ues: 4
+  cirdb: 0
+  chanmod: 0
+  num_ues: 4
   #
   # Built-in channel model defined in the channelmod: section above:
   # chanmod: 1
@@ -216,8 +216,8 @@ vrtsim:
   # cir_db.bin. No external emitter required. Generate the database offline
   # with cir_generator.py. Use cirdb-path to point to the directory containing
   # cir_db.bin and cir_db.yaml.
-  cirdb_file: /cirdb/cir_db.bin
-  cirdb_yaml: /cirdb/cir_db.yaml  
+  #cirdb_file: /cirdb/cir_db.bin
+  #cirdb_yaml: /cirdb/cir_db.yaml  
   #
   # Per-UE channel configuration for multi-UE operation
   ue_config:
