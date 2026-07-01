@@ -257,7 +257,10 @@ echo ""
 
 # Stage 5/7: UEs (connect to DU_e1)
 print_stage "Stage 5/7: Starting 4 UEs (→ DU_e1)..."
-docker compose -f "$COMPOSE_FILE" up -d ue_0 ue_1 ue_2 ue_3 
+for u in ue_0 ue_1 ue_2 ue_3; do
+  docker compose -f "$COMPOSE_FILE" up -d "$u"; sleep 8
+  print_info "Launched $u ..."
+done
 wait_for_service "ue_0" 30
 print_info "Waiting 30s for UE attach + PDU session..."
 sleep 30

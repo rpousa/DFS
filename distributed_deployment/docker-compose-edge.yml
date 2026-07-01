@@ -180,8 +180,8 @@ services:
         --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.81.140/26
         --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.81.140/26
     #    --gNBs.[0].NETWORK_INTERFACES.GNB_PORT_FOR_NGU 2155
-    cpuset: "18-21"
-    cpus: 4.0
+    cpuset: "20-21"
+    cpus: 2.0
     cpu_shares: 4096
     oom_score_adj: -600
     ulimits:
@@ -277,8 +277,8 @@ services:
     depends_on:
       - cuup_e
       - cir-generator
-    cpuset: "4-9"
-    cpus: 6.0
+    cpuset: "4-7"
+    cpus: 4.0
     cpu_shares: 8192            # absolute top priority — RFSim server
     oom_score_adj: -700
     ulimits:
@@ -292,88 +292,6 @@ services:
       sh -c "sleep 5 &&
              /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem 2>&1 "
 #             stdbuf -oL tee /opt/oai-gnb/logs/du_e1_stdout.log"
-
-#   # ==========================================
-#   # DU_e2 (CellID=33333333, PCI=2)
-#   # F1-C → CU-CP @ Core (192.168.0.200:38472)
-#   # F1-U → CU-UP_e (local, 192.168.84.140:2153)
-#   # ==========================================
-
-#   du_e2:
-#     image: du:comnetsemu
-#     container_name: du_e2
-#     hostname: du_e2
-#     cap_add:
-#       - SYS_NICE
-#       - NET_ADMIN
-#     networks:
-#       f1c_net:
-#         ipv4_address: 192.168.83.161
-#       ran_net:
-#         ipv4_address: 192.168.80.161
-#       core_net:
-#         ipv4_address: 192.168.81.161
-#       #f1u_net:
-#       #  ipv4_address: 192.168.84.161
-#     ports:
-#       - "192.168.0.243:501:501/sctp"         # F1-C local SCTP port (different from DU_e1)
-#       - "192.168.0.243:2163:2152/udp"        # F1-U local GTP-U port
-#     devices:
-#       - /dev/net/tun:/dev/net/tun
-#     volumes:
-#       - ./configs/du_e2/gnb-du.sa.band78.106prb.rfsim.conf:/opt/oai-gnb/etc/gnb.conf
-#       - ./logs/du_e2:/opt/oai-gnb/logs
-#     environment:
-#       USE_ADDITIONAL_OPTIONS: >-
-#         --e2_agent.near_ric_ip_addr 192.168.0.200
-#         --e2_agent.sm_dir /usr/local/lib/flexric/
-#         --telnetsrv --telnetsrv.shrmod ci
-#         -E --rfsim --Active_gNBs gNB-OAI
-#         --gNBs.[0].gNB_ID 0xe00
-#         --gNBs.[0].gNB_DU_ID 0xe02
-#         --gNBs.[0].gNB_name gNB-OAI
-#         --gNBs.[0].nr_cellid 33333333
-#         --gNBs.[0].min_rxtxtime 6
-#         --gNBs.[0].servingCellConfigCommon.[0].physCellId 2
-#         --MACRLCs.[0].local_n_address 192.168.83.161
-#         --MACRLCs.[0].remote_n_address 192.168.0.200  
-#         --MACRLCs.[0].remote_n_portd 2153
-#         --MACRLCs.[0].tr_s_preference local_L1
-#         --MACRLCs.[0].tr_n_preference f1
-#         --MACRLCs.[0].stats_max_ue 32
-#         --gNBs.[0].TIMERS.t300 1000
-#         --rfsimulator.[0].serveraddr server
-#         --rfsimulator.[0].serverport 4044
-#         --log_config.phy_log_level info
-#         --log_config.mac_log_level info
-#         --MACRLCs.[0].local_n_address_f1u 192.168.81.161
-#         --MACRLCs.[0].local_n_portd 2152
-#         --L1s.[0].L1_tx_thread_core 10
-#         --L1s.[0].L1_rx_thread_core 11
-#         --thread-pool 12,13       
-# #        --MACRLCs.[0].local_n_port_f1u 2157
-# # --gNBs.[0].TIMERS.t301 2000
-# # --gNBs.[0].TIMERS.t310 2000
-# # --gNBs.[0].TIMERS.t311 30000
-# # --gNBs.[0].TIMERS.t319 2000
-# #      --MACRLCs.[0].remote_n_address_f1u 192.168.84.140
-#     cpuset: "10-13"
-#     cpus: 4.0
-#     cpu_shares: 4096
-#     oom_score_adj: -700
-#     ulimits:
-#       rtprio: 99
-#       memlock: -1
-#       nofile: 1048576
-#     # sysctls:
-#     #   - net.core.rmem_max=33554432
-#     #   - net.core.wmem_max=33554432
-#     depends_on:
-#       - cuup_e
-#     command: >
-#       sh -c "sleep 5 &&
-#              /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem 2>&1"
-  #           stdbuf -oL tee /opt/oai-gnb/logs/du_e2_stdout.log"
 
   # ==========================================
   # UE_1 — 10 UEs attached to DU_e1 (RFSimulator)
@@ -411,8 +329,8 @@ services:
         --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
     depends_on:
       - du_e1
-    cpuset: "10,11"
-    cpus: 2.0
+    cpuset: "8-10"
+    cpus: 3.0
     cpu_shares: 4096
     oom_score_adj: -600
     ulimits:
@@ -429,7 +347,7 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
-      - SYS_NICE
+    #  - SYS_NICE
     #privileged: true
     networks:
       ran_net:
@@ -453,14 +371,14 @@ services:
         --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
     depends_on:
       - du_e1
-    cpuset: "12,13"
-    cpus: 2.0
+    cpuset: "11-13"
+    cpus: 3.0
     cpu_shares: 4096
     oom_score_adj: -600
     ulimits:
         memlock: -1
         nofile: 1048576
-        rtprio: 99
+    #    rtprio: 99
     command: >
       sh -c "sleep 1 &&
              /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem 2>&1 "
@@ -471,7 +389,7 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
-      - SYS_NICE
+    #  - SYS_NICE
     #privileged: true
     networks:
       ran_net:
@@ -495,14 +413,14 @@ services:
         --log_config.global_log_level info
     depends_on:
       - du_e1
-    cpuset: "14,15"
-    cpus: 2.0
+    cpuset: "14-16"
+    cpus: 3.0
     cpu_shares: 4096
     oom_score_adj: -600
     ulimits:
        memlock: -1
        nofile: 1048576
-       rtprio: 99
+    #   rtprio: 99
     command: >
       sh -c "sleep 1 &&
              /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem 2>&1 "
@@ -537,14 +455,14 @@ services:
         --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
     depends_on:
       - du_e1
-    cpuset: "16,17"
-    cpus: 2.0
+    cpuset: "17-19"
+    cpus: 3.0
     cpu_shares: 4096
     oom_score_adj: -600
     ulimits:
       memlock: -1
       nofile: 1048576
-      rtprio: 99
+    #  rtprio: 99
     command: >
       sh -c "sleep 1 &&
              /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem 2>&1 "
