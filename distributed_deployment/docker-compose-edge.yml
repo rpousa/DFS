@@ -305,8 +305,8 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
-      - SYS_NICE
-    privileged: true
+    #  - SYS_NICE
+    #privileged: true
     networks:
       ran_net:
         ipv4_address: 192.168.80.168
@@ -329,8 +329,8 @@ services:
         --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
     depends_on:
       - du_e1
-    cpuset: "8-10"
-    cpus: 3.0
+    #cpuset: "8-10"
+    #cpus: 3.0
     cpu_shares: 4096
     oom_score_adj: -600
     ulimits:
@@ -347,7 +347,7 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
-      - SYS_NICE
+    #  - SYS_NICE
     #privileged: true
     networks:
       ran_net:
@@ -371,8 +371,8 @@ services:
         --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
     depends_on:
       - du_e1
-    cpuset: "11-13"
-    cpus: 3.0
+    #cpuset: "11-13"
+    #cpus: 3.0
     cpu_shares: 4096
     oom_score_adj: -600
     ulimits:
@@ -389,7 +389,7 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
-      - SYS_NICE
+    #  - SYS_NICE
     #privileged: true
     networks:
       ran_net:
@@ -413,8 +413,8 @@ services:
         --log_config.global_log_level info
     depends_on:
       - du_e1
-    cpuset: "14-16"
-    cpus: 3.0
+    #cpuset: "14-16"
+    #cpus: 3.0
     cpu_shares: 4096
     oom_score_adj: -600
     ulimits:
@@ -431,7 +431,7 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
-      - SYS_NICE
+    #  - SYS_NICE
     #privileged: true
     networks:
       ran_net:
@@ -455,8 +455,8 @@ services:
         --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
     depends_on:
       - du_e1
-    cpuset: "17-19"
-    cpus: 3.0
+    #cpuset: "17-19"
+    #cpus: 3.0
     cpu_shares: 4096
     oom_score_adj: -600
     ulimits:
