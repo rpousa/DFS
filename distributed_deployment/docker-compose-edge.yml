@@ -305,7 +305,7 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
-    #  - SYS_NICE
+      - SYS_NICE
     #privileged: true
     networks:
       ran_net:
@@ -322,20 +322,22 @@ services:
         -E --device.name vrtsim
         --vrtsim.role client
         --vrtsim.ue_id 0
-        -r 106 --numerology 1 --band 78 -C 3319680000 
+        -r 106 --numerology 1 -C 3319680000 
         --ssb 516 
         --log_config.global_log_options level,nocolor,time
         --log_config.global_log_level debug
         --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
+#        -r 106 --numerology 1 --band 78 -C 3319680000 
+
     depends_on:
       - du_e1
     #cpuset: "8-10"
     #cpus: 3.0
-    cpu_shares: 4096
-    oom_score_adj: -600
-    ulimits:
-       memlock: -1
-       nofile: 1048576
+    #cpu_shares: 4096
+    #oom_score_adj: -600
+    #ulimits:
+    #   memlock: -1
+    #   nofile: 1048576
     #  rtprio: 97
     command: >
       sh -c "sleep 1 &&
@@ -347,7 +349,7 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
-    #  - SYS_NICE
+      - SYS_NICE
     #privileged: true
     networks:
       ran_net:
@@ -364,20 +366,22 @@ services:
         -E --device.name vrtsim
         --vrtsim.role client
         --vrtsim.ue_id 1
-        -r 106 --numerology 1 --band 78 -C 3319680000 
+        -r 106 --numerology 1 -C 3319680000 
         --ssb 516 
         --log_config.global_log_options level,nocolor,time
         --log_config.global_log_level info
         --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
+#        -r 106 --numerology 1 --band 78 -C 3319680000 
+
     depends_on:
       - du_e1
     #cpuset: "11-13"
     #cpus: 3.0
-    cpu_shares: 4096
-    oom_score_adj: -600
-    ulimits:
-        memlock: -1
-        nofile: 1048576
+    # cpu_shares: 4096
+    # oom_score_adj: -600
+    # ulimits:
+    #     memlock: -1
+    #     nofile: 1048576
     #    rtprio: 99
     command: >
       sh -c "sleep 1 &&
@@ -389,7 +393,7 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
-    #  - SYS_NICE
+      - SYS_NICE
     #privileged: true
     networks:
       ran_net:
@@ -407,19 +411,21 @@ services:
         --vrtsim.role client
         --vrtsim.ue_id 2
         --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
-        -r 106 --numerology 1 --band 78 -C 3319680000 
+        -r 106 --numerology 1 -C 3319680000 
         --ssb 516 
         --log_config.global_log_options level,nocolor,time
         --log_config.global_log_level info
+#        -r 106 --numerology 1 --band 78 -C 3319680000 
+
     depends_on:
       - du_e1
     #cpuset: "14-16"
     #cpus: 3.0
-    cpu_shares: 4096
-    oom_score_adj: -600
-    ulimits:
-       memlock: -1
-       nofile: 1048576
+    # cpu_shares: 4096
+    # oom_score_adj: -600
+    # ulimits:
+    #    memlock: -1
+    #    nofile: 1048576
     #   rtprio: 99
     command: >
       sh -c "sleep 1 &&
@@ -431,7 +437,7 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
-    #  - SYS_NICE
+      - SYS_NICE
     #privileged: true
     networks:
       ran_net:
@@ -448,20 +454,22 @@ services:
         -E --device.name vrtsim
         --vrtsim.role client
         --vrtsim.ue_id 3
-        -r 106 --numerology 1 --band 78 -C 3319680000 
+        -r 106 --numerology 1 -C 3319680000 
         --ssb 516 
         --log_config.global_log_options level,nocolor,time
         --log_config.global_log_level info
         --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
+#        -r 106 --numerology 1 --band 78 -C 3319680000 
+
     depends_on:
       - du_e1
     #cpuset: "17-19"
     #cpus: 3.0
-    cpu_shares: 4096
-    oom_score_adj: -600
-    ulimits:
-      memlock: -1
-      nofile: 1048576
+    # cpu_shares: 4096
+    # oom_score_adj: -600
+    # ulimits:
+    #   memlock: -1
+    #   nofile: 1048576
     #  rtprio: 99
     command: >
       sh -c "sleep 1 &&
