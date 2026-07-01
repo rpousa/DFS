@@ -10,6 +10,7 @@ services:
       GENERATOR_ARGS: "--models TDL-A TDL-A TDL-A TDL-A --antennas 1x1 1x1 1x1 1x1 --delay-spreads 1.0 1.0 1.0 1.0 --speeds 0 0 0 0 --fs-hz 46080000 --fc-hz 3319680000" 
       #GENERATOR_ARGS: "--models TDL-A --antennas 1x1 --delay-spreads 1.0 --speeds 0 --fs-hz 46080000 --fc-hz 3319680000" 
       OUTPUT: "--out /opt/output/cir_db.bin"
+    restart: "no"
     volumes:
       - cirdb_data:/opt/output
     #command: ["sh", "-c", "python3 external_taps/cir_generator.py $GENERATOR_ARGS $OUTPUT" ]
@@ -334,7 +335,8 @@ services:
         --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
 #        -r 106 --numerology 1 --band 78 -C 3319680000 
     depends_on:
-      - du_e1
+      du_e1:
+        condition: service_started
     #cpuset: "8-10"
     #cpus: 3.0
     cpu_shares: 4096
@@ -378,7 +380,8 @@ services:
 #        -r 106 --numerology 1 --band 78 -C 3319680000 
 
     depends_on:
-      - du_e1
+      du_e1:
+        condition: service_started
     #cpuset: "11-13"
     #cpus: 3.0
     cpu_shares: 4096
@@ -421,7 +424,8 @@ services:
         --log_config.global_log_level info
 #        -r 106 --numerology 1 --band 78 -C 3319680000 
     depends_on:
-      - du_e1
+      du_e1:
+        condition: service_started
     #cpuset: "14-16"
     #cpus: 3.0
     cpu_shares: 4096
@@ -464,7 +468,8 @@ services:
         --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
 #        -r 106 --numerology 1 --band 78 -C 3319680000 
     depends_on:
-      - du_e1
+      du_e1:
+        condition: service_started
     #cpuset: "17-19"
     #cpus: 3.0
     cpu_shares: 4096
