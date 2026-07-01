@@ -24,8 +24,8 @@ gNBs:
     nr_cellid: 12345678
     ##### Physical parameters:
     min_rxtxtime: 6
-    pusch_AntennaPorts: 2
-    pdsch_AntennaPorts_XP: 2
+    pusch_AntennaPorts: 1
+    pdsch_AntennaPorts_XP: 1
 
     servingCellConfigCommon:
       #spCellConfigCommon
@@ -160,8 +160,8 @@ L1s:
 
 RUs:
   - local_rf: yes
-    nb_tx: 2
-    nb_rx: 2
+    nb_tx: 1
+    nb_rx: 1
     att_tx: 0
     att_rx: 0
     bands: [78]
@@ -222,19 +222,19 @@ vrtsim:
   #
   # Per-UE channel configuration for multi-UE operation
   ue_config:
-    - antennas: "2x2"   # NxM where N=UE-TX, M=gNB-TX; M must equal RU nb_tx
+    - antennas: "1x1"   # NxM where N=UE-TX, M=gNB-TX; M must equal RU nb_tx
       model_id: 0       # 0=TDL-A 1=TDL-B 2=TDL-C 3=TDL-D 4=TDL-E
       ds_ns: 1.0        # RMS delay spread in ns
       speed_mps: 0      # UE speed in m/s # aoa_deg: 0.0    # angle of arrival in degrees; TDL-D/E only
-    - antennas: "2x2"   
+    - antennas: "1x1"   
       model_id: 0
       ds_ns: 1.0
       speed_mps: 0
-    - antennas: "2x2"   
+    - antennas: "1x1"   
       model_id: 0
       ds_ns: 1.0
       speed_mps: 0
-    - antennas: "2x2"   
+    - antennas: "1x1"   
       model_id: 0
       ds_ns: 1.0
       speed_mps: 0
