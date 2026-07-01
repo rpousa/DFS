@@ -257,11 +257,12 @@ services:
         --vrtsim.num_ues 4
         --L1s.[0].max_ldpc_iterations 2
         --MACRLCs.[0].ulsch_max_frame_inactivity 0
-        --MACRLCs.[0].ul_max_mcs 8
-        --gNBs.[0].min_rxtxtime 6
+        --MACRLCs.[0].ul_max_mcs 6
+        --gNBs.[0].min_rxtxtime 8
         --L1s.[0].L1_rx_thread_core 4
         --thread-pool 3,4,5,6,7,8
         --L1s.[0].L1_tx_thread_core 3
+
 #        --log_config.hw_log_level debug
 #  --vrtsim.cirdb 1
 # --log_config.phy_log_level debug
@@ -350,7 +351,7 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
-      - SYS_NICE
+    #  - SYS_NICE
     #privileged: true
     networks:
       ran_net:
@@ -394,7 +395,7 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
-      - SYS_NICE
+    #  - SYS_NICE
     #privileged: true
     networks:
       ran_net:
@@ -437,7 +438,7 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
-      - SYS_NICE
+    #  - SYS_NICE
     #privileged: true
     networks:
       ran_net:
