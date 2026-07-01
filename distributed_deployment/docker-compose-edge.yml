@@ -328,7 +328,7 @@ services:
         --ssb 516 
         --log_config.global_log_options level,nocolor,time
         --log_config.global_log_level debug
-        --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
+        --ue-nb-ant-tx 2 --ue-nb-ant-rx 2
 #        -r 106 --numerology 1 --band 78 -C 3319680000 
     depends_on:
       - du_e1
@@ -371,7 +371,7 @@ services:
         --ssb 516 
         --log_config.global_log_options level,nocolor,time
         --log_config.global_log_level info
-        --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
+        --ue-nb-ant-tx 2 --ue-nb-ant-rx 2
 #        -r 106 --numerology 1 --band 78 -C 3319680000 
 
     depends_on:
@@ -411,13 +411,12 @@ services:
         -E --device.name vrtsim
         --vrtsim.role client
         --vrtsim.ue_id 2
-        --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
+        --ue-nb-ant-tx 2 --ue-nb-ant-rx 2
         -r 106 --numerology 1 -C 3319680000 
         --ssb 516 
         --log_config.global_log_options level,nocolor,time
         --log_config.global_log_level info
 #        -r 106 --numerology 1 --band 78 -C 3319680000 
-
     depends_on:
       - du_e1
     #cpuset: "14-16"
@@ -459,9 +458,8 @@ services:
         --ssb 516 
         --log_config.global_log_options level,nocolor,time
         --log_config.global_log_level info
-        --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
+        --ue-nb-ant-tx 2 --ue-nb-ant-rx 2
 #        -r 106 --numerology 1 --band 78 -C 3319680000 
-
     depends_on:
       - du_e1
     #cpuset: "17-19"
