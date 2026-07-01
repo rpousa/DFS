@@ -7,11 +7,11 @@ services:
     image: oaisoftwarealliance/cir-generator:v0.0.1
     container_name: cir_gen_edge
     environment:
-      GENERATOR_ARGS: "--models TDL-A --antennas 1x1 --delay-spreads 1.0 --speeds 0 --fs-hz 46080000 --fc-hz 3319680000"
+      GENERATOR_ARGS: "--models [TDL-A,TDL-A,TDL-A,TDL-A] --antennas [1x1,1x1,1x1,1x1] --delay-spreads [1.0,1.0,1.0,1.0] --speeds [0,0,0,0] --fs-hz 46080000 --fc-hz 3319680000"
       OUTPUT: "--out /opt/output/cir_db.bin"
     volumes:
       - cirdb_data:/opt/output
-    command: ["sh", "-c", "python3 external_taps/cir_generator.py $GENERATOR_ARGS $OUTPUT &&  sleep infinity" ]
+    #command: ["sh", "-c", "python3 external_taps/cir_generator.py $GENERATOR_ARGS $OUTPUT" ]
   # ==========================================
   # UPF Edge — Slice 3 (SST=1, SD=3)
   # ==========================================
