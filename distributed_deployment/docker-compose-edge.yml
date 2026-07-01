@@ -335,9 +335,9 @@ services:
     #cpus: 3.0
     #cpu_shares: 4096
     #oom_score_adj: -600
-    #ulimits:
-    #   memlock: -1
-    #   nofile: 1048576
+    ulimits:
+      memlock: -1
+      nofile: 1048576
     #  rtprio: 97
     command: >
       sh -c "sleep 1 &&
@@ -379,9 +379,9 @@ services:
     #cpus: 3.0
     # cpu_shares: 4096
     # oom_score_adj: -600
-    # ulimits:
-    #     memlock: -1
-    #     nofile: 1048576
+    ulimits:
+      memlock: -1
+      nofile: 1048576
     #    rtprio: 99
     command: >
       sh -c "sleep 1 &&
@@ -423,9 +423,9 @@ services:
     #cpus: 3.0
     # cpu_shares: 4096
     # oom_score_adj: -600
-    # ulimits:
-    #    memlock: -1
-    #    nofile: 1048576
+    ulimits:
+      memlock: -1
+      nofile: 1048576
     #   rtprio: 99
     command: >
       sh -c "sleep 1 &&
@@ -467,9 +467,9 @@ services:
     #cpus: 3.0
     # cpu_shares: 4096
     # oom_score_adj: -600
-    # ulimits:
-    #   memlock: -1
-    #   nofile: 1048576
+    ulimits:
+      memlock: -1
+      nofile: 1048576
     #  rtprio: 99
     command: >
       sh -c "sleep 1 &&

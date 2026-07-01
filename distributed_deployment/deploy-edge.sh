@@ -306,7 +306,7 @@ fi
 # ==========================================
 # Stage 8/8: Slice stress test (optional)
 # ==========================================
-print_stage "Stage 8/8: Slice stress test..."
+print_stage " Slice stress test..."
 
 # Gate 1: need at least the tunnels up
 if [ "${UES_WITH_IP:-0}" -lt 1 ]; then
