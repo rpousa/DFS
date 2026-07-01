@@ -249,17 +249,18 @@ services:
         --gNBs.[0].TIMERS.t300 1000
         --MACRLCs.[0].local_n_address_f1u 192.168.81.151
         --MACRLCs.[0].local_n_portd 2152
-        --L1s.[0].L1_tx_thread_core 4
-        --L1s.[0].L1_rx_thread_core 5
+        --L1s.[0].L1_tx_thread_core 3
+        --L1s.[0].L1_rx_thread_core 4
         --thread-pool 4,5,6,7,8
         -E --device.name vrtsim
         --vrtsim.role server
+        --vrtsim.cirdb 1
         --vrtsim.timescale 1
         --vrtsim.num_ues 4
         --L1s.[0].max_ldpc_iterations 2
         --MACRLCs.[0].ulsch_max_frame_inactivity 0
         --MACRLCs.[0].ul_max_mcs 8
-        --gNBs.[0].min_rxtxtime 6
+      #  --gNBs.[0].min_rxtxtime 6
 #        --log_config.hw_log_level debug
 #  --vrtsim.cirdb 1
 # --log_config.phy_log_level debug
@@ -277,8 +278,8 @@ services:
     depends_on:
       - cuup_e
       - cir-generator
-    cpuset: "4-8"
-    cpus: 5.0
+    cpuset: "3-8"
+    cpus: 6.0
     cpu_shares: 8192            # absolute top priority — RFSim server
     oom_score_adj: -700
     ulimits:
@@ -305,7 +306,7 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
-      - SYS_NICE
+    #  - SYS_NICE
     #privileged: true
     networks:
       ran_net:
@@ -328,7 +329,6 @@ services:
         --log_config.global_log_level debug
         --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
 #        -r 106 --numerology 1 --band 78 -C 3319680000 
-
     depends_on:
       - du_e1
     #cpuset: "8-10"
