@@ -277,7 +277,7 @@ services:
     depends_on:
       - cuup_e
       - cir-generator
-    cpuset: "4-7"
+    cpuset: "4-8"
     cpus: 4.0
     cpu_shares: 8192            # absolute top priority — RFSim server
     oom_score_adj: -700
