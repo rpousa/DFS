@@ -260,7 +260,7 @@ services:
         --MACRLCs.[0].ul_max_mcs 6
         --gNBs.[0].min_rxtxtime 8
         --L1s.[0].L1_rx_thread_core 4
-        --thread-pool 3,4,5,6,7,8
+        --thread-pool 5,6,7,8
         --L1s.[0].L1_tx_thread_core 3
 
 #        --log_config.hw_log_level debug
