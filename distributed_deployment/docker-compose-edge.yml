@@ -256,7 +256,7 @@ services:
         --vrtsim.cirdb 0
         --vrtsim.timescale 1
         --vrtsim.num_ues 4
-        --L1s.[0].max_ldpc_iterations 2
+        --L1s.[0].max_ldpc_iterations 8
         --MACRLCs.[0].ulsch_max_frame_inactivity 0
         --MACRLCs.[0].ul_max_mcs 6
         --gNBs.[0].min_rxtxtime 8
