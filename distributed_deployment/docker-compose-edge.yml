@@ -305,7 +305,7 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
-    #  - SYS_NICE
+      - SYS_NICE
     #privileged: true
     networks:
       ran_net:
@@ -347,7 +347,7 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
-    #  - SYS_NICE
+      - SYS_NICE
     #privileged: true
     networks:
       ran_net:
@@ -389,7 +389,7 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
-    #  - SYS_NICE
+      - SYS_NICE
     #privileged: true
     networks:
       ran_net:
@@ -431,7 +431,7 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
-    #  - SYS_NICE
+      - SYS_NICE
     #privileged: true
     networks:
       ran_net:
