@@ -278,8 +278,10 @@ services:
     # --gNBs.[0].TIMERS.t319 2000
     # --MACRLCs.[0].remote_n_address_f1u 192.168.0.193
     depends_on:
-      - cuup_e
-      - cir-generator
+      cuup_e:
+        condition: service_healthy
+      cir-generator:
+        condition: service_completed_successfully
     cpuset: "3-8"
     cpus: 6.0
     cpu_shares: 8192            # absolute top priority — RFSim server
