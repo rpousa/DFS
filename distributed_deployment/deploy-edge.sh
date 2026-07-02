@@ -226,7 +226,7 @@ print_stage "Stage 3/7: Starting DU_e1 ..."
 docker compose -f "$COMPOSE_FILE" up -d du_e1 
 wait_for_service "du_e1" 30
 #wait_for_service "du_e2" 30
-print_info "Waiting for DUs to initialize SCTP + RFSim servers..."
+print_info "Waiting for DUs to initialize SCTP ..."
 sleep 20
 
 for du in du_e1 ; do
