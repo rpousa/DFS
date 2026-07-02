@@ -256,7 +256,7 @@ services:
         --vrtsim.cirdb 0
         --vrtsim.timescale 0.5
         --vrtsim.num_ues 4
-        --L1s.[0].max_ldpc_iterations 8
+        --L1s.[0].max_ldpc_iterations 4
         --MACRLCs.[0].ulsch_max_frame_inactivity 0
         --MACRLCs.[0].ul_max_mcs 6
         --gNBs.[0].min_rxtxtime 6
@@ -281,8 +281,8 @@ services:
     depends_on:
       cuup_e:
         condition: service_healthy
-      cir-generator:
-        condition: service_completed_successfully
+      # cir-generator:
+      #   condition: service_completed_successfully
     cpuset: "3-8"
     cpus: 6.0
     cpu_shares: 8192            # absolute top priority — RFSim server
