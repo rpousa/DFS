@@ -161,7 +161,7 @@ services:
       - ./logs/cuup_e:/opt/oai-gnb/logs
     environment:
       USE_ADDITIONAL_OPTIONS: >-
-        -E --sa --rfsim
+        -E --sa 
         --log_config.global_log_options level,nocolor,time
         --log_config.global_log_level info
         --log_config.e1ap_log_level debug
@@ -251,7 +251,7 @@ services:
         --gNBs.[0].TIMERS.t300 1000
         --MACRLCs.[0].local_n_address_f1u 192.168.81.151
         --MACRLCs.[0].local_n_portd 2152
-        -E 
+        -E --rfsim
         --L1s.[0].max_ldpc_iterations 4
         --MACRLCs.[0].ulsch_max_frame_inactivity 0
         --MACRLCs.[0].ul_max_mcs 6

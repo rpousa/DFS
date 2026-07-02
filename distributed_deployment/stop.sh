@@ -107,11 +107,11 @@ if [ "$FORCE" = false ]; then
     [[ ! $REPLY =~ ^[Yy]$ ]] && { print_info "Cancelled"; exit 0; }
 fi
 
-if [ "$REMOVE_VOLUMES" = true ] && [ "$FORCE" = false ]; then
-    print_warn "This will DELETE all persistent volume data (MySQL DB, logs, etc.)"
-    read -p "Type 'yes' to confirm: " -r; echo
-    [[ ! $REPLY =~ ^[Yy][Ee][Ss]$ ]] && REMOVE_VOLUMES=false && print_info "Volumes will be kept"
-fi
+# if [ "$REMOVE_VOLUMES" = true ] && [ "$FORCE" = false ]; then
+#     print_warn "This will DELETE all persistent volume data (MySQL DB, logs, etc.)"
+#     read -p "Type 'yes' to confirm: " -r; echo
+#     [[ ! $REPLY =~ ^[Yy][Ee][Ss]$ ]] && REMOVE_VOLUMES=false && print_info "Volumes will be kept"
+# fi
 
 # ==========================================
 # Helper: Extract from compose file
