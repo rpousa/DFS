@@ -3,17 +3,6 @@
 # Components: CU-UP_e + UPF_e + ext_dn_e + DU_e1 + DU_e2 + UE_1
 
 services:
-  cir-generator:
-    image: oaisoftwarealliance/cir-generator:v0.0.1
-    container_name: cir_gen_edge
-    environment:
-      GENERATOR_ARGS: "--models TDL-A TDL-A TDL-A TDL-A --antennas 1x1 1x1 1x1 1x1 --delay-spreads 1.0 1.0 1.0 1.0 --speeds 0 0 0 0 --fs-hz 46080000 --fc-hz 3319680000" 
-      #GENERATOR_ARGS: "--models TDL-A --antennas 1x1 --delay-spreads 1.0 --speeds 0 --fs-hz 46080000 --fc-hz 3319680000" 
-      OUTPUT: "--out /opt/output/cir_db.bin"
-    restart: "no"
-    volumes:
-      - cirdb_data:/opt/output
-    #command: ["sh", "-c", "python3 external_taps/cir_generator.py $GENERATOR_ARGS $OUTPUT" ]
   # ==========================================
   # UPF Edge — Slice 3 (SST=1, SD=3)
   # ==========================================
@@ -252,7 +241,7 @@ services:
         --MACRLCs.[0].local_n_address_f1u 192.168.81.151
         --MACRLCs.[0].local_n_portd 2152
         -E --rfsim
-        --L1s.[0].max_ldpc_iterations 4
+        --L1s.[0].max_ldpc_iterations 2
         --MACRLCs.[0].ulsch_max_frame_inactivity 0
         --MACRLCs.[0].ul_max_mcs 6
         --gNBs.[0].min_rxtxtime 6
@@ -534,6 +523,3 @@ networks:
           gateway: 172.28.2.1
     driver_opts:
       com.docker.network.bridge.name: br-sgi
-volumes:
-  cirdb_data:
-  tmp_data:

@@ -277,14 +277,14 @@ if [ -f docker-compose-observability.yml ]; then
     echo ""
 fi
 
-# Stage 6.5/7: F1-U cross-machine routing setup (Edge → CO)
-#print_stage "Stage 6.5/7: Starting observability agents..."
-# setup_f1u_routes_edge
-# echo ""
-# setup_n3_routes_edge
-# echo ""
-# verify_f1u_routes edge
-# echo ""
+Stage 6.5/7: F1-U cross-machine routing setup (Edge → CO)
+print_stage "Stage 6.5/7: Starting observability agents..."
+setup_f1u_routes_edge
+echo ""
+setup_n3_routes_edge
+echo ""
+verify_f1u_routes edge
+echo ""
 
 # Stage 7/7: UE connection verification
 print_stage "Stage 7/7: Verifying UE connections..."
@@ -322,12 +322,12 @@ else
 
     # Gate 3: data-plane reachability probes (per slice, through the tunnel)
     print_info "Probing per-slice datapaths..."
-    docker exec ue_0 ping -c2 -W2 -I oaitun_ue1 192.168.72.135 >/dev/null 2>&1 \
-        && print_info "  ✓ eMBB  → ext_dn_co  (CO)"   || print_warn "  ✗ eMBB  datapath (cross-machine to CO)"
-    docker exec ue_1 ping -c2 -W2 -I oaitun_ue1 192.168.82.135 >/dev/null 2>&1 \
-        && print_info "  ✓ URLLC → ext_dn_e   (local)" || print_warn "  ✗ URLLC datapath"
-    docker exec ue_2 ping -c2 -W2 -I oaitun_ue1 192.168.72.31  >/dev/null 2>&1 \
-        && print_info "  ✓ mIoT  → ext_dn_core(Core)" || print_warn "  ✗ mIoT  datapath (cross-machine to Core)"
+    docker exec ue_1 ping -c2 -W2 -I oaitun_ue1 192.168.72.135 >/dev/null 2>&1 \
+        && print_info "  ✓ eMBB  → ext_dn_co  (CO)"   || print_warn "  ✗ eMBB  (CO, cross-machine)"
+    docker exec ue_1 ping -c2 -W2 -I oaitun_ue2 192.168.82.135 >/dev/null 2>&1 \
+        && print_info "  ✓ URLLC → ext_dn_e   (local)" || print_warn "  ✗ URLLC (local)"
+    docker exec ue_1 ping -c2 -W2 -I oaitun_ue3 192.168.72.31  >/dev/null 2>&1 \
+        && print_info "  ✓ mIoT  → ext_dn_core(Core)" || print_warn "  ✗ mIoT  (Core, cross-machine)"
 
     # Gate 4: pushgateway reachable from Edge
     if timeout 3 bash -c "echo > /dev/tcp/${CORE_IP}/9099" 2>/dev/null; then
