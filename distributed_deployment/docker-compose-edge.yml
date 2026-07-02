@@ -254,7 +254,7 @@ services:
         -E --device.name vrtsim
         --vrtsim.role server
         --vrtsim.cirdb 0
-        --vrtsim.timescale 1
+        --vrtsim.timescale 0.5
         --vrtsim.num_ues 4
         --L1s.[0].max_ldpc_iterations 8
         --MACRLCs.[0].ulsch_max_frame_inactivity 0
