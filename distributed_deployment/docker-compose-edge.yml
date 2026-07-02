@@ -251,11 +251,7 @@ services:
         --gNBs.[0].TIMERS.t300 1000
         --MACRLCs.[0].local_n_address_f1u 192.168.81.151
         --MACRLCs.[0].local_n_portd 2152
-        -E --device.name vrtsim
-        --vrtsim.role server
-        --vrtsim.cirdb 0
-        --vrtsim.timescale 0.5
-        --vrtsim.num_ues 4
+        -E 
         --L1s.[0].max_ldpc_iterations 4
         --MACRLCs.[0].ulsch_max_frame_inactivity 0
         --MACRLCs.[0].ul_max_mcs 6
@@ -263,7 +259,8 @@ services:
         --L1s.[0].L1_rx_thread_core 4
         --thread-pool 5,6,7,8
         --L1s.[0].L1_tx_thread_core 3
-
+        --rfsimulator.[0].serveraddr server
+        --rfsimulator.[0].serverport 4043
 #        --log_config.hw_log_level debug
 #  --vrtsim.cirdb 1
 # --log_config.phy_log_level debug
@@ -311,7 +308,7 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
-      - SYS_NICE
+    #  - SYS_NICE
     #privileged: true
     networks:
       ran_net:
@@ -320,167 +317,164 @@ services:
       - /dev/net/tun:/dev/net/tun
     ipc: host
     volumes:
-      - ./configs/ue_1/nrue0.vrtsim.yaml:/opt/oai-nr-ue/etc/nr-ue.yaml
+      - ./configs/ue_1/nrue0.rfsim_4.yaml:/opt/oai-nr-ue/etc/nr-ue.yaml
       - ./logs/ue_0:/opt/oai-nr-ue/logs
       - tmp_data:/tmp/
     environment:
       USE_ADDITIONAL_OPTIONS: >-
-        -E --device.name vrtsim
-        --vrtsim.role client
-        --vrtsim.ue_id 0
+        -E --num-ues 4
         -r 106 --numerology 1 -C 3319680000 
         --ssb 516 
         --log_config.global_log_options level,nocolor,time
-        --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
 #        --log_config.global_log_level debug
 #        -r 106 --numerology 1 --band 78 -C 3319680000 
     depends_on:
       du_e1:
         condition: service_started
-    cpuset: "9-11"
-    cpus: 3.0
+    cpuset: "9-20"
+    cpus: 12.0
     cpu_shares: 4096
     #oom_score_adj: -600
     ulimits:
       memlock: -1
       nofile: 1048576
-    #  rtprio: 97
+      rtprio: 80
     command: >
       sh -c "sleep 1 &&
              /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem 2>&1 "
-  ue_1:
-    image: ue:comnetsemu
-    container_name: ue_1
-    hostname: ue_1
-    cap_add:
-      - NET_ADMIN
-      - NET_RAW
-      - SYS_NICE
-    #privileged: true
-    networks:
-      ran_net:
-        ipv4_address: 192.168.80.169
-    devices:
-      - /dev/net/tun:/dev/net/tun
-    ipc: host
-    volumes:
-      - ./configs/ue_1/nrue1.vrtsim.yaml:/opt/oai-nr-ue/etc/nr-ue.yaml
-      - ./logs/ue_1:/opt/oai-nr-ue/logs
-      - tmp_data:/tmp/
-    environment:
-      USE_ADDITIONAL_OPTIONS: >-
-        -E --device.name vrtsim
-        --vrtsim.role client
-        --vrtsim.ue_id 1
-        -r 106 --numerology 1 -C 3319680000 
-        --ssb 516 
-        --log_config.global_log_options level,nocolor,time
-        --log_config.global_log_level info
-        --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
-#        -r 106 --numerology 1 --band 78 -C 3319680000 
-    depends_on:
-      du_e1:
-        condition: service_started
-    cpuset: "12-14"
-    cpus: 3.0
-    cpu_shares: 4096
-    # oom_score_adj: -600
-    ulimits:
-      memlock: -1
-      nofile: 1048576
-    #    rtprio: 99
-    command: >
-      sh -c "sleep 1 &&
-             /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem 2>&1 "
-  ue_2:
-    image: ue:comnetsemu
-    container_name: ue_2
-    hostname: ue_2
-    cap_add:
-      - NET_ADMIN
-      - NET_RAW
-      - SYS_NICE
-    #privileged: true
-    networks:
-      ran_net:
-        ipv4_address: 192.168.80.170
-    devices:
-      - /dev/net/tun:/dev/net/tun
-    ipc: host
-    volumes:
-      - ./configs/ue_1/nrue2.vrtsim.yaml:/opt/oai-nr-ue/etc/nr-ue.yaml
-      - ./logs/ue_2:/opt/oai-nr-ue/logs
-      - tmp_data:/tmp/
-    environment:
-      USE_ADDITIONAL_OPTIONS: >-
-        -E --device.name vrtsim
-        --vrtsim.role client
-        --vrtsim.ue_id 2
-        --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
-        -r 106 --numerology 1 -C 3319680000 
-        --ssb 516 
-        --log_config.global_log_options level,nocolor,time
-        --log_config.global_log_level info
-#        -r 106 --numerology 1 --band 78 -C 3319680000 
-    depends_on:
-      du_e1:
-        condition: service_started
-    cpuset: "15-17"
-    cpus: 3.0
-    cpu_shares: 4096
-    # oom_score_adj: -600
-    ulimits:
-      memlock: -1
-      nofile: 1048576
-    #   rtprio: 99
-    command: >
-      sh -c "sleep 1 &&
-             /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem 2>&1 "
-  ue_3:
-    image: ue:comnetsemu
-    container_name: ue_3
-    hostname: ue_3
-    cap_add:
-      - NET_ADMIN
-      - NET_RAW
-      - SYS_NICE
-    #privileged: true
-    networks:
-      ran_net:
-        ipv4_address: 192.168.80.171
-    devices:
-      - /dev/net/tun:/dev/net/tun
-    ipc: host
-    volumes:
-      - ./configs/ue_1/nrue3.vrtsim.yaml:/opt/oai-nr-ue/etc/nr-ue.yaml
-      - ./logs/ue_3:/opt/oai-nr-ue/logs
-      - tmp_data:/tmp/
-    environment:
-      USE_ADDITIONAL_OPTIONS: >-
-        -E --device.name vrtsim
-        --vrtsim.role client
-        --vrtsim.ue_id 3
-        -r 106 --numerology 1 -C 3319680000 
-        --ssb 516 
-        --log_config.global_log_options level,nocolor,time
-        --log_config.global_log_level info
-        --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
-#        -r 106 --numerology 1 --band 78 -C 3319680000 
-    depends_on:
-      du_e1:
-        condition: service_started
-    cpuset: "18-20"
-    cpus: 3.0
-    cpu_shares: 4096
-    # oom_score_adj: -600
-    ulimits:
-      memlock: -1
-      nofile: 1048576
-    #  rtprio: 99
-    command: >
-      sh -c "sleep 1 &&
-             /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem 2>&1 "
- #            stdbuf -oL tee /opt/oai-nr-ue/logs/ue_1_stdout.log"
+#   ue_1:
+#     image: ue:comnetsemu
+#     container_name: ue_1
+#     hostname: ue_1
+#     cap_add:
+#       - NET_ADMIN
+#       - NET_RAW
+#     #  - SYS_NICE
+#     #privileged: true
+#     networks:
+#       ran_net:
+#         ipv4_address: 192.168.80.169
+#     devices:
+#       - /dev/net/tun:/dev/net/tun
+#     ipc: host
+#     volumes:
+#       - ./configs/ue_1/nrue1.vrtsim.yaml:/opt/oai-nr-ue/etc/nr-ue.yaml
+#       - ./logs/ue_1:/opt/oai-nr-ue/logs
+#       - tmp_data:/tmp/
+#     environment:
+#       USE_ADDITIONAL_OPTIONS: >-
+#         -E --device.name vrtsim
+#         --vrtsim.role client
+#         --vrtsim.ue_id 1
+#         -r 106 --numerology 1 -C 3319680000 
+#         --ssb 516 
+#         --log_config.global_log_options level,nocolor,time
+#         --log_config.global_log_level info
+#         --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
+# #        -r 106 --numerology 1 --band 78 -C 3319680000 
+#     depends_on:
+#       du_e1:
+#         condition: service_started
+#     cpuset: "12-14"
+#     cpus: 3.0
+#     cpu_shares: 4096
+#     # oom_score_adj: -600
+#     ulimits:
+#       memlock: -1
+#       nofile: 1048576
+#       rtprio: 80
+#     command: >
+#       sh -c "sleep 1 &&
+#              /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem 2>&1 "
+#   ue_2:
+#     image: ue:comnetsemu
+#     container_name: ue_2
+#     hostname: ue_2
+#     cap_add:
+#       - NET_ADMIN
+#       - NET_RAW
+#     #  - SYS_NICE
+#     #privileged: true
+#     networks:
+#       ran_net:
+#         ipv4_address: 192.168.80.170
+#     devices:
+#       - /dev/net/tun:/dev/net/tun
+#     ipc: host
+#     volumes:
+#       - ./configs/ue_1/nrue2.vrtsim.yaml:/opt/oai-nr-ue/etc/nr-ue.yaml
+#       - ./logs/ue_2:/opt/oai-nr-ue/logs
+#       - tmp_data:/tmp/
+#     environment:
+#       USE_ADDITIONAL_OPTIONS: >-
+#         -E --device.name vrtsim
+#         --vrtsim.role client
+#         --vrtsim.ue_id 2
+#         --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
+#         -r 106 --numerology 1 -C 3319680000 
+#         --ssb 516 
+#         --log_config.global_log_options level,nocolor,time
+#         --log_config.global_log_level info
+# #        -r 106 --numerology 1 --band 78 -C 3319680000 
+#     depends_on:
+#       du_e1:
+#         condition: service_started
+#     cpuset: "15-17"
+#     cpus: 3.0
+#     cpu_shares: 4096
+#     # oom_score_adj: -600
+#     ulimits:
+#       memlock: -1
+#       nofile: 1048576
+#       rtprio: 80
+#     command: >
+#       sh -c "sleep 1 &&
+#              /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem 2>&1 "
+#   ue_3:
+#     image: ue:comnetsemu
+#     container_name: ue_3
+#     hostname: ue_3
+#     cap_add:
+#       - NET_ADMIN
+#       - NET_RAW
+#     #  - SYS_NICE
+#     #privileged: true
+#     networks:
+#       ran_net:
+#         ipv4_address: 192.168.80.171
+#     devices:
+#       - /dev/net/tun:/dev/net/tun
+#     ipc: host
+#     volumes:
+#       - ./configs/ue_1/nrue3.vrtsim.yaml:/opt/oai-nr-ue/etc/nr-ue.yaml
+#       - ./logs/ue_3:/opt/oai-nr-ue/logs
+#       - tmp_data:/tmp/
+#     environment:
+#       USE_ADDITIONAL_OPTIONS: >-
+#         -E --device.name vrtsim
+#         --vrtsim.role client
+#         --vrtsim.ue_id 3
+#         -r 106 --numerology 1 -C 3319680000 
+#         --ssb 516 
+#         --log_config.global_log_options level,nocolor,time
+#         --log_config.global_log_level info
+#         --ue-nb-ant-tx 1 --ue-nb-ant-rx 1
+# #        -r 106 --numerology 1 --band 78 -C 3319680000 
+#     depends_on:
+#       du_e1:
+#         condition: service_started
+#     cpuset: "18-20"
+#     cpus: 3.0
+#     cpu_shares: 4096
+#     # oom_score_adj: -600
+#     ulimits:
+#       memlock: -1
+#       nofile: 1048576
+#       rtprio: 80
+#     command: >
+#       sh -c "sleep 1 &&
+#              /tini -sv -- /opt/oai-nr-ue/bin/entrypoint.sh /opt/oai-nr-ue/bin/nr-uesoftmodem 2>&1 "
+#  #            stdbuf -oL tee /opt/oai-nr-ue/logs/ue_1_stdout.log"
 
 # ==========================================
 # Networks Configuration
