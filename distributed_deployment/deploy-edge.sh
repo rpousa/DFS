@@ -261,8 +261,8 @@ print_stage "Stage 5/7: Starting 4 UEs (→ DU_e1)..."
 #   docker compose -f "$COMPOSE_FILE" up -d --no-deps "$u"; sleep 8
 #   print_info "Launched $u ..."
 # done
-docker compose -f "$COMPOSE_FILE" up -d --no-deps ue_0; sleep 8
-wait_for_service "ue_0" 30
+docker compose -f "$COMPOSE_FILE" up -d --no-deps ue_1; sleep 8
+wait_for_service "ue_1" 30
 print_info "Waiting 30s for UE attach + PDU session..."
 sleep 30
 echo ""
