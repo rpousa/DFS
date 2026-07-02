@@ -277,7 +277,7 @@ if [ -f docker-compose-observability.yml ]; then
     echo ""
 fi
 
-Stage 6.5/7: F1-U cross-machine routing setup (Edge → CO)
+# Stage 6.5/7: F1-U cross-machine routing setup (Edge → CO)
 print_stage "Stage 6.5/7: Starting observability agents..."
 setup_f1u_routes_edge
 echo ""
