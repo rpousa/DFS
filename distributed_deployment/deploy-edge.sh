@@ -204,13 +204,13 @@ sleep 15
 docker exec cuup_e ss -Slnp 2>/dev/null | grep -iE "sctp|2153" || print_warn "CU-UP_e not yet listening"
 echo ""
 
-# Stage 1.5/7: Cir (Cir generator)
-print_stage "Stage 1.5/7: Starting Cir_generator..."
-docker compose -f "$COMPOSE_FILE" up -d cir-generator
-#wait_for_service "cir-generator" 30
-print_info "Waiting for Cir_generator to start..."
-sleep 5
-echo ""
+# # Stage 1.5/7: Cir (Cir generator)
+# print_stage "Stage 1.5/7: Starting Cir_generator..."
+# docker compose -f "$COMPOSE_FILE" up -d cir-generator
+# #wait_for_service "cir-generator" 30
+# print_info "Waiting for Cir_generator to start..."
+# sleep 5
+# echo ""
 
 
 # Stage 2/7: UPF_e + ext_dn_e
@@ -257,10 +257,11 @@ echo ""
 
 # Stage 5/7: UEs (connect to DU_e1)
 print_stage "Stage 5/7: Starting 4 UEs (→ DU_e1)..."
-for u in ue_0 ue_1 ue_2 ue_3; do
-  docker compose -f "$COMPOSE_FILE" up -d --no-deps "$u"; sleep 8
-  print_info "Launched $u ..."
-done
+# for u in ue_0 ue_1 ue_2 ue_3; do
+#   docker compose -f "$COMPOSE_FILE" up -d --no-deps "$u"; sleep 8
+#   print_info "Launched $u ..."
+# done
+docker compose -f "$COMPOSE_FILE" up -d --no-deps ue_0; sleep 8
 wait_for_service "ue_0" 30
 print_info "Waiting 30s for UE attach + PDU session..."
 sleep 30
@@ -287,7 +288,7 @@ fi
 
 # Stage 7/7: UE connection verification
 print_stage "Stage 7/7: Verifying UE connections..."
-if check_ues_connection ; then
+if check_ue_connections ; then
     print_info "✓ All 4 UEs connected!"
 else
     print_warn "Only $CONNECTED_UES/4 UEs connected"
@@ -295,7 +296,7 @@ else
         echo "Options: [w]ait+recheck  [p]roceed  [q]uit"
         read -p "Choice: " -n 1 -r; echo
         case $REPLY in
-            [Ww]) sleep 10; check_ues_connection  && break ;;
+            [Ww]) sleep 10; check_ue_connections  && break ;;
             [Pp]) print_info "Proceeding with $CONNECTED_UES UE(s)"; break ;;
             [Qq]) break ;;
             *) print_error "Invalid" ;;
