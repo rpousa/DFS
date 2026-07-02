@@ -58,15 +58,15 @@ wait_for_service() {
 }
 
 # ==========================================
-# UE connection check (4 UEs on DU_e1)
+# UE connection check (3 UEs on DU_e1)
 # ==========================================
-# Checks if all 4 UEs are connected to DU_e1, 1 container 4 different connections
+# Checks if all 3 UEs are connected to DU_e1, 1 container 3 different connections
 check_ue_connections() {
-    local total_ues=4 connected=0 with_ip=0
+    local total_ues=3 connected=0 with_ip=0
     UE_IPS=(); UE_INTERFACES=()
     print_stage "Checking UE connections (all on DU_e1)..."
     echo ""
-    for i in {1..4}; do
+    for i in $(seq 1 $total_ues); do
         local iface="oaitun_ue$i"
         if docker exec ue_1 ip addr show 2>/dev/null | grep -q "$iface"; then
             ((connected++))
@@ -83,7 +83,7 @@ check_ue_connections() {
     echo ""
     print_info "Connected: $connected/$total_ues — with IP: $with_ip/$connected"
     export CONNECTED_UES=$connected UES_WITH_IP=$with_ip
-    [ $connected -eq 4 ] && return 0 || return 1
+    [ $connected -eq 3 ] && return 0 || return 1
 }
 
 # Checks if all 4 UEs are connected to DU_e1, 4 different containers

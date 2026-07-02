@@ -229,8 +229,8 @@ services:
     volumes:
       - ./configs/du_e1/gnb-du.sa.band78.106prb.vrtsim.yaml:/opt/oai-gnb/etc/gnb.yaml
       - ./logs/du_e1:/opt/oai-gnb/logs
-      - tmp_data:/tmp/            # shared shm descriptor
-      - cirdb_data:/cirdb:ro      # CIR database
+    #  - tmp_data:/tmp/            # shared shm descriptor
+    #  - cirdb_data:/cirdb:ro      # CIR database
     environment:
       USE_ADDITIONAL_OPTIONS: >-
         --e2_agent.near_ric_ip_addr 192.168.0.200
@@ -301,7 +301,7 @@ services:
   # Per requirement: ALL UEs connect to DU_e1 (which uses CU-UP @ Centraloffice)
   # ==========================================
 
-  ue_0:
+  ue_1:
     image: ue:comnetsemu
     container_name: ue_0
     hostname: ue_0
@@ -319,7 +319,7 @@ services:
     volumes:
       - ./configs/ue_1/nrue.rfsim_3.yaml:/opt/oai-nr-ue/etc/nr-ue.yaml
       - ./logs/ue_0:/opt/oai-nr-ue/logs
-      - tmp_data:/tmp/
+    #  - tmp_data:/tmp/
     environment:
       USE_ADDITIONAL_OPTIONS: >-
         -E --num-ues 3
