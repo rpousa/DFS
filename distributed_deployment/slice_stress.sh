@@ -16,42 +16,57 @@ push() { curl -s --data-binary @- "$PGW/metrics/job/stress/slice/$1"; }
 run_slice() {
   local slice iface src ip port proto
   read slice iface src ip port proto <<< "$1"
-  local ts raw; ts=$(date +%s); raw="./results/${slice}_${ts}.jsonl"
+  local ts raw; ts=$(date +%s); raw="./results/${slice}_${ts}.log"
   echo "[stress] $slice via $UE_CTR:$iface ($src) → $ip:$port ($proto)"
 
-  # preflight: interface must exist and have the expected IP
-  if ! docker exec "$UE_CTR" ip addr show "$iface" 2>/dev/null | grep -q "$src"; then
-    echo "[stress] $slice SKIP — $iface ($src) not present in $UE_CTR"; return 1
-  fi
+  docker exec "$UE_CTR" ip addr show "$iface" 2>/dev/null | grep -q "$src" \
+    || { echo "[stress] $slice SKIP — $iface ($src) missing"; return 1; }
 
   local OPTS
   if [ "$proto" = tcp ]; then
-    OPTS="-R -P 4"
+      OPTS="-R -P 4"
   else
-    local RATE; RATE=$([ "$slice" = urllc ] && echo 8M || echo 500K)
-    OPTS="-u -b $RATE -l 200"
+      local RATE; RATE=$([ "$slice" = urllc ] && echo 8M || echo 500K)
+      OPTS="-u -b $RATE -l 200"
   fi
 
-  # -B binds the source IP → kernel routes out the matching tun
-  docker exec "$UE_CTR" iperf3 -c "$ip" -B "$src" -p "$port" $OPTS -t "$DUR" -i 1 --json-stream 2>/dev/null \
+  # 3.16: stream text intervals; stdbuf+--forceflush prevent pipe buffering
+  docker exec "$UE_CTR" stdbuf -oL iperf3 -c "$ip" -B "$src" -p "$port" \
+        $OPTS -t "$DUR" -i 1 --forceflush 2>&1 \
   | tee "$raw" \
   | while IFS= read -r line; do
-        [ "$(echo "$line" | jq -r '.event // empty')" = "interval" ] || continue
-        BPS=$(echo "$line" | jq '.data.sum.bits_per_second // 0')
-        if [ "$proto" = udp ]; then
-            JIT=$(echo "$line"  | jq '.data.sum.jitter_ms // 0')
-            LOSS=$(echo "$line" | jq '.data.sum.lost_percent // 0')
-            push "$slice" <<EOF
-slice_throughput_bps $BPS
-slice_jitter_ms $JIT
-slice_loss_percent $LOSS
+        # interval lines contain "sec" + a bitrate; skip the final summary
+        echo "$line" | grep -qE '[0-9.]+-[0-9.]+ +sec' || continue
+        echo "$line" | grep -qiE 'sender|receiver' && continue
+        # extract "<value> <unit>bits/sec" → bps
+        read val unit <<< "$(echo "$line" | grep -oE '[0-9.]+ [KMG]?bits/sec' | tail -1 | sed 's#bits/sec##')"
+        [ -z "$val" ] && continue
+        case "$unit" in
+          K) bps=$(awk "BEGIN{print $val*1e3}") ;;
+          M) bps=$(awk "BEGIN{print $val*1e6}") ;;
+          G) bps=$(awk "BEGIN{print $val*1e9}") ;;
+          *) bps=$val ;;
+        esac
+        push "$slice" <<EOF
+slice_throughput_bps $bps
 EOF
-        else
-            push "$slice" <<EOF
-slice_throughput_bps $BPS
-EOF
-        fi
     done
+
+  # ---- final summary → jitter / loss / retransmits ----
+  if [ "$proto" = udp ]; then
+      # e.g.  "... 0.123 ms  5/1000 (0.5%)  receiver"
+      local sum jit loss
+      sum=$(grep -iE 'receiver' "$raw" | tail -1)
+      jit=$(echo "$sum"  | grep -oE '[0-9.]+ ms' | grep -oE '[0-9.]+' | tail -1)
+      loss=$(echo "$sum" | grep -oE '\([0-9.]+%\)' | grep -oE '[0-9.]+' | tail -1)
+      [ -n "$jit" ]  && push "$slice" <<< "slice_jitter_ms ${jit}"
+      [ -n "$loss" ] && push "$slice" <<< "slice_loss_percent ${loss}"
+  else
+      # TCP retransmits: sum the "Retr" column across parallel streams (sender summary)
+      local retr
+      retr=$(grep -iE 'sender' "$raw" | grep -oE '[0-9]+ +sender' | grep -oE '^[0-9]+' | tail -1)
+      [ -n "$retr" ] && push "$slice" <<< "slice_tcp_retransmits ${retr}"
+  fi
   echo "[stress] $slice done — $raw"
 }
 
