@@ -1,6 +1,6 @@
 global:
   scrape_interval: 2s
-  scrape_timeout: 5s
+  scrape_timeout: 2s
   evaluation_interval: 2s
   external_labels:
     testbed: 5g-distributed
@@ -46,5 +46,6 @@ scrape_configs:
   - job_name: 'slice_iperf'
     honor_labels: true
     scrape_interval: 1s  
+    scrape_timeout: 1s
     static_configs:
       - targets: ['192.168.71.182:9091']
