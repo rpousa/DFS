@@ -22,6 +22,8 @@ echo "  - 5G Core (MySQL, NRF, AMF, SMF, UDM, UDR, AUSF, PCF, NSSF)"
 echo "  - CU-CP (Control Plane — F1-C, E1, NGAP)"
 echo "  - UPF_core (Central/Anchor UPF — Slice SST=1/SD=1)"
 echo "  - ext_dn_core"
+echo "  - Flexric"
+echo "  - Observability (Prometheus, Grafana, Pushgateway, node_exporter, cadvisor)"
 echo ""
 
 RED='\033[0;31m'
