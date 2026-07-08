@@ -33,9 +33,10 @@ scrape_configs:
   # --- xApp / FlexRIC KPMs (local to Core, via core_net bridge) ---
   - job_name: flexric_xapp
     metrics_path: /metrics
+    scrape_interval: 1s
     static_configs:
       - targets: ['192.168.71.150:9464']
-        labels: { component: xapp, ric: flexric }
+        labels: { component: xapp, role: flexric }
 
   # --- Prometheus self-scrape ---
   - job_name: prometheus

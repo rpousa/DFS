@@ -406,10 +406,11 @@ services:
       - ./logs/cuup_co:/usr/local/flexric/cu_logs:ro
       - ./flexric_volumes/event_ric_watchdog.sh:/usr/local/bin/event_ric_watchdog.sh
       #- ./flexric_volumes/ric_watchdog.sh:/usr/local/bin/ric_watchdog.sh
-      - ./flexric_volumes/xapp_daemon_topo.py:/usr/local/flexric/xApp/python3/xapp_daemon.py
+      - ./flexric_volumes/xapp_slice_check.py:/usr/local/flexric/xApp/python3/xapp_daemon.py
       - ./flexric_volumes/topology.py:/usr/local/flexric/xApp/python3/topology.py
       - ./flexric_volumes/xapp_functs.py:/usr/local/flexric/xApp/python3/xapp_functs.py
       - ./flexric_volumes/xapp_test.py:/usr/local/flexric/xApp/python3/xapp.py
+      - ./flexric_volumes/xapp_daemon_topo.py:/usr/local/flexric/xApp/python3/xapp_daemon_topo.py
     # cpuset: "0-1"
     # cpus: 0.5
     # cpu_shares: 512
