@@ -8,6 +8,7 @@ WATCHDOG_LOG="/var/log/ric_watchdog.log"
 INDEX_FILE="/var/run/ric_restart_index"
 XAPP_SCRIPT="/usr/local/flexric/xApp/python3/xapp_daemon.py"
 XAPP_PID_FILE="/var/run/xapp_daemon.pid"
+PAUSE_FILE="/tmp/ric_watchdog.pause"
 CHECK_INTERVAL=2
 
 mkdir -p "$RIC_LOG_DIR"
@@ -47,6 +48,12 @@ start_xapp() {
 }
 
 while true; do
+
+    if [ -f "$PAUSE_FILE" ]; then
+        sleep "$CHECK_INTERVAL"
+        continue
+    fi
+
     if ! pgrep -x "nearRT-RIC" > /dev/null; then
         RESTART_INDEX=$((RESTART_INDEX + 1))
         echo "$RESTART_INDEX" > "$INDEX_FILE"
