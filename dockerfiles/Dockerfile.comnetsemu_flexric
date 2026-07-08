@@ -40,7 +40,7 @@ RUN apt-get update && \
     apt-get clean
 
 
-#RUN pip3 install requests
+RUN pip3 install requests prometheus_client prometheus-flask-exporter
 
 #COPY /dockerfiles/volumes/config.yaml /openair-amf/etc/config.yaml
 COPY ./dockerfiles/volumes/flexric_gnb.conf /usr/local/etc/flexric/flexric_gnb.conf
