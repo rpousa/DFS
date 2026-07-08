@@ -13,6 +13,7 @@ import time
 import threading
 import ctypes
 import traceback
+import signal
 
 import xapp_sdk as ric
 import xapp_functs                      # classify_e2node lives here  [[23]]
@@ -56,6 +57,14 @@ S_SESSION   = Summary("ue_session_duration_seconds",
 G_SLICE     = Gauge("ue_dl_slice_id",
                     "Current DL slice id associated to a UE",
                     ["e2_node", "rnti"])
+
+_shutdown = False
+def _sig(_s, _f):
+    global _shutdown
+    _shutdown = True
+signal.signal(signal.SIGINT,  _sig)
+signal.signal(signal.SIGTERM, _sig)
+
 
 # ----------------------------------------------------------------------
 # Residency tracker
@@ -269,7 +278,7 @@ def main():
 
     last_metric = last_slice = 0.0
     try:
-        while ric.try_stop == 0:
+        while not _shutdown:
             now = time.time()
 
             if now - last_metric >= METRIC_REFRESH:
@@ -306,6 +315,7 @@ def main():
         for kind, h in handlers:
             try: rm[kind](h)
             except Exception: pass
+        ric.try_stop()            # ← call it (clean disconnect)
         print("[xapp] stopped", flush=True)
 
 if __name__ == "__main__":
