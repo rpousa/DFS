@@ -246,7 +246,7 @@ def main():
     du_nodes  = []        # (nid, node_label) for slice control
     subscribed = set()    # (node_type, cu_du_id) already subscribed
 
-    def poll_and_subscribe():
+    def poll_and_subscribe(cb_refs, handlers, du_nodes, subscribed):
         """Subscribe to any E2 node not seen before. Safe to call repeatedly."""
         for con in ric.conn_e2_nodes():
             nid   = con.id
@@ -282,7 +282,7 @@ def main():
 
             subscribed.add(key)
 
-    poll_and_subscribe()      # initial pass
+    poll_and_subscribe(cb_refs, handlers, du_nodes, subscribed)      # initial pass
 
     last_metric = last_slice = 0.0
     try:
@@ -290,7 +290,7 @@ def main():
             now = time.time()
 
             if now - last_poll >= 5.0:      # pick up DUs that connect late
-                poll_and_subscribe()
+                poll_and_subscribe(cb_refs, handlers, du_nodes, subscribed)
                 last_poll = now
 
             if now - last_metric >= METRIC_REFRESH:
