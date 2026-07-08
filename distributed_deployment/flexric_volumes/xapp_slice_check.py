@@ -240,46 +240,58 @@ def main():
     conn = ric.conn_e2_nodes()
     assert len(conn) > 0, "No E2 nodes connected"
 
-    cb_refs = []          # keep callbacks alive (SDK GC caveat) [[19]]
-    handlers = []
-    du_nodes = []         # (nid, node_label) for slice control
+    
+    cb_refs   = []        # keep callbacks alive (SDK GC caveat)
+    handlers  = []
+    du_nodes  = []        # (nid, node_label) for slice control
+    subscribed = set()    # (node_type, cu_du_id) already subscribed
 
-    for con in conn:
-        nid = con.id
-        ntype = xapp_functs.classify_e2node(nid)
-        cu    = cu_du_id_of(nid)
-        label = node_label_of(ntype, cu)
-        cu_lbl = f"0x{cu:x}" if cu is not None else "na"
-        print(f"[xapp] E2 node {label} type={ntype}", flush=True)
+    def poll_and_subscribe():
+        """Subscribe to any E2 node not seen before. Safe to call repeatedly."""
+        for con in ric.conn_e2_nodes():
+            nid   = con.id
+            ntype = xapp_functs.classify_e2node(nid)
+            cu    = cu_du_id_of(nid)
+            key   = (ntype, cu)
+            if key in subscribed:
+                continue
+            label  = node_label_of(ntype, cu)
+            cu_lbl = f"0x{cu:x}" if cu is not None else "na"
+            print(f"[xapp] E2 node {label} type={ntype}", flush=True)
 
-        if ntype in TYPES_DU:
-            mac = MACCb(label, ntype, cu_lbl)
-            cb_refs.append(mac)
-            handlers.append(("mac", ric.report_mac_sm(nid, REPORT_INTERVAL, mac)))
-            sl = SliceCb(label)
-            cb_refs.append(sl)
-            handlers.append(("slice", ric.report_slice_sm(nid, ric.Interval_ms_5, sl)))
-            du_nodes.append((nid, label))
+            if ntype in TYPES_DU:
+                mac = MACCb(label, ntype, cu_lbl)
+                cb_refs.append(mac)
+                handlers.append(("mac", ric.report_mac_sm(nid, REPORT_INTERVAL, mac)))
+                sl = SliceCb(label)
+                cb_refs.append(sl)
+                handlers.append(("slice", ric.report_slice_sm(nid, ric.Interval_ms_5, sl)))
+                du_nodes.append((nid, label))
+                time.sleep(2)   # let the slice subscription settle before ADD
+                try:
+                    ric.control_slice_sm(nid, build_addmod_static())
+                    print(f"[xapp] Added STATIC slices on {label}", flush=True)
+                except Exception as e:
+                    print(f"[xapp] ADD slices failed on {label}: {e}", flush=True)
 
-        elif ntype in TYPES_CUUP:
-            p = PDCPCb(label, ntype, cu_lbl); g = GTPCb(label, ntype, cu_lbl)
-            cb_refs += [p, g]
-            handlers.append(("pdcp", ric.report_pdcp_sm(nid, REPORT_INTERVAL, p)))
-            handlers.append(("gtp",  ric.report_gtp_sm(nid, REPORT_INTERVAL, g)))
+            elif ntype in TYPES_CUUP:
+                p = PDCPCb(label, ntype, cu_lbl); g = GTPCb(label, ntype, cu_lbl)
+                cb_refs += [p, g]
+                handlers.append(("pdcp", ric.report_pdcp_sm(nid, REPORT_INTERVAL, p)))
+                handlers.append(("gtp",  ric.report_gtp_sm(nid, REPORT_INTERVAL, g)))
 
-    # Push the target slice definition to every DU once
-    time.sleep(3)
-    for nid, label in du_nodes:
-        try:
-            ric.control_slice_sm(nid, build_addmod_static())
-            print(f"[xapp] Added STATIC slices on {label}", flush=True)
-        except Exception as e:
-            print(f"[xapp] ADD slices failed on {label}: {e}", flush=True)
+            subscribed.add(key)
+
+    poll_and_subscribe()      # initial pass
 
     last_metric = last_slice = 0.0
     try:
         while not _shutdown:
             now = time.time()
+
+            if now - last_poll >= 5.0:      # pick up DUs that connect late
+                poll_and_subscribe()
+                last_poll = now
 
             if now - last_metric >= METRIC_REFRESH:
                 TRACKER.refresh_metrics()
