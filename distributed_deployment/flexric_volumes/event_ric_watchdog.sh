@@ -40,7 +40,7 @@ start_xapp() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - [Instance #${RESTART_INDEX}] Starting xApp daemon..." >> "$WATCHDOG_LOG"
 
     cd /usr/local/flexric/xApp/python3/
-    nohup python3 "$XAPP_SCRIPT" > "$XAPP_LOG" 2>&1 &
+    nohup stdbuf -oL -eL "$RIC_BIN" -c "$RIC_CONF" > "$RIC_LOG" 2>&1 &
     local xapp_pid=$!
     echo "$xapp_pid" > "$XAPP_PID_FILE"
 

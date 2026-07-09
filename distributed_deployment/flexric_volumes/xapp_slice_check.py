@@ -331,6 +331,9 @@ def main():
                 print(f"[dbg] tracked residency keys={len(TRACKER._first)} "
                     f"detected_slice_ues={len(DETECTED_UES)} "
                     f"assoc_done={len(ASSOC_DONE)}", flush=True)
+                print(f"[dbg] nodes={len(conn)} -> {nodes} | "
+                    f"slice_ues={len(DETECTED_UES)} assoc_done={len(ASSOC_DONE)}", flush=True)
+
                 last_status = now
 
             time.sleep(0.2)
