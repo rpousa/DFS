@@ -270,7 +270,7 @@ def main():
                 time.sleep(2)   # let the slice subscription settle before ADD
                 try:
                     ric.control_slice_sm(nid, build_addmod_static())
-                    print(f"[xapp] Added STATIC slices on {label}", flush=True)
+                    print(f"[xapp] Added STATIC subscription to slices on {label}", flush=True)
                 except Exception as e:
                     print(f"[xapp] ADD slices failed on {label}: {e}", flush=True)
 
@@ -284,7 +284,7 @@ def main():
 
     poll_and_subscribe(cb_refs, handlers, du_nodes, subscribed)      # initial pass
 
-    last_metric = last_slice = 0.0
+    last_metric = last_slice = last_poll = 0.0
     try:
         while not _shutdown:
             now = time.time()
