@@ -275,10 +275,9 @@ def main():
                     print(f"[xapp] ADD slices failed on {label}: {e}", flush=True)
 
             elif ntype in TYPES_CUUP:
-                p = PDCPCb(label, ntype, cu_lbl); g = GTPCb(label, ntype, cu_lbl)
-                cb_refs += [p, g]
+                p = PDCPCb(label, ntype, cu_lbl); 
+                cb_refs += [p]
                 handlers.append(("pdcp", ric.report_pdcp_sm(nid, REPORT_INTERVAL, p)))
-                handlers.append(("gtp",  ric.report_gtp_sm(nid, REPORT_INTERVAL, g)))
 
             subscribed.add(key)
 

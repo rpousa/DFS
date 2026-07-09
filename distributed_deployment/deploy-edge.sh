@@ -380,7 +380,7 @@ print_info "  DU_e1   → CO CU-UP:    F1-U → ${CO_IP}:2153/udp  (CROSS-MACHIN
 print_info "  DU_e1/e2/CU-UP_e → FlexRIC: E2AP → ${CORE_IP}:36421/sctp"
 print_info "  Metrics → Core Grafana: http://${CORE_IP}:3000"
 echo ""
-print_info "UE summary: ${UES_WITH_IP:-0}/${CONNECTED_UES:-0}/4 UEs attached to DU_e1"
+print_info "UE summary: ${UES_WITH_IP:-0}/${CONNECTED_UES:-0}/3 UEs attached to DU_e1"
 echo ""
 print_info "Logs:  docker compose -f $COMPOSE_FILE logs -f"
 print_info "Stop:  docker compose -f $COMPOSE_FILE down"
