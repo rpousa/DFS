@@ -12,7 +12,7 @@
 #   DU_e1: F1-C → Core CU-CP, F1-U → CU-UP_co @ Centraloffice (CROSS-MACHINE)
 #   DU_e2: F1-C → Core CU-CP, F1-U → CU-UP_e local
 #
-# All UEs (4) connect to DU_e1 per requirement
+# All UEs (3) connect to DU_e1 per requirement
 
 set -e
 
@@ -35,7 +35,7 @@ echo "  - UPF_e    (Slice SST=1/SD=3)"
 echo "  - ext_dn_e"
 echo "  - DU_e1    (CellID=22222222, PCI=1, F1-C→Core, F1-U→CU-UP_co@CO)"
 #echo "  - DU_e2    (CellID=33333333, PCI=2, F1-C→Core, F1-U→CU-UP_e local)"
-echo "  - UE_1     (4 UEs → DU_e1 via RFSim)"
+echo "  - UE_1     (3 UEs → DU_e1 via RFSim)"
 echo ""
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC='\033[0m'
