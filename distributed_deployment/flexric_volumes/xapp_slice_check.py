@@ -255,6 +255,7 @@ def main():
     def poll_and_subscribe(cb_refs, handlers, du_nodes, subscribed):
         """Subscribe to any E2 node not seen before. Safe to call repeatedly."""
         for con in ric.conn_e2_nodes():
+            print(con)
             nid   = con.id
             ntype = xapp_functs.classify_e2node(nid)
             cu    = cu_du_id_of(nid)
@@ -286,8 +287,9 @@ def main():
                 handlers.append(("pdcp", ric.report_pdcp_sm(nid, REPORT_INTERVAL, p)))
 
             subscribed.add(key)
-
-    poll_and_subscribe(cb_refs, handlers, du_nodes, subscribed)      # initial pass
+        return cb_refs, handlers, du_nodes, subscribed
+    
+    cb_refs, handlers, du_nodes, subscribed = poll_and_subscribe(cb_refs, handlers, du_nodes, subscribed)      # initial pass
 
     last_metric = last_slice = last_poll = last_status =  0.0
     try:
@@ -295,7 +297,7 @@ def main():
             now = time.time()
 
             if now - last_poll >= 5.0:      # pick up DUs that connect late
-                poll_and_subscribe(cb_refs, handlers, du_nodes, subscribed)
+                cb_refs, handlers, du_nodes, subscribed = poll_and_subscribe(cb_refs, handlers, du_nodes, subscribed)
                 last_poll = now
 
             if now - last_metric >= METRIC_REFRESH:
