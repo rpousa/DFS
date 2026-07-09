@@ -21,6 +21,27 @@ fi
 
 echo "$(date '+%Y-%m-%d %H:%M:%S') - Starting nearRT-RIC watchdog (current index: $RESTART_INDEX)..." >> "$WATCHDOG_LOG"
 
+wait_for_ran() {
+    local log="$1"; local timeout="${2:-150}"
+    local start=$(date +%s)
+    while true; do
+        local cucp cuup du
+        cucp=$(grep "E2 SETUP-REQUEST" "$log" 2>/dev/null | grep -c "ngran_gNB_CUCP")
+        cuup=$(grep "E2 SETUP-REQUEST" "$log" 2>/dev/null | grep -c "ngran_gNB_CUUP")
+        du=$(  grep "E2 SETUP-REQUEST" "$log" 2>/dev/null | grep -c "ngran_gNB_DU")
+        echo "$(date '+%F %T') - waiting RAN: cucp=$cucp cuup=$cuup du=$du" >> "$WATCHDOG_LOG"
+        if [ "${cucp:-0}" -ge 1 ] && [ "${cuup:-0}" -ge 2 ] && [ "${du:-0}" -ge 2 ]; then
+            echo "$(date '+%F %T') - RAN fully connected" >> "$WATCHDOG_LOG"
+            return 0
+        fi
+        if [ $(( $(date +%s) - start )) -ge "$timeout" ]; then
+            echo "$(date '+%F %T') - TIMEOUT; starting xApp with partial RAN" >> "$WATCHDOG_LOG"
+            return 1
+        fi
+        sleep 2
+    done
+}
+
 start_xapp() {
     # Kill any existing xApp
     if [ -f "$XAPP_PID_FILE" ]; then
@@ -34,13 +55,13 @@ start_xapp() {
     fi
 
     # Wait for RIC to be fully ready
-    sleep 8
-
+    wait_for_ran "$RIC_LOG" 150  
+    
     local XAPP_LOG="${RIC_LOG_DIR}/xapp_instance_${RESTART_INDEX}.log"
     echo "$(date '+%Y-%m-%d %H:%M:%S') - [Instance #${RESTART_INDEX}] Starting xApp daemon..." >> "$WATCHDOG_LOG"
 
     cd /usr/local/flexric/xApp/python3/
-    nohup python3 "$XAPP_SCRIPT" > "$XAPP_LOG" 2>&1 &
+    nohup stdbuf -oL -eL python3 -u "$XAPP_SCRIPT" > "$XAPP_LOG" 2>&1 &    
     local xapp_pid=$!
     echo "$xapp_pid" > "$XAPP_PID_FILE"
 
