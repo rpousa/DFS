@@ -244,8 +244,11 @@ def main():
 
     ric.init()
     conn = ric.conn_e2_nodes()
-    assert len(conn) > 0, "No E2 nodes connected"
-
+    EXPECTED = 4                       # cucp + cuup_co + cuup_e + du_co (5 with du_e1)
+    if len(conn) < EXPECTED:
+        print(f"[xapp] only {len(conn)} nodes at attach; exiting to retry", flush=True)
+        ric.try_stop(); return         # clean exit; watchdog relaunches on a stable RIC
+    
     
     cb_refs   = []        # keep callbacks alive (SDK GC caveat)
     handlers  = []
@@ -255,7 +258,7 @@ def main():
     def poll_and_subscribe(cb_refs, handlers, du_nodes, subscribed):
         """Subscribe to any E2 node not seen before. Safe to call repeatedly."""
         for con in ric.conn_e2_nodes():
-            print(con)
+            
             nid   = con.id
             ntype = xapp_functs.classify_e2node(nid)
             cu    = cu_du_id_of(nid)

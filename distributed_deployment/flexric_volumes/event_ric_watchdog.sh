@@ -30,7 +30,7 @@ wait_for_ran() {
         cuup=$(grep "E2 SETUP-REQUEST" "$log" 2>/dev/null | grep -c "ngran_gNB_CUUP")
         du=$(  grep "E2 SETUP-REQUEST" "$log" 2>/dev/null | grep -c "ngran_gNB_DU")
         echo "$(date '+%F %T') - waiting RAN: cucp=$cucp cuup=$cuup du=$du" >> "$WATCHDOG_LOG"
-        if [ "${cucp:-0}" -ge 1 ] && [ "${cuup:-0}" -ge 2 ] && [ "${du:-0}" -ge 2 ]; then
+        if [ "${cucp:-0}" -ge 1 ] && [ "${cuup:-0}" -ge 2 ] && [ "${du:-0}" -ge 1 ]; then
             echo "$(date '+%F %T') - RAN fully connected" >> "$WATCHDOG_LOG"
             return 0
         fi
@@ -49,7 +49,7 @@ start_xapp() {
         if kill -0 "$old_pid" 2>/dev/null; then
             echo "$(date '+%Y-%m-%d %H:%M:%S') - Stopping old xApp (PID: $old_pid)..." >> "$WATCHDOG_LOG"
             kill "$old_pid" 2>/dev/null
-            sleep 2
+            sleep 10
             kill -9 "$old_pid" 2>/dev/null || true
         fi
     fi
