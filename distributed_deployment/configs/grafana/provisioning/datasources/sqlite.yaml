@@ -1,0 +1,20 @@
+apiVersion: 1
+datasources:
+  - name: RC_DB
+    uid: desvo1ed8r5dsc
+    type: frser-sqlite-datasource
+    access: proxy
+    jsonData:
+      path: /var/lib/grafana/sqlite/xapp_db
+  - name: KPM_DB_1
+    uid: depbmy9sb6m0wb
+    type: frser-sqlite-datasource
+    access: proxy
+    jsonData:
+      path: /var/lib/grafana/sqlite/xapp_db
+  - name: KPM_DB_2
+    uid: edthsvykzynswc
+    type: frser-sqlite-datasource
+    access: proxy
+    jsonData:
+      path: /var/lib/grafana/sqlite/xapp_db

@@ -402,7 +402,7 @@ services:
       - "192.168.0.200:9464:9464/tcp"
     volumes:
       - ./configs/flexric:/usr/local/etc/flexric
-      - ./logs/flexric:/usr/local/logs
+      - ./logs/flexric:/usr/local/etc/flexric_logs
       - ./logs/cuup_co:/usr/local/flexric/cu_logs:ro
       - ./flexric_volumes/event_ric_watchdog.sh:/usr/local/bin/event_ric_watchdog.sh
       #- ./flexric_volumes/ric_watchdog.sh:/usr/local/bin/ric_watchdog.sh
@@ -411,6 +411,8 @@ services:
       - ./flexric_volumes/xapp_functs.py:/usr/local/flexric/xApp/python3/xapp_functs.py
       - ./flexric_volumes/xapp_test.py:/usr/local/flexric/xApp/python3/xapp.py
       - ./flexric_volumes/xapp_daemon_topo.py:/usr/local/flexric/xApp/python3/xapp_daemon_topo.py
+      - xapp_db_data:/tmp          # <-- exposes /tmp/xapp_db
+
     # cpuset: "0-1"
     # cpus: 0.5
     # cpu_shares: 512
@@ -539,10 +541,12 @@ services:
       - ./configs/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./configs/grafana/dashboards:/var/lib/grafana/dashboards:ro
       - grafana_data:/var/lib/grafana
+      - xapp_db_data:/var/lib/grafana/sqlite:ro 
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
       - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel,frser-sqlite-datasource
+      - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=frser-sqlite-datasource
       - GF_SERVER_HTTP_ADDR=0.0.0.0
       - GF_SERVER_HTTP_PORT=3000
       - GF_SERVER_PROTOCOL=http
@@ -616,4 +620,6 @@ volumes:
   prometheus_data:
     driver: local
   grafana_data:
+    driver: local
+  xapp_db_data:
     driver: local

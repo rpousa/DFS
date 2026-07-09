@@ -102,19 +102,6 @@
       ]
     },
     {
-      "id": 7,
-      "type": "timeseries",
-      "title": "Disk I/O wait (%)",
-      "gridPos": { "x": 16, "y": 16, "w": 8, "h": 7 },
-      "targets": [
-        {
-          "expr": "rate(node_cpu_seconds_total{mode=\"iowait\"}[1m]) * 100",
-          "legendFormat": "{{instance}} cpu{{cpu}}"
-        }
-      ],
-      "fieldConfig": { "defaults": { "unit": "percent" } }
-    },
-    {
       "id": 8,
       "type": "timeseries",
       "title": "Host network RX (bits/s) — physical NICs only",
@@ -167,14 +154,6 @@
       "fieldConfig": { "defaults": { "unit": "bps" } }
     },
     {
-      "id": 12,
-      "type": "stat",
-      "title": "Targets up",
-      "gridPos": { "x": 0, "y": 39, "w": 6, "h": 4 },
-      "targets": [{ "expr": "sum(up)" }],
-      "fieldConfig": { "defaults": { "unit": "none" } }
-    },
-    {
       "id": 13,
       "type": "stat",
       "title": "Targets down",
@@ -215,67 +194,15 @@
     {
       "id": 15, "type": "timeseries", "title": "Slice throughput (bps)",
       "gridPos": { "x": 0, "y": 47, "w": 12, "h": 8 },
-      "targets": [ { "expr": "slice_throughput_bps", "legendFormat": "{{slice}}" } ],
+      "targets": [ { "expr": "slice_throughput_bps and (time() - push_time_seconds{job=\"stress\"} < 15)", "legendFormat": "{{slice}}" } ],
       "fieldConfig": { "defaults": { "unit": "bps" } }
     },
-    {
-      "id": 16, "type": "timeseries", "title": "URLLC jitter (ms) & packet loss (%)",
-      "gridPos": { "x": 12, "y": 47, "w": 12, "h": 8 },
-      "targets": [
-        { "expr": "slice_jitter_ms",   "legendFormat": "jitter {{slice}}" },
-        { "expr": "slice_loss_percent","legendFormat": "loss {{slice}}" }
-      ]
-    },
+
     {
       "id": 17, "type": "stat", "title": "Latest throughput per slice",
       "gridPos": { "x": 0, "y": 55, "w": 12, "h": 6 },
       "targets": [ { "expr": "slice_throughput_bps", "legendFormat": "{{slice}}", "instant": true } ],
       "fieldConfig": { "defaults": { "unit": "bps" } }
-    },
-    {
-      "id": 18, "type": "timeseries", "title": "eMBB TCP retransmits",
-      "gridPos": { "x": 12, "y": 55, "w": 12, "h": 6 },
-      "targets": [ { "expr": "slice_tcp_retransmits", "legendFormat": "{{slice}}" } ]
-    },
-    {
-      "id": 19, "type": "timeseries",
-      "title": "UE residency per E2 node (s)",
-      "gridPos": { "x": 0, "y": 63, "w": 12, "h": 8 },
-      "targets": [
-        { "expr": "ue_residency_seconds",
-          "legendFormat": "{{e2_node}} / {{rnti}}" }
-      ],
-      "fieldConfig": { "defaults": { "unit": "s" } }
-    },
-    {
-      "id": 20, "type": "timeseries",
-      "title": "Active UEs per DU / CU-UP",
-      "gridPos": { "x": 12, "y": 63, "w": 12, "h": 8 },
-      "targets": [
-        { "expr": "node_active_ue_count",
-          "legendFormat": "{{e2_node}}" }
-      ],
-      "fieldConfig": { "defaults": { "unit": "none", "decimals": 0 } }
-    },
-    {
-      "id": 21, "type": "stat",
-      "title": "Mean UE session duration per node (s)",
-      "gridPos": { "x": 0, "y": 71, "w": 12, "h": 6 },
-      "targets": [
-        { "expr": "rate(ue_session_duration_seconds_sum[5m]) / rate(ue_session_duration_seconds_count[5m])",
-          "legendFormat": "{{e2_node}}", "instant": true }
-      ],
-      "fieldConfig": { "defaults": { "unit": "s" } }
-    },
-    {
-      "id": 22, "type": "state-timeline",
-      "title": "UE → DL slice association",
-      "gridPos": { "x": 12, "y": 71, "w": 12, "h": 6 },
-      "targets": [
-        { "expr": "ue_dl_slice_id",
-          "legendFormat": "{{e2_node}} / {{rnti}}" }
-      ],
-      "fieldConfig": { "defaults": { "unit": "none", "decimals": 0 } }
     }
   ]
 }

@@ -8,6 +8,48 @@ xApp: per-DU / per-CU-UP UE residency-time reporting to Prometheus/Grafana
 - Slicing:   subscribe Slice SM on DUs to detect UEs+RNTIs, add target slices,
   then ASSOC each detected UE to the target DL slice using its REAL rnti.
 """
+import subprocess, os
+
+KPM_BIN  = "/usr/local/flexric/xApp/c/monitor/xapp_kpm_moni"   # adjust to your built path
+KPM_LOG  = "/usr/local/etc/flexric_logs/kpm_xapp.log"
+EXPECTED_NODES = 4          # cucp + cuup_co + cuup_e + du_co (5 if du_e1 present)
+
+_kpm_proc = None
+
+def start_kpm_if_ready(conn):
+    """Launch the C KPM xApp once, only after the RAN is fully connected."""
+    global _kpm_proc
+    if _kpm_proc is not None:            # already launched
+        return
+    if len(conn) < EXPECTED_NODES:
+        return
+    if not os.path.exists(KPM_BIN):
+        print(f"[xapp] KPM binary not found at {KPM_BIN}", flush=True)
+        return
+    logf = open(KPM_LOG, "ab", buffering=0)
+    _kpm_proc = subprocess.Popen(
+        ["stdbuf", "-oL", "-eL", KPM_BIN],
+        stdout=logf, stderr=logf,
+        preexec_fn=os.setsid,            # own process group -> clean signalling
+    )
+    print(f"[xapp] Launched C KPM xApp pid={_kpm_proc.pid} "
+          f"(nodes={len(conn)})", flush=True)
+
+def stop_kpm():
+    """Terminate the KPM xApp CLEANLY so it deregisters (never -9)."""
+    global _kpm_proc
+    if _kpm_proc is None:
+        return
+    if _kpm_proc.poll() is None:         # still running
+        _kpm_proc.send_signal(signal.SIGINT)   # C xApp catches SIGINT -> try_stop
+        try:
+            _kpm_proc.wait(timeout=10)         # give it time to deregister
+        except subprocess.TimeoutExpired:
+            _kpm_proc.terminate()              # SIGTERM fallback
+            try: _kpm_proc.wait(timeout=5)
+            except subprocess.TimeoutExpired: _kpm_proc.kill()
+    print("[xapp] C KPM xApp stopped", flush=True)
+    _kpm_proc = None
 
 import time
 import threading
@@ -301,6 +343,8 @@ def main():
 
             if now - last_poll >= 5.0:      # pick up DUs that connect late
                 cb_refs, handlers, du_nodes, subscribed = poll_and_subscribe(cb_refs, handlers, du_nodes, subscribed)
+                
+                start_kpm_if_ready(conn) 
                 last_poll = now
 
             if now - last_metric >= METRIC_REFRESH:
@@ -349,8 +393,9 @@ def main():
         for kind, h in handlers:
             try: rm[kind](h)
             except Exception: pass
+        stop_kpm() 
         ric.try_stop()            # ← call it (clean disconnect)
-        print("[xapp] stopped", flush=True)
+        print("[xapp] xapps stopped", flush=True)
 
 if __name__ == "__main__":
     main()
