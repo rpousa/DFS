@@ -127,9 +127,13 @@ class MACCb(ric.mac_cb):
         ric.mac_cb.__init__(self)
         self.nl, self.nt, self.cu = node_label, node_type, cu_du_id
     def handle(self, ind):
-        if len(ind.ue_stats) > 0:
+        n = len(ind.ue_stats)
+        if n and (int(time.time()) % 5 == 0):
+            print(f"[dbg-mac] {self.nl} ue_stats={n} "
+                  f"rntis={[hex(ind.ue_stats[i].rnti) for i in range(n)]}", flush=True)
+        if n:
             now = time.time()
-            for i in range(len(ind.ue_stats)):
+            for i in range(n):
                 TRACKER.observe(self.nl, self.nt, self.cu, ind.ue_stats[i].rnti, now)
 
 class PDCPCb(ric.pdcp_cb):
@@ -159,6 +163,8 @@ class SliceCb(ric.slice_cb):
         self.node_label = node_label
     def handle(self, ind):
         st = ind.ue_slice_stats
+        if int(time.time()) % 5 == 0:
+            print(f"[dbg-slice] {self.node_label} len_ue_slice={st.len_ue_slice}", flush=True)
         if st.len_ue_slice > 0:
             with SLICE_LOCK:
                 for u in st.ues:
@@ -283,7 +289,7 @@ def main():
 
     poll_and_subscribe(cb_refs, handlers, du_nodes, subscribed)      # initial pass
 
-    last_metric = last_slice = last_poll = 0.0
+    last_metric = last_slice = last_poll = last_status =  0.0
     try:
         while not _shutdown:
             now = time.time()
@@ -309,14 +315,23 @@ def main():
                     nid = next((n for n, l in du_nodes if l == label), None)
                     if nid is None:
                         continue
-                    try:
-                        ric.control_slice_sm(nid, build_assoc(rnti, TARGET_DL_SLICE_ID))
-                        ASSOC_DONE.add((label, rnti))
-                        print(f"[xapp] Moved rnti={rnti:#06x} on {label} "
-                              f"-> DL slice {TARGET_DL_SLICE_ID}", flush=True)
-                    except Exception as e:
-                        print(f"[xapp] ASSOC failed rnti={rnti:#06x}: {e}", flush=True)
+                    # try:
+                    #     ric.control_slice_sm(nid, build_assoc(rnti, TARGET_DL_SLICE_ID))
+                    #     ASSOC_DONE.add((label, rnti))
+                    #     print(f"[xapp] Moved rnti={rnti:#06x} on {label} "
+                    #           f"-> DL slice {TARGET_DL_SLICE_ID}", flush=True)
+                    # except Exception as e:
+                    #     print(f"[xapp] ASSOC failed rnti={rnti:#06x}: {e}", flush=True)
                 last_slice = now
+            
+            if now - last_status >= 5.0:
+                conn = ric.conn_e2_nodes()
+                nodes = [(xapp_functs.classify_e2node(c.id), cu_du_id_of(c.id)) for c in conn]
+                print(f"[dbg] connected E2 nodes={len(conn)} -> {nodes}", flush=True)
+                print(f"[dbg] tracked residency keys={len(TRACKER._first)} "
+                    f"detected_slice_ues={len(DETECTED_UES)} "
+                    f"assoc_done={len(ASSOC_DONE)}", flush=True)
+                last_status = now
 
             time.sleep(0.2)
     finally:
