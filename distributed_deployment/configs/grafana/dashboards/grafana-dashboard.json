@@ -1,3 +1,4 @@
+
 {
   "annotations": {
     "list": [
@@ -15,11 +16,13 @@
       }
     ]
   },
+  
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": 21,
   "links": [],
+  
   "panels": [
     {
       "collapsed": false,
@@ -29,6 +32,8 @@
         "x": 0,
         "y": 0
       },
+      "repeat": "ue",
+      "repeatDirection": "h",
       "id": 13,
       "panels": [],
       "title": "E2SM-RC",
@@ -116,9 +121,9 @@
       "pluginVersion": "12.0.1+security-01",
       "targets": [
         {
-          "queryText": "SELECT\n  tstamp AS \"time\",\n  sinr,\n  ran_ue_id\nFROM\n  RC_MEAS_REPORT\nORDER BY\n  tstamp ASC;",
+          "queryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(sinr) AS value\nFROM RC_MEAS_REPORT\nWHERE ran_ue_id IN ($ue)\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "table",
-          "rawQueryText": "SELECT\n  tstamp AS \"time\",\n  sinr,\n  ran_ue_id\nFROM\n  RC_MEAS_REPORT\nORDER BY\n  tstamp ASC;",
+          "rawQueryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(sinr) AS value\nFROM RC_MEAS_REPORT\nWHERE ran_ue_id IN ($ue)\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -211,9 +216,9 @@
       "pluginVersion": "12.0.1+security-01",
       "targets": [
         {
-          "queryText": "SELECT\n  tstamp AS \"time\",\n  rsrp,\n  ran_ue_id\nFROM\n  RC_MEAS_REPORT\nORDER BY\n  tstamp ASC;",
+          "queryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(rsrp) AS value\nFROM RC_MEAS_REPORT\nWHERE ran_ue_id IN ($ue)\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "table",
-          "rawQueryText": "SELECT\n  tstamp AS \"time\",\n  rsrp,\n  ran_ue_id\nFROM\n  RC_MEAS_REPORT\nORDER BY\n  tstamp ASC;",
+          "rawQueryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(rsrp) AS value\nFROM RC_MEAS_REPORT\nWHERE ran_ue_id IN ($ue)\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -306,9 +311,9 @@
       "pluginVersion": "12.0.1+security-01",
       "targets": [
         {
-          "queryText": "SELECT\n  tstamp AS \"time\",\n  rsrq,\n  ran_ue_id\nFROM\n  RC_MEAS_REPORT\nORDER BY\n  tstamp ASC;",
+          "queryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(rsrq) AS value\nFROM RC_MEAS_REPORT\nWHERE ran_ue_id IN ($ue)\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "table",
-          "rawQueryText": "SELECT\n  tstamp AS \"time\",\n  rsrq,\n  ran_ue_id\nFROM\n  RC_MEAS_REPORT\nORDER BY\n  tstamp ASC;",
+          "rawQueryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(rsrq) AS value\nFROM RC_MEAS_REPORT\nWHERE ran_ue_id IN ($ue)\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -715,9 +720,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n    tstamp AS \"time\",\n    ran_ue_id,\n    AVG(measure_value)*1000000 AS UE\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL'\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IN ($ue)\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    ran_ue_id,\n    AVG(measure_value)*1000000 AS UE\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL'\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IN ($ue)\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -853,9 +858,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n    tstamp AS \"time\",\n    ran_ue_id,\n    AVG(measure_value)*1000000 AS UE\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL'\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL' AND ran_ue_id IN ($ue)\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    ran_ue_id,\n    AVG(measure_value)*1000000 AS UE\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL'\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL' AND ran_ue_id IN ($ue)\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -990,9 +995,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n    tstamp AS \"time\",\n    ran_ue_id,\n    AVG(measure_value) AS UE\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpDl'\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpDl' AND ran_ue_id IN ($ue)\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    ran_ue_id,\n    AVG(measure_value) AS UE\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpDl'\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpDl' AND ran_ue_id IN ($ue)\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -1127,9 +1132,10 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n    tstamp AS \"time\",\n    ran_ue_id,\n    AVG(measure_value) AS UE\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpUl'\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpUl' AND ran_ue_id IN ($ue)\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    ran_ue_id,\n    AVG(measure_value) AS UE\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpUl'\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpUl' AND ran_ue_id IN ($ue)\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp"
+,
           "refId": "A",
           "timeColumns": [
             "time",
@@ -1264,9 +1270,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n   tstamp AS \"time\",\n   ran_ue_id,\n   AVG(measure_value) AS UE\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotDl'\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotDl' AND ran_ue_id IN ($ue)\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n   tstamp AS \"time\",\n   ran_ue_id,\n   AVG(measure_value) AS UE\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotDl'\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotDl' AND ran_ue_id IN ($ue)\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -1401,9 +1407,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n   tstamp AS \"time\",\n   ran_ue_id,\n   AVG(measure_value) AS UE\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotUl'\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotUl' AND ran_ue_id IN ($ue)\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n   tstamp AS \"time\",\n   ran_ue_id,\n   AVG(measure_value) AS UE\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotUl'\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotUl' AND ran_ue_id IN ($ue)\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -1538,9 +1544,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n    tstamp AS \"time\",\n    ran_ue_id,\n    AVG(measure_value) AS UE\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.RlcSduDelayDl'\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.RlcSduDelayDl' AND ran_ue_id IN ($ue)\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    ran_ue_id,\n    AVG(measure_value) AS UE\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.RlcSduDelayDl'\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.RlcSduDelayDl' AND ran_ue_id IN ($ue)\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -1557,8 +1563,21 @@
   "schemaVersion": 41,
   "tags": [],
   "templating": {
-    "list": []
-  },
+  "list": [
+    {
+      "name": "ue",
+      "label": "UE (ran_ue_id)",
+      "type": "query",
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" },
+      "query": "SELECT DISTINCT ran_ue_id FROM KPM_MeasRecord ORDER BY ran_ue_id",
+      "refresh": 2,
+      "includeAll": true,
+      "multi": true,
+      "sort": 1,
+      "current": {}
+    }
+  ]
+ },
   "time": {
     "from": "now-1m",
     "to": "now"
