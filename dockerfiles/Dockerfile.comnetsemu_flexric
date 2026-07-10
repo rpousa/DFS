@@ -36,6 +36,7 @@ RUN apt-get update && \
        python3-pip \
        libsctp1 \
        libstdc++6 \
+       sqlite3 \
        && \
     apt-get clean
 
