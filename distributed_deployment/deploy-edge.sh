@@ -256,7 +256,7 @@ fi
 echo ""
 
 # Stage 5/7: UEs (connect to DU_e1)
-print_stage "Stage 5/7: Starting 4 UEs (→ DU_e1)..."
+print_stage "Stage 5/7: Starting 3 UEs (→ DU_e1)..."
 # for u in ue_0 ue_1 ue_2 ue_3; do
 #   docker compose -f "$COMPOSE_FILE" up -d --no-deps "$u"; sleep 8
 #   print_info "Launched $u ..."
@@ -289,9 +289,9 @@ echo ""
 # Stage 7/7: UE connection verification
 print_stage "Stage 7/7: Verifying UE connections..."
 if check_ue_connections ; then
-    print_info "✓ All 4 UEs connected!"
+    print_info "✓ All 3 UEs connected!"
 else
-    print_warn "Only $CONNECTED_UES/4 UEs connected"
+    print_warn "Only $CONNECTED_UES/3 UEs connected"
     while true; do
         echo "Options: [w]ait+recheck  [p]roceed  [q]uit"
         read -p "Choice: " -n 1 -r; echo
