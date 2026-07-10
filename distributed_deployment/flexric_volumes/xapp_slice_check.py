@@ -17,7 +17,7 @@ RC_LOG   = "/usr/local/etc/flexric_logs/kpm_rc_xapp.log"
 EXPECTED_NODES = 4          # cucp + cuup_co + cuup_e + du_co (5 if du_e1 present)
 
 _kpm_proc = None
-
+_rc_proc  = None
 def start_kpm_if_ready(conn):
     """Launch the C KPM xApp once, only after the RAN is fully connected."""
     global _kpm_proc

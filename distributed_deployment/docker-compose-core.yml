@@ -411,8 +411,7 @@ services:
       - ./flexric_volumes/xapp_functs.py:/usr/local/flexric/xApp/python3/xapp_functs.py
       - ./flexric_volumes/xapp_test.py:/usr/local/flexric/xApp/python3/xapp.py
       - ./flexric_volumes/xapp_daemon_topo.py:/usr/local/flexric/xApp/python3/xapp_daemon_topo.py
-      - xapp_db_data:/tmp          # <-- exposes /tmp/xapp_db
-
+      - xapp_db_data:/usr/local/xappdb           # <-- exposes /tmp/xapp_db
     # cpuset: "0-1"
     # cpus: 0.5
     # cpu_shares: 512
