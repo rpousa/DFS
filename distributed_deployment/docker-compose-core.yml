@@ -391,6 +391,8 @@ services:
     image: comnetsemu_flexric:comnetsemu
     container_name: flexric
     hostname: flexric
+    environment:
+      - XAPP_DURATION=-1
     cap_add:
       - SYS_NICE
     networks:
