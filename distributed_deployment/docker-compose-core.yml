@@ -419,7 +419,15 @@ services:
     # cpu_shares: 512
     command: >
       sh -c "sleep 5 &&
-             /usr/local/bin/event_ric_watchdog.sh"
+             /usr/local/bin/event_ric_watchdog.sh &
+             sleep 8 &&
+             exec tail -n +1 -F \
+               /var/log/ric_watchdog.log \
+               /usr/local/etc/flexric_logs/flexric_instance_*.log \
+               /usr/local/etc/flexric_logs/xapp_instance_*.log \
+               /usr/local/etc/flexric_logs/kpm_*xapp.log 2>/dev/null"
+# sh -c "sleep 5 &&
+#        /usr/local/bin/event_ric_watchdog.sh"
     healthcheck:
       test: ["CMD-SHELL", "ss -Sln | grep -q ':36421' || exit 1"]
       interval: 15s
