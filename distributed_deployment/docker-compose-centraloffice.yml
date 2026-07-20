@@ -236,6 +236,7 @@ services:
         --log_config.e1ap_log_level debug
         --log_config.f1u_log_level debug
         --log_config.gtpu_log_level debug
+        --log_config.e2ap_log_level debug
         --e2_agent.near_ric_ip_addr 192.168.0.200
         --e2_agent.sm_dir /usr/local/lib/flexric/
         --telnetsrv --telnetsrv.shrmod ci
