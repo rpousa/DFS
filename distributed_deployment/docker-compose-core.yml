@@ -418,17 +418,19 @@ services:
     # cpus: 0.5
     # cpu_shares: 512
     command: >
-      sh -c "mkdir -p /usr/local/etc/flexric_logs
-             touch /var/log/ric_watchdog.log
-             /usr/local/bin/event_ric_watchdog.sh >>/var/log/ric_watchdog.log 2>&1 &
-             sleep 6
-             
-             FILES="/var/log/ric_watchdog.log"
-             for f in /usr/local/etc/flexric_logs/*.log; do
-                [ -e "$f" ] && FILES="$FILES $f"
-             done
-             
-             exec tail -n +1 -F $FILES"
+      sh -c '
+        mkdir -p /usr/local/etc/flexric_logs
+        touch /var/log/ric_watchdog.log
+        /usr/local/bin/event_ric_watchdog.sh >> /var/log/ric_watchdog.log 2>&1 &
+        sleep 6
+
+        FILES="/var/log/ric_watchdog.log"
+        for f in /usr/local/etc/flexric_logs/*.log; do
+          [ -e "$$f" ] && FILES="$$FILES $$f"
+        done
+
+        exec tail -n +1 -F $$FILES
+      '
 # sh -c "sleep 5 &&
 #        /usr/local/bin/event_ric_watchdog.sh"
     healthcheck:
