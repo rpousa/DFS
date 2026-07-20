@@ -419,8 +419,7 @@ services:
     # cpu_shares: 512
     command: >
       sh -c "mkdir -p /usr/local/etc/flexric_logs;
-             touch /var/log/ric_watchdog.log
-                   /usr/local/etc/flexric_logs/boot.log;
+             touch /var/log/ric_watchdog.log;
              /usr/local/bin/event_ric_watchdog.sh >>/var/log/ric_watchdog.log 2>&1 &
              sleep 6;
              exec tail -n +1 -F --retry \
