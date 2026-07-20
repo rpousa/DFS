@@ -320,7 +320,8 @@ def build_assoc(rnti, dl_id):
 def main():
     start_http_server(EXPORTER_PORT)          # /metrics for Prometheus
     print(f"[xapp] Prometheus exporter on :{EXPORTER_PORT}", flush=True)
-
+    subprocess.run(["pkill", "-INT", "-f", "xapp_kpm_moni"], check=False)
+    subprocess.run(["pkill", "-INT", "-f", "xapp_rc_moni"],  check=False)  # SIGINT, never -9
     ric.init()
     conn = ric.conn_e2_nodes()
     EXPECTED = 4                       # cucp + cuup_co + cuup_e + du_co (5 with du_e1)
