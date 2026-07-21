@@ -22,7 +22,7 @@ fi
 echo "$(date '+%Y-%m-%d %H:%M:%S') - Starting nearRT-RIC watchdog (current index: $RESTART_INDEX)..." >> "$WATCHDOG_LOG"
 
 wait_for_ran() {
-    local log="$1"; local timeout="${2:-150}"
+    local log="$1"; 
     local start=$(date +%s)
     while true; do
         local cucp cuup du
@@ -34,10 +34,7 @@ wait_for_ran() {
             echo "$(date '+%F %T') - RAN fully connected" >> "$WATCHDOG_LOG"
             return 0
         fi
-        if [ $(( $(date +%s) - start )) -ge "$timeout" ]; then
-            echo "$(date '+%F %T') - TIMEOUT; starting xApp with partial RAN" >> "$WATCHDOG_LOG"
-            return 1
-        fi
+
         sleep 2
     done
 }

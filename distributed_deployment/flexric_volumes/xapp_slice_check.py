@@ -11,7 +11,8 @@ xApp: per-DU / per-CU-UP UE residency-time reporting to Prometheus/Grafana
 import subprocess, os
 
 KPM_BIN  = "/usr/local/flexric/xApp/c/monitor/xapp_kpm_moni"   
-RC_BIN   = "/usr/local/flexric/xApp/c/monitor/xapp_rc_moni"                
+RC_BIN   = "/usr/local/flexric/xApp/c/monitor/xapp_rc_moni"        
+RC_Create_DRB = "/usr/local/flexric/xApp/c/monitor/xapp_kpm_rc" # study for creation of DRB         
 KPM_LOG  = "/usr/local/etc/flexric_logs/kpm_moni_xapp.log"
 RC_LOG   = "/usr/local/etc/flexric_logs/kpm_rc_xapp.log"
 EXPECTED_NODES = 4          # cucp + cuup_co + cuup_e + du_co (5 if du_e1 present)
