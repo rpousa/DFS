@@ -395,6 +395,7 @@ services:
       - XAPP_DURATION=-1
     cap_add:
       - SYS_NICE
+      - SYS_PTRACE 
     networks:
       core_net:
         ipv4_address: 192.168.71.150
