@@ -37,11 +37,7 @@ wait_for_ran() {
         # honor pause
         [ -f "$PAUSE_FILE" ] && { sleep "$POLL"; continue; }
 
-        read -r total cucp cuup du <<<"$(probe_nodes)"
-        echo "$(probe_nodes)"
-        total=${total:-0}; cucp=${cucp:-0}; cuup=${cuup:-0}; du=${du:-0}
-
-        echo "$(date '+%F %T') - RAN nodes: total=$total cucp=$cucp cuup=$cuup du=$du" >> "$WATCHDOG_LOG"
+        nodes=$(grep "Registered E2 nodes" "$RIC_LOG" | tail -1 | grep -oE '[0-9]+$')
 
         # readiness: 1 CU-CP, 2 CU-UP (co + edge), 1 DU (edge)
         if [ "$cucp" -ge 1 ] && [ "$cuup" -ge 2 ] && [ "$du" -ge 1 ]; then
