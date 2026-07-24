@@ -24,7 +24,7 @@ echo "$(date '+%Y-%m-%d %H:%M:%S') - Starting nearRT-RIC watchdog (current index
 wait_for_ran() {
     local log="$1"; 
     local start=$(date +%s)
-    local STALL=90
+    local STALL=9000
     while true; do
         local cucp cuup du
         cucp=$(grep "E2 SETUP-REQUEST" "$log" 2>/dev/null | grep -c "ngran_gNB_CUCP")
