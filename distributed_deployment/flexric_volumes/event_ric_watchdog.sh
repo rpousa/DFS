@@ -38,6 +38,7 @@ wait_for_ran() {
         [ -f "$PAUSE_FILE" ] && { sleep "$POLL"; continue; }
 
         read -r total cucp cuup du <<<"$(probe_nodes)"
+        echo "$(probe_nodes)"
         total=${total:-0}; cucp=${cucp:-0}; cuup=${cuup:-0}; du=${du:-0}
 
         echo "$(date '+%F %T') - RAN nodes: total=$total cucp=$cucp cuup=$cuup du=$du" >> "$WATCHDOG_LOG"
