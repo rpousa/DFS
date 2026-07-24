@@ -9,6 +9,7 @@ INDEX_FILE="/var/run/ric_restart_index"
 XAPP_SCRIPT="/usr/local/flexric/xApp/python3/xapp_daemon.py"
 XAPP_PID_FILE="/var/run/xapp_daemon.pid"
 PAUSE_FILE="/tmp/ric_watchdog.pause"
+PROBE="/usr/local/etc/flexric/probe_nodes.py"
 CHECK_INTERVAL=2
 
 mkdir -p "$RIC_LOG_DIR"
@@ -21,20 +22,36 @@ fi
 
 echo "$(date '+%Y-%m-%d %H:%M:%S') - Starting nearRT-RIC watchdog (current index: $RESTART_INDEX)..." >> "$WATCHDOG_LOG"
 
+probe_nodes() {
+    python3 "$PROBE" 2>/dev/null | tail -1
+}
+
+
 wait_for_ran() {
     local log="$1"; 
     local start=$(date +%s)
     local STALL=9000
+    local POLL=5
+
     while true; do
-        local nodes
-        nodes=$(grep "Registered E2 nodes" "$RIC_LOG" | tail -1 | grep -oE '[0-9]+$')
-        [ "${nodes:-0}" -ge 4 ] && return 0
-        if [ $(( $(date +%s) - start )) -gt $STALL ]; then
-            echo "$(date '+%F %T') - STALL: forcing RIC restart" >> "$WATCHDOG_LOG"
-            pkill -x nearRT-RIC        # watchdog relaunches a clean instance
+        # honor pause
+        [ -f "$PAUSE_FILE" ] && { sleep "$POLL"; continue; }
+
+        read -r total cucp cuup du <<<"$(probe_nodes)"
+        total=${total:-0}; cucp=${cucp:-0}; cuup=${cuup:-0}; du=${du:-0}
+
+        echo "$(date '+%F %T') - RAN nodes: total=$total cucp=$cucp cuup=$cuup du=$du" >> "$WATCHDOG_LOG"
+
+        # readiness: 1 CU-CP, 2 CU-UP (co + edge), 1 DU (edge)
+        if [ "$cucp" -ge 1 ] && [ "$cuup" -ge 2 ] && [ "$du" -ge 1 ]; then
+            return 0
+        fi
+
+        if [ $(( $(date +%s) - start )) -gt "$STALL" ]; then
+            echo "$(date '+%F %T') - STALL: RAN not ready ($total nodes)" >> "$WATCHDOG_LOG"
             return 1
         fi
-        sleep 2
+        sleep "$POLL"
     done
 }
 
@@ -51,7 +68,10 @@ start_xapp() {
     fi
 
     # Wait for RIC to be fully ready
-    wait_for_ran "$RIC_LOG" 150 || return 1 
+    if ! wait_for_ran "$RIC_LOG" ; then
+        echo "$(date '+%F %T') - Not launching xApp: RAN not ready" >> "$WATCHDOG_LOG"
+        return 1
+    fi 
     
     local XAPP_LOG="${RIC_LOG_DIR}/xapp_instance_${RESTART_INDEX}.log"
     echo "$(date '+%Y-%m-%d %H:%M:%S') - [Instance #${RESTART_INDEX}] Starting xApp daemon..." >> "$WATCHDOG_LOG"

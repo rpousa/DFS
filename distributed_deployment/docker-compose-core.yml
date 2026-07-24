@@ -407,6 +407,7 @@ services:
       - ./configs/flexric:/usr/local/etc/flexric
       - ./logs/flexric:/usr/local/etc/flexric_logs
       - ./logs/cuup_co:/usr/local/flexric/cu_logs:ro
+      - ./flexric_volumes/probe_nodes.py:/usr/local/etc/flexric/probe_nodes.py
       - ./flexric_volumes/event_ric_watchdog.sh:/usr/local/bin/event_ric_watchdog.sh
       #- ./flexric_volumes/ric_watchdog.sh:/usr/local/bin/ric_watchdog.sh
       - ./flexric_volumes/xapp_slice_check.py:/usr/local/flexric/xApp/python3/xapp_daemon.py
