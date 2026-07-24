@@ -22,8 +22,10 @@ def main():
     cucp = cuup = du = 0
     for n in nodes:
         t = n.id.type
+
         # FlexRIC e2ap node types: CUCP / CUUP / DU (enum values from the SDK)
         name = str(t)
+        print(name)
         if "CUCP" in name or t == ric.ngran_gNB_CUCP: cucp += 1
         elif "CUUP" in name or t == ric.ngran_gNB_CUUP: cuup += 1
         elif "DU"  in name or t == ric.ngran_gNB_DU:   du   += 1
