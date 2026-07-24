@@ -26,11 +26,9 @@ wait_for_ran() {
     local start=$(date +%s)
     local STALL=9000
     while true; do
-        local cucp cuup du
-        cucp=$(grep "E2 SETUP-REQUEST" "$log" 2>/dev/null | grep -c "ngran_gNB_CUCP")
-        cuup=$(grep "E2 SETUP-REQUEST" "$log" 2>/dev/null | grep -c "ngran_gNB_CUUP")
-        du=$(  grep "E2 SETUP-REQUEST" "$log" 2>/dev/null | grep -c "ngran_gNB_DU")
-        [ "${cucp:-0}" -ge 1 ] && [ "${cuup:-0}" -ge 2 ] && [ "${du:-0}" -ge 1 ] && return 0
+        local nodes
+        nodes=$(grep "Registered E2 nodes" "$RIC_LOG" | tail -1 | grep -oE '[0-9]+$')
+        [ "${nodes:-0}" -ge 4 ] && return 0
         if [ $(( $(date +%s) - start )) -gt $STALL ]; then
             echo "$(date '+%F %T') - STALL: forcing RIC restart" >> "$WATCHDOG_LOG"
             pkill -x nearRT-RIC        # watchdog relaunches a clean instance
@@ -53,7 +51,7 @@ start_xapp() {
     fi
 
     # Wait for RIC to be fully ready
-    wait_for_ran "$RIC_LOG" 150  
+    wait_for_ran "$RIC_LOG" 150 || return 1 
     
     local XAPP_LOG="${RIC_LOG_DIR}/xapp_instance_${RESTART_INDEX}.log"
     echo "$(date '+%Y-%m-%d %H:%M:%S') - [Instance #${RESTART_INDEX}] Starting xApp daemon..." >> "$WATCHDOG_LOG"
