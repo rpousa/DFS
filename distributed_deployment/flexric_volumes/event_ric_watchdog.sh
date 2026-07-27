@@ -38,8 +38,8 @@ wait_for_ran() {
         # Honor pause
         [ -f "$PAUSE_FILE" ] && { sleep "$POLL"; continue; }
 
-        connected=$(grep "Registered E2 nodes" "$RIC_LOG" | tail -1 | grep -oE '[0-9]+$' || echo 0)
-        echo "Connected: $connected, Total Nodes: $total_n_nodes" >> "$WATCHDOG_LOG"
+        connected=$(grep "E2 Setup" "$RIC_LOG" | tail -1 | grep -oE '[0-9]+$' || echo 0)
+        echo "Connected: $connected, Total Nodes expected : $total_n_nodes" >> "$WATCHDOG_LOG"
 
         if (( connected == total_n_nodes )); then
             echo "$(date '+%F %T') - RAN ready ($connected nodes)" >> "$WATCHDOG_LOG"
