@@ -32,20 +32,21 @@ wait_for_ran() {
     local start=$(date +%s)
     local STALL=9000
     local POLL=5
-
+    local total_n_nodes=4
     while true; do
         # honor pause
         [ -f "$PAUSE_FILE" ] && { sleep "$POLL"; continue; }
 
-        total=$(grep "Registered E2 nodes" "$RIC_LOG" | tail -1 | grep -oE '[0-9]+$')
+        connected=$(grep "Registered E2 nodes" "$RIC_LOG" | tail -1 | grep -oE '[0-9]+$')
+        echo "$connected"
 
-        if (( total -eq 4 )); then
-            echo "$(date '+%F %T') - RAN ready ($total nodes)" >> "$WATCHDOG_LOG"
+        if (( connected -eq total_n_nodes )); then
+            echo "$(date '+%F %T') - RAN ready ($connected nodes)" >> "$WATCHDOG_LOG"
             return 0
         fi
 
         if [ $(( $(date +%s) - start )) -gt "$STALL" ]; then
-            echo "$(date '+%F %T') - STALL: RAN not ready ($total nodes)" >> "$WATCHDOG_LOG"
+            echo "$(date '+%F %T') - STALL: RAN not ready ($connected nodes)" >> "$WATCHDOG_LOG"
             return 1
         fi
         sleep "$POLL"
