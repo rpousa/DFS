@@ -37,10 +37,10 @@ wait_for_ran() {
         # honor pause
         [ -f "$PAUSE_FILE" ] && { sleep "$POLL"; continue; }
 
-        nodes=$(grep "Registered E2 nodes" "$RIC_LOG" | tail -1 | grep -oE '[0-9]+$')
+        total=$(grep "Registered E2 nodes" "$RIC_LOG" | tail -1 | grep -oE '[0-9]+$')
 
-        # readiness: 1 CU-CP, 2 CU-UP (co + edge), 1 DU (edge)
-        if [ "$cucp" -ge 1 ] && [ "$cuup" -ge 2 ] && [ "$du" -ge 1 ]; then
+        if (( total -eq 4 )); then
+            echo "$(date '+%F %T') - RAN ready ($total nodes)" >> "$WATCHDOG_LOG"
             return 0
         fi
 
