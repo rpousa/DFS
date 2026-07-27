@@ -28,19 +28,20 @@ probe_nodes() {
 
 
 wait_for_ran() {
-    local log="$1"; 
+    local log="$1"
     local start=$(date +%s)
     local STALL=9000
     local POLL=5
-    local total_n_nodes=4
+    total_n_nodes=4  # Ensure this is defined outside the function if needed
+
     while true; do
-        # honor pause
+        # Honor pause
         [ -f "$PAUSE_FILE" ] && { sleep "$POLL"; continue; }
 
-        connected=$(grep "Registered E2 nodes" "$RIC_LOG" | tail -1 | grep -oE '[0-9]+$')
-        echo "$connected"
+        connected=$(grep "Registered E2 nodes" "$RIC_LOG" | tail -1 | grep -oE '[0-9]+$' || echo 0)
+        echo "Connected: $connected, Total Nodes: $total_n_nodes" >> "$WATCHDOG_LOG"
 
-        if (( connected -eq total_n_nodes )); then
+        if (( connected == total_n_nodes )); then
             echo "$(date '+%F %T') - RAN ready ($connected nodes)" >> "$WATCHDOG_LOG"
             return 0
         fi
