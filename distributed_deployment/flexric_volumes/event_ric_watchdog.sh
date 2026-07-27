@@ -37,8 +37,18 @@ wait_for_ran() {
     while true; do
         # Honor pause
         [ -f "$PAUSE_FILE" ] && { sleep "$POLL"; continue; }
+        
+        cuup_n=$(grep "E2 SETUP" "$RIC_LOG" | grep -oP 'ngran_gNB_CUUP ID \K[0-9]+' | wc -l )
+        echo "Number of CUUPs connected: $cuup_n" >> "$WATCHDOG_LOG"
 
-        connected=$(grep "E2 SETUP" "$RIC_LOG" | tail -1 |  grep -oP 'Node ID \K[0-9]+' | wc -l || echo 0)
+        cucp_n=$(grep "E2 SETUP" "$RIC_LOG" | grep -oP 'ngran_gNB_CUCP' | wc -l)
+        echo "Number of CUCPs connected: $cucp_n" >> "$WATCHDOG_LOG"
+        
+        du_n=$(grep "E2 SETUP" "$RIC_LOG" | grep -oP 'ngran_gNB_DU' | wc -l )
+        echo "Number of DUs connected: $du_n" >> "$WATCHDOG_LOG"
+
+        connected=$((cuup_n + cucp_n + du_n))
+
         echo "Connected: $connected, Total Nodes expected : $total_n_nodes" >> "$WATCHDOG_LOG"
 
         if (( connected == total_n_nodes )); then
