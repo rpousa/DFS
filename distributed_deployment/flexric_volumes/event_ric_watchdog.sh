@@ -31,8 +31,8 @@ wait_for_ran() {
     local log="$1"
     local start=$(date +%s)
     local STALL=9000
-    local POLL=5
-    total_n_nodes=4  # Ensure this is defined outside the function if needed
+    local POLL=30
+    total_n_nodes=4  
 
     while true; do
         # Honor pause

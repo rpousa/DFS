@@ -218,7 +218,7 @@ print_stage "Stage 2/7: Starting UPF_e and ext_dn_e..."
 docker compose -f "$COMPOSE_FILE" up -d upf_e ext_dn_e
 wait_for_service "upf_e" 30
 wait_for_service "ext_dn_e" 30
-sleep 5
+sleep 20
 echo ""
 
 # Stage 3/7: DU_e1 (F1-U cross-machine to CO) + DU_e2 (F1-U local)
