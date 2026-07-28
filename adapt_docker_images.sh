@@ -51,7 +51,7 @@ if [ "$MODE" == "core" ]; then
 elif [ "$MODE" == "edge" ]; then
   IMAGES=(ext_dn upf  gnb ue cu du cuup )
 elif [ "$MODE" == "centraloffice" ]; then
-  IMAGES=(ext_dn mysql amf smf nrf ausf udm udr upf nssf pcf gnb ue cu du cuup cucp onos proxy_l2 comnetsemu_flexric)
+  IMAGES=(ext_dn gnb cu du cuup cucp onos comnetsemu_flexric)
 elif [ "$MODE" == "full" ]; then
   IMAGES=(ext_dn mysql amf smf nrf ausf udm udr upf nssf pcf gnb ue cu du cuup cucp onos proxy_l2 comnetsemu_flexric)
 else
