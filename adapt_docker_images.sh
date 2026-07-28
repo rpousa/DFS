@@ -34,7 +34,7 @@ for arg in "$@"; do
       MODE="full"
       ;;
     edge)
-      MODE="edeg"
+      MODE="edge"
       ;;
     co)
       MODE="centraloffice"
