@@ -1559,7 +1559,7 @@
     }
   ],
   "preload": false,
-  "refresh": "1s",
+  "refresh": "5s",
   "schemaVersion": 41,
   "tags": [],
   "templating": {
@@ -1570,7 +1570,7 @@
       "type": "query",
       "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" },
       "query": "SELECT DISTINCT ran_ue_id FROM KPM_MeasRecord ORDER BY ran_ue_id",
-      "refresh": 2,
+      "refresh": 1,
       "includeAll": true,
       "multi": true,
       "sort": 1,
