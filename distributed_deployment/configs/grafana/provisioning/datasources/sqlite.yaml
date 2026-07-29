@@ -5,16 +5,16 @@ datasources:
     type: frser-sqlite-datasource
     access: proxy
     jsonData:
-      path: /var/lib/grafana/sqlite/xapp_db
+      path: "/var/lib/grafana/sqlite/xapp_db?mode=ro&_busy_timeout=5000&_pragma=busy_timeout(5000)"
   - name: KPM_DB_1
     uid: depbmy9sb6m0wb
     type: frser-sqlite-datasource
     access: proxy
     jsonData:
-      path: /var/lib/grafana/sqlite/xapp_db
+      path: "/var/lib/grafana/sqlite/xapp_db?mode=ro&_busy_timeout=5000&_pragma=busy_timeout(5000)"
   - name: KPM_DB_2
     uid: edthsvykzynswc
     type: frser-sqlite-datasource
     access: proxy
     jsonData:
-      path: /var/lib/grafana/sqlite/xapp_db
+      path: "/var/lib/grafana/sqlite/xapp_db?mode=ro&_busy_timeout=5000&_pragma=busy_timeout(5000)"
