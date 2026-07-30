@@ -1597,7 +1597,7 @@
       "1d"
     ]
   },
-  "timezone": "browser",
+  "timezone": "UTC",
   "title": "KPI measurements",
   "uid": "cdtipm2on2f40e",
   "version": 2
