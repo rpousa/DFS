@@ -31,7 +31,7 @@ def start_kpm_if_ready(conn):
         return
     logf = open(KPM_LOG, "ab", buffering=0)
     _kpm_proc = subprocess.Popen(
-        ["stdbuf", "-oL", "-eL", KPM_BIN],
+        ["stdbuf", "-oL", "-eL", KPM_BIN, "-d", "/usr/local/xappdb/", "-n", "xapp_db"],
         stdout=logf, stderr=logf,
         preexec_fn=os.setsid,            # own process group -> clean signalling
     )
@@ -66,7 +66,7 @@ def start_rc_if_ready(conn):
         return
     logf = open(RC_LOG, "ab", buffering=0)
     _rc_proc = subprocess.Popen(
-        ["stdbuf", "-oL", "-eL", RC_BIN],
+        ["stdbuf", "-oL", "-eL", RC_BIN, "-d", "/usr/local/xappdb/", "-n", "xapp_db"],
         stdout=logf, stderr=logf,
         preexec_fn=os.setsid,            # own process group -> clean signalling
     )
