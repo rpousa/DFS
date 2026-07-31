@@ -21,6 +21,51 @@
   "links": [],
   "panels": [
     {
+      "id": 200,
+      "title": "CU-UP Backhaul Volume (per CU-UP)",
+      "type": "timeseries",
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bits",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 15,
+            "showPoints": "never",
+            "spanNulls": true
+          },
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "cuup_co (eMBB+mIoT)" },
+            "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } } ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "cuup_e (URLLC)" },
+            "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "orange" } } ]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["last", "max", "mean"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" },
+          "queryType": "time series",
+          "rawQueryText": "SELECT tstamp AS \"time\",\n       CASE WHEN ran_ue_id = 2 THEN 'cuup_e (URLLC)' ELSE 'cuup_co (eMBB+mIoT)' END AS metric,\n       SUM(measure_value)*1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, metric\nORDER BY tstamp",
+          "queryText": "SELECT tstamp AS \"time\",\n       CASE WHEN ran_ue_id = 2 THEN 'cuup_e (URLLC)' ELSE 'cuup_co (eMBB+mIoT)' END AS metric,\n       SUM(measure_value)*1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, metric\nORDER BY tstamp",
+          "timeColumns": ["time", "ts"]
+        }
+      ]
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
@@ -416,9 +461,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n    tstamp AS \"time\",\n    ran_ue_id,\n    AVG(measure_value)*1000 AS UE\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL'\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)*1000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    ran_ue_id,\n    AVG(measure_value)*1000 AS UE\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL'\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)*1000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -554,9 +599,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n    tstamp AS \"time\",\n    ran_ue_id,\n    AVG(measure_value)*1000000 AS UE\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL'\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)*1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    ran_ue_id,\n    AVG(measure_value)*1000000 AS UE\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL'\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)*1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -691,9 +736,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n    tstamp AS \"time\",\n    ran_ue_id,\n    AVG(measure_value) AS UE\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpDl'\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpDl' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    ran_ue_id,\n    AVG(measure_value) AS UE\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpDl'\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpDl' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -828,9 +873,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n    tstamp AS \"time\",\n    ran_ue_id,\n    AVG(measure_value) AS UE\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpUl'\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpUl' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    ran_ue_id,\n    AVG(measure_value) AS UE\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpUl'\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpUl' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -965,9 +1010,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n   tstamp AS \"time\",\n   ran_ue_id,\n   AVG(measure_value) AS UE\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotDl'\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT\n   tstamp AS \"time\",\n   'UE ' || ran_ue_id AS metric,\n   AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotDl' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n   tstamp AS \"time\",\n   ran_ue_id,\n   AVG(measure_value) AS UE\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotDl'\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT\n   tstamp AS \"time\",\n   'UE ' || ran_ue_id AS metric,\n   AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotDl' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -1102,9 +1147,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n   tstamp AS \"time\",\n   ran_ue_id,\n   AVG(measure_value) AS UE\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotUl'\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT\n   tstamp AS \"time\",\n   'UE ' || ran_ue_id AS metric,\n   AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotUl' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n   tstamp AS \"time\",\n   ran_ue_id,\n   AVG(measure_value) AS UE\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotUl'\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT\n   tstamp AS \"time\",\n   'UE ' || ran_ue_id AS metric,\n   AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotUl' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -1239,9 +1284,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n    tstamp AS \"time\",\n    ran_ue_id,\n    AVG(measure_value) AS UE\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.RlcSduDelayDl'\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.RlcSduDelayDl' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    ran_ue_id,\n    AVG(measure_value) AS UE\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.RlcSduDelayDl'\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.RlcSduDelayDl' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "timeColumns": [
             "time",
