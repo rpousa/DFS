@@ -416,6 +416,8 @@ def main():
             if now - last_status >= 5.0:
                 conn = ric.conn_e2_nodes()
                 nodes = [(xapp_functs.classify_e2node(c.id), cu_du_id_of(c.id)) for c in conn]
+                for ue in list(DETECTED_UES.keys()):
+                    print(f"[dbg] detected_ues={ue} dl_id={DETECTED_UES[ue]} ")
                 print(f"[dbg] connected E2 nodes={len(conn)} -> {nodes}", flush=True)
                 print(f"[dbg] tracked residency keys={len(TRACKER._first)} "
                     f"detected_slice_ues={len(DETECTED_UES)} "
