@@ -7,7 +7,7 @@
 
 services:
   # ==========================================
-  # UPF Centraloffice — Slice 2 (SST=1, SD=2)
+  # UPF Centraloffice — Slice 2 (SST=2, SD=1)
   # ==========================================
 
   upf_co:

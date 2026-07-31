@@ -12,7 +12,7 @@ import subprocess, os
 
 KPM_BIN  = "/usr/local/flexric/xApp/c/monitor/xapp_kpm_moni"   
 RC_BIN   = "/usr/local/flexric/xApp/c/monitor/xapp_rc_moni"        
-RC_Create_DRB = "/usr/local/flexric/xApp/c/monitor/xapp_kpm_rc" # study for creation of DRB         
+# RC_Create_DRB = "/usr/local/flexric/xApp/c/monitor/xapp_kpm_rc" # study for creation of DRB         
 KPM_LOG  = "/usr/local/etc/flexric_logs/kpm_moni_xapp.log"
 RC_LOG   = "/usr/local/etc/flexric_logs/kpm_rc_xapp.log"
 EXPECTED_NODES = 4          # cucp + cuup_co + cuup_e + du_co (5 if du_e1 present)
@@ -54,40 +54,40 @@ def stop_kpm():
     print("[xapp] C KPM xApp stopped", flush=True)
     _kpm_proc = None
 
-def start_rc_if_ready(conn):
-    """Launch the C RC xApp once, only after the RAN is fully connected."""
-    global _rc_proc
-    if _rc_proc is not None:            # already launched
-        return
-    if len(conn) < EXPECTED_NODES:
-        return
-    if not os.path.exists(RC_BIN):
-        print(f"[xapp] RC binary not found at {RC_BIN}", flush=True)
-        return
-    logf = open(RC_LOG, "ab", buffering=0)
-    _rc_proc = subprocess.Popen(
-        ["stdbuf", "-oL", "-eL", RC_BIN, "-d", "/usr/local/xappdb/", "-n", "xapp_db"],
-        stdout=logf, stderr=logf,
-        preexec_fn=os.setsid,            # own process group -> clean signalling
-    )
-    print(f"[xapp] Launched C RC xApp pid={_rc_proc.pid} "
-          f"(nodes={len(conn)})", flush=True)
+# def start_rc_if_ready(conn):
+#     """Launch the C RC xApp once, only after the RAN is fully connected."""
+#     global _rc_proc
+#     if _rc_proc is not None:            # already launched
+#         return
+#     if len(conn) < EXPECTED_NODES:
+#         return
+#     if not os.path.exists(RC_BIN):
+#         print(f"[xapp] RC binary not found at {RC_BIN}", flush=True)
+#         return
+#     logf = open(RC_LOG, "ab", buffering=0)
+#     _rc_proc = subprocess.Popen(
+#         ["stdbuf", "-oL", "-eL", RC_BIN, "-d", "/usr/local/xappdb/", "-n", "xapp_db"],
+#         stdout=logf, stderr=logf,
+#         preexec_fn=os.setsid,            # own process group -> clean signalling
+#     )
+#     print(f"[xapp] Launched C RC xApp pid={_rc_proc.pid} "
+#           f"(nodes={len(conn)})", flush=True)
 
-def stop_rc():
-    """Terminate the RC xApp CLEANLY so it deregisters (never -9)."""
-    global _rc_proc
-    if _rc_proc is None:
-        return
-    if _rc_proc.poll() is None:         
-        _rc_proc.send_signal(signal.SIGINT)   # C xApp catches SIGINT -> try_stop
-        try:
-            _rc_proc.wait(timeout=10)         # deregister time
-        except subprocess.TimeoutExpired:
-            _rc_proc.terminate()              
-            try: _rc_proc.wait(timeout=5)
-            except subprocess.TimeoutExpired: _rc_proc.kill()
-    print("[xapp] C RC xApp stopped", flush=True)
-    _rc_proc = None
+# def stop_rc():
+#     """Terminate the RC xApp CLEANLY so it deregisters (never -9)."""
+#     global _rc_proc
+#     if _rc_proc is None:
+#         return
+#     if _rc_proc.poll() is None:         
+#         _rc_proc.send_signal(signal.SIGINT)   # C xApp catches SIGINT -> try_stop
+#         try:
+#             _rc_proc.wait(timeout=10)         # deregister time
+#         except subprocess.TimeoutExpired:
+#             _rc_proc.terminate()              
+#             try: _rc_proc.wait(timeout=5)
+#             except subprocess.TimeoutExpired: _rc_proc.kill()
+#     print("[xapp] C RC xApp stopped", flush=True)
+#     _rc_proc = None
 
 import time
 import threading
@@ -243,14 +243,30 @@ class SliceCb(ric.slice_cb):
         self.node_label = node_label
     def handle(self, ind):
         st = ind.ue_slice_stats
-        if int(time.time()) % 5 == 0:
-            print(f"[dbg-slice] {self.node_label} len_ue_slice={st.len_ue_slice}", flush=True)
-        if st.len_ue_slice > 0:
-            with SLICE_LOCK:
-                for u in st.ues:
-                    dl_id = u.dl_id if u.dl_id >= 0 else -1
-                    DETECTED_UES[(self.node_label, u.rnti)] = dl_id
-                    G_SLICE.labels(self.node_label, f"{u.rnti:#06x}").set(dl_id)
+        n = st.len_ue_slice
+        if n <= 0:
+            return
+
+        seen = set()
+        with SLICE_LOCK:
+            for i in range(n):                    # <-- BOUND the loop
+                u = st.ues[i]
+                rnti = u.rnti & 0xffff             # sanitize to 16-bit RNTI
+                dl_id = u.dl_id if u.dl_id >= 0 else -1
+                key = (self.node_label, rnti)
+                DETECTED_UES[key] = dl_id
+                G_SLICE.labels(self.node_label, f"{rnti:#06x}").set(dl_id)
+                seen.add(key)
+
+            # prune entries no longer present on this node (stops residual growth)
+            stale = [k for k in DETECTED_UES
+                    if k[0] == self.node_label and k not in seen]
+            for k in stale:
+                del DETECTED_UES[k]
+                try:
+                    G_SLICE.remove(k[0], f"{k[1]:#06x}")
+                except KeyError:
+                    pass
 
 SLICE_LOCK   = threading.Lock()
 DETECTED_UES = {}          # (node_label, rnti) -> current dl_id
@@ -322,7 +338,7 @@ def main():
     start_http_server(EXPORTER_PORT)          # /metrics for Prometheus
     print(f"[xapp] Prometheus exporter on :{EXPORTER_PORT}", flush=True)
     subprocess.run(["pkill", "-INT", "-f", "xapp_kpm_moni"], check=False)
-    subprocess.run(["pkill", "-INT", "-f", "xapp_rc_moni"],  check=False)  # SIGINT, never -9
+    #subprocess.run(["pkill", "-INT", "-f", "xapp_rc_moni"],  check=False)  # SIGINT, never -9
     ric.init()
     conn = ric.conn_e2_nodes()
     EXPECTED = 4                       # cucp + cuup_co + cuup_e + du_co (5 with du_e1)
@@ -384,7 +400,7 @@ def main():
                 cb_refs, handlers, du_nodes, subscribed = poll_and_subscribe(cb_refs, handlers, du_nodes, subscribed)
                 
                 start_kpm_if_ready(conn) 
-                start_rc_if_ready(conn)
+                #start_rc_if_ready(conn)
                 last_poll = now
 
             if now - last_metric >= METRIC_REFRESH:
@@ -436,7 +452,7 @@ def main():
             try: rm[kind](h)
             except Exception: pass
         stop_kpm() 
-        stop_rc()
+        #stop_rc()
         ric.try_stop()            # ← call it (clean disconnect)
         print("[xapp] xapps stopped", flush=True)
 
