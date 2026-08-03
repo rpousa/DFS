@@ -683,7 +683,7 @@
               }
             ]
           },
-          "unit": "Kbits/sec"
+          "unit": "Mbits/s"
         },
         "overrides": [
           {
@@ -772,9 +772,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpDl' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpDl' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpDl' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpDl' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -841,7 +841,7 @@
               }
             ]
           },
-          "unit": "Kbits"
+          "unit": "Mbits/s"
         },
         "overrides": [
           {
@@ -881,6 +881,25 @@
                 }
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "UE 3"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "UE 3"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
           }
         ]
       },
@@ -911,9 +930,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpUl' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpUl' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpUl' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpUl' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "timeColumns": [
             "time",
