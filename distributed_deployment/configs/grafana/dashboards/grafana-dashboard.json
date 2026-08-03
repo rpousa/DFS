@@ -379,16 +379,7 @@
           },
           "mappings": [],
           "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
+            "mode": "absolute"
           },
           "unit": "Mbits"
         },
@@ -538,16 +529,7 @@
           "fieldMinMax": false,
           "mappings": [],
           "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
+            "mode": "absolute"
           },
           "unit": "Mbits"
         },
@@ -693,16 +675,7 @@
           },
           "mappings": [],
           "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
+            "mode": "absolute"
           },
           "unit": "Mbits/s"
         },
@@ -851,16 +824,7 @@
           },
           "mappings": [],
           "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
+            "mode": "absolute"
           },
           "unit": "Mbits/s"
         },
@@ -1006,16 +970,7 @@
           },
           "mappings": [],
           "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
+            "mode": "absolute"
           },
           "unit": "short"
         },
@@ -1142,16 +1097,7 @@
           },
           "mappings": [],
           "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
+            "mode": "absolute"
           },
           "unit": "short"
         },
@@ -1299,16 +1245,7 @@
           },
           "mappings": [],
           "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
+            "mode": "absolute"
           },
           "unit": "µs"
         },
