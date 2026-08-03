@@ -236,6 +236,16 @@ class GTPCb(ric.gtp_cb):
             for i in range(len(ind.gtp_stats)):
                 TRACKER.observe(self.nl, self.nt, self.cu, ind.gtp_stats[i].rnti, now)
 
+class RLCCb(ric.rlc_cb):
+    def __init__(self, node_label, node_type, cu_du_id):
+        ric.rlc_cb.__init__(self)
+        self.nl, self.nt, self.cu = node_label, node_type, cu_du_id
+    def handle(self, ind):
+        if len(ind.rb_stats) > 0:
+            now = time.time()
+            for i in range(len(ind.rb_stats)):
+                TRACKER.observe(self.nl, self.nt, self.cu, ind.rb_stats[i].rnti, now)
+
 class SliceCb(ric.slice_cb):
     """Detect UEs + their current DL slice id per DU (structure from xapp_slice_moni_ctrl.py [[14]])."""
     def __init__(self, node_label):
@@ -370,9 +380,11 @@ def main():
                 mac = MACCb(label, ntype, cu_lbl)
                 cb_refs.append(mac)
                 handlers.append(("mac", ric.report_mac_sm(nid, REPORT_INTERVAL, mac)))
+                rlc = RLCCb(label, ntype, cu_lbl); cb_refs.append(rlc)          
+                handlers.append(("rlc",  ric.report_rlc_sm(nid, REPORT_INTERVAL, rlc))) 
                 sl = SliceCb(label)
                 cb_refs.append(sl)
-                handlers.append(("slice", ric.report_slice_sm(nid, ric.Interval_ms_5, sl)))
+                handlers.append(("slice", ric.report_slice_sm(nid, REPORT_INTERVAL, sl)))
                 du_nodes.append((nid, label))
                 time.sleep(2)   # let the slice subscription settle before ADD
                 try:
@@ -385,6 +397,8 @@ def main():
                 p = PDCPCb(label, ntype, cu_lbl); 
                 cb_refs += [p]
                 handlers.append(("pdcp", ric.report_pdcp_sm(nid, REPORT_INTERVAL, p)))
+                g = GTPCb(label, ntype, cu_lbl); cb_refs += [g]                 
+                handlers.append(("gtp",  ric.report_gtp_sm(nid, REPORT_INTERVAL, g))) 
 
             subscribed.add(key)
         return cb_refs, handlers, du_nodes, subscribed
