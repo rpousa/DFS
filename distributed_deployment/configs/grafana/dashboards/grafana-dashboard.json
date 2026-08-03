@@ -28,7 +28,7 @@
       "gridPos": { "h": 9, "w": 12, "x": 0, "y": 0 },
       "fieldConfig": {
         "defaults": {
-          "unit": "bits",
+          "unit": "Mbits",
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "smooth",
@@ -59,8 +59,8 @@
           "refId": "A",
           "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" },
           "queryType": "time series",
-          "rawQueryText": "SELECT tstamp AS \"time\",\n       CASE WHEN ran_ue_id = 2 THEN 'cuup_e (URLLC)' ELSE 'cuup_co (eMBB+mIoT)' END AS metric,\n       SUM(measure_value)*1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, metric\nORDER BY tstamp",
-          "queryText": "SELECT tstamp AS \"time\",\n       CASE WHEN ran_ue_id = 2 THEN 'cuup_e (URLLC)' ELSE 'cuup_co (eMBB+mIoT)' END AS metric,\n       SUM(measure_value)*1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, metric\nORDER BY tstamp",
+          "rawQueryText": "SELECT tstamp AS \"time\",\n       CASE WHEN ran_ue_id = 2 THEN 'cuup_e (URLLC)' ELSE 'cuup_co (eMBB+mIoT)' END AS metric,\n       SUM(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, metric\nORDER BY tstamp",
+          "queryText": "SELECT tstamp AS \"time\",\n       CASE WHEN ran_ue_id = 2 THEN 'cuup_e (URLLC)' ELSE 'cuup_co (eMBB+mIoT)' END AS metric,\n       SUM(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, metric\nORDER BY tstamp",
           "timeColumns": ["time", "ts"]
         }
       ]
@@ -338,7 +338,7 @@
       "type": "heatmap"
     },
     {
-      "datasource": {},
+      "datasource": {"type":"frser-sqlite-datasource","uid":"edthsvykzynswc"},
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -378,7 +378,6 @@
             }
           },
           "mappings": [],
-          "max": 500000000,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -391,7 +390,7 @@
               }
             ]
           },
-          "unit": "decbits"
+          "unit": "Mbits"
         },
         "overrides": [
           {
@@ -431,6 +430,25 @@
                 }
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "UE 3"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "UE 3"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
           }
         ]
       },
@@ -461,10 +479,11 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)*1000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)*1000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
+          "unit": "Mbits",
           "timeColumns": [
             "time",
             "ts"
@@ -516,7 +535,6 @@
           },
           "fieldMinMax": false,
           "mappings": [],
-          "max": 150000000,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -529,7 +547,7 @@
               }
             ]
           },
-          "unit": "decbits"
+          "unit": "Mbits"
         },
         "overrides": [
           {
@@ -599,9 +617,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)*1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)*1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -613,7 +631,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": {},
+      "datasource": {"type":"frser-sqlite-datasource","uid":"edthsvykzynswc"},
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -653,7 +671,6 @@
             }
           },
           "mappings": [],
-          "max": 600000,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -666,7 +683,7 @@
               }
             ]
           },
-          "unit": "Kbits"
+          "unit": "Kbits/sec"
         },
         "overrides": [
           {
@@ -702,6 +719,25 @@
                 "id": "color",
                 "value": {
                   "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "UE 3"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "UE 3"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
                   "mode": "fixed"
                 }
               }
@@ -750,7 +786,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": {},
+      "datasource": {
+            "type": "frser-sqlite-datasource",
+            "uid": "edthsvykzynswc"
+          },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -790,7 +829,6 @@
             }
           },
           "mappings": [],
-          "max": 150000,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -887,7 +925,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": {},
+      "datasource": {"type":"frser-sqlite-datasource","uid":"edthsvykzynswc"},
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -927,7 +965,6 @@
             }
           },
           "mappings": [],
-          "max": 100,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -940,7 +977,7 @@
               }
             ]
           },
-          "unit": "%"
+          "unit": "short"
         },
         "overrides": [
           {
@@ -1024,7 +1061,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": {},
+      "datasource": {"type":"frser-sqlite-datasource","uid":"edthsvykzynswc"},
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1064,7 +1101,6 @@
             }
           },
           "mappings": [],
-          "max": 100,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1077,7 +1113,7 @@
               }
             ]
           },
-          "unit": "%"
+          "unit": "short"
         },
         "overrides": [
           {
@@ -1108,6 +1144,25 @@
               {
                 "id": "displayName",
                 "value": "UE 2"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "UE 3"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "UE 3"
               },
               {
                 "id": "color",
@@ -1161,7 +1216,9 @@
       "type": "timeseries"
     },
     {
-      "datasource": {},
+      "datasource": {
+        "type": "frser-sqlite-datasource",
+        "uid": "edthsvykzynswc"},
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1201,7 +1258,6 @@
             }
           },
           "mappings": [],
-          "max": 150000,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1245,6 +1301,25 @@
               {
                 "id": "displayName",
                 "value": "UE 2"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "UE 3"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "UE 3"
               },
               {
                 "id": "color",
@@ -1299,14 +1374,14 @@
     }
   ],
   "preload": false,
-  "refresh": "1s",
+  "refresh": "5s",
   "schemaVersion": 41,
   "tags": [],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "now-1m",
+    "from": "now-15m",
     "to": "now"
   },
   "timepicker": {
@@ -1324,7 +1399,7 @@
       "1d"
     ]
   },
-  "timezone": "browser",
+  "timezone": "UTC",
   "title": "KPI measurements",
   "uid": "cdtipm2on2f40e",
   "version": 2
