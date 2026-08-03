@@ -1,0 +1,62 @@
+{
+  "title": "RAN L2/Transport (MAC/RLC/PDCP/GTP)",
+  "uid": "ran-l2-transport",
+  "timezone": "UTC",
+  "refresh": "5s",
+  "time": { "from": "now-15m", "to": "now" },
+  "templating": { "list": [
+    { "name": "node", "type": "query", "datasource": {"type":"prometheus","uid":"PROM_UID"},
+      "query": "label_values(ran_mac_ue, e2_node)", "includeAll": true, "multi": true }
+  ]},
+  "panels": [
+    { "id": 1, "title": "MAC PRB usage (DL) per RNTI", "type": "timeseries",
+      "gridPos": {"h":8,"w":12,"x":0,"y":0},
+      "datasource": {"type":"prometheus","uid":"PROM_UID"},
+      "fieldConfig": {"defaults": {"unit":"short","color":{"mode":"palette-classic"}}},
+      "targets": [ {"expr":"rate(ran_mac_ue{field=\"dl_aggr_prb\",e2_node=~\"$node\"}[1m])",
+                    "legendFormat":"{{e2_node}} {{rnti}}"} ] },
+
+    { "id": 2, "title": "MAC PRB usage (UL) per RNTI", "type": "timeseries",
+      "gridPos": {"h":8,"w":12,"x":12,"y":0},
+      "datasource": {"type":"prometheus","uid":"PROM_UID"},
+      "fieldConfig": {"defaults": {"unit":"short","color":{"mode":"palette-classic"}}},
+      "targets": [ {"expr":"rate(ran_mac_ue{field=\"ul_aggr_prb\",e2_node=~\"$node\"}[1m])",
+                    "legendFormat":"{{e2_node}} {{rnti}}"} ] },
+
+    { "id": 3, "title": "Radio quality (CQI / PUSCH SNR)", "type": "timeseries",
+      "gridPos": {"h":8,"w":12,"x":0,"y":8},
+      "datasource": {"type":"prometheus","uid":"PROM_UID"},
+      "fieldConfig": {"defaults": {"unit":"short","color":{"mode":"palette-classic"}}},
+      "targets": [
+        {"expr":"ran_mac_ue{field=\"wb_cqi\",e2_node=~\"$node\"}","legendFormat":"CQI {{rnti}}"},
+        {"expr":"ran_mac_ue{field=\"pusch_snr\",e2_node=~\"$node\"}","legendFormat":"SNR {{rnti}}"} ] },
+
+    { "id": 4, "title": "RLC buffer occupancy (TX bytes)", "type": "timeseries",
+      "gridPos": {"h":8,"w":12,"x":12,"y":8},
+      "datasource": {"type":"prometheus","uid":"PROM_UID"},
+      "fieldConfig": {"defaults": {"unit":"bytes","color":{"mode":"palette-classic"}}},
+      "targets": [ {"expr":"ran_rlc_bearer{field=\"txbuf_occ_bytes\",e2_node=~\"$node\"}",
+                    "legendFormat":"{{e2_node}} rnti {{rnti}} rb {{rbid}}"} ] },
+
+    { "id": 5, "title": "PDCP throughput DL (bytes/s)", "type": "timeseries",
+      "gridPos": {"h":8,"w":12,"x":0,"y":16},
+      "datasource": {"type":"prometheus","uid":"PROM_UID"},
+      "fieldConfig": {"defaults": {"unit":"Bps","color":{"mode":"palette-classic"}}},
+      "targets": [ {"expr":"rate(ran_pdcp_bearer{field=\"txpdu_bytes\",e2_node=~\"$node\"}[1m])",
+                    "legendFormat":"{{e2_node}} rnti {{rnti}}"} ] },
+
+    { "id": 6, "title": "PDCP throughput UL (bytes/s)", "type": "timeseries",
+      "gridPos": {"h":8,"w":12,"x":12,"y":16},
+      "datasource": {"type":"prometheus","uid":"PROM_UID"},
+      "fieldConfig": {"defaults": {"unit":"Bps","color":{"mode":"palette-classic"}}},
+      "targets": [ {"expr":"rate(ran_pdcp_bearer{field=\"rxpdu_bytes\",e2_node=~\"$node\"}[1m])",
+                    "legendFormat":"{{e2_node}} rnti {{rnti}}"} ] },
+
+    { "id": 7, "title": "GTP-U active bearers (QFI presence)", "type": "timeseries",
+      "gridPos": {"h":8,"w":24,"x":0,"y":24},
+      "datasource": {"type":"prometheus","uid":"PROM_UID"},
+      "fieldConfig": {"defaults": {"unit":"short","color":{"mode":"palette-classic"}}},
+      "targets": [ {"expr":"count by (e2_node) (ran_gtp_bearer{field=\"teidupf\",e2_node=~\"$node\"})",
+                    "legendFormat":"{{e2_node}} active QFIs"} ] }
+  ]
+}

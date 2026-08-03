@@ -137,6 +137,13 @@ S_SESSION   = Summary("ue_session_duration_seconds",
 G_SLICE     = Gauge("ue_dl_slice_id",
                     "Current DL slice id associated to a UE",
                     ["e2_node", "rnti"])
+G_MAC       = Gauge("ran_mac_ue",     "MAC per-UE",     ["e2_node","rnti","field"])
+G_RLC       = Gauge("ran_rlc_bearer", "RLC per-bearer", ["e2_node","rnti","rbid","field"])
+G_PDCP      = Gauge("ran_pdcp_bearer","PDCP per-bearer",["e2_node","rnti","rbid","field"])
+G_GTP       = Gauge("ran_gtp_bearer", "GTP-U per-UE",   ["e2_node","rnti","qfi","field"])
+
+SNAP_LOCK = threading.Lock()
+MAC_SNAP, RLC_SNAP, PDCP_SNAP, GTP_SNAP = {}, {}, {}, {}
 
 _shutdown = False
 def _sig(_s, _f):
@@ -168,6 +175,35 @@ class ResidencyTracker:
 
     def refresh_metrics(self):
         now = time.time()
+        with SNAP_LOCK:                           
+            for (nl, r), d in list(GTP_SNAP.items()):
+                if now - d["_ts"] > RESIDENCY_TIMEOUT:
+                    del GTP_SNAP[(nl, r)]; continue
+                for f, v in d.items():
+                    if f != "_ts":
+                        G_GTP.labels(nl, f"{r:#06x}", f).set(v)
+
+            for (nl, r), d in list(RLC_SNAP.items()):
+                if now - d["_ts"] > RESIDENCY_TIMEOUT:
+                    del RLC_SNAP[(nl, r)]; continue
+                for f, v in d.items():
+                    if f != "_ts":
+                        G_RLC.labels(nl, f"{r:#06x}", f).set(v)
+
+            for (nl, r), d in list(PDCP_SNAP.items()):
+                if now - d["_ts"] > RESIDENCY_TIMEOUT:
+                    del PDCP_SNAP[(nl, r)]; continue
+                for f, v in d.items():
+                    if f != "_ts":
+                        G_PDCP.labels(nl, f"{r:#06x}", f).set(v)
+
+            for (nl, r), d in list(MAC_SNAP.items()):
+                if now - d["_ts"] > RESIDENCY_TIMEOUT:
+                    del MAC_SNAP[(nl, r)]; continue
+                for f, v in d.items():
+                    if f != "_ts":
+                        G_MAC.labels(nl, f"{r:#06x}", f).set(v)
+
         with self._lock:
             per_node_active = {}
             for key in list(self._first.keys()):
@@ -203,18 +239,23 @@ TRACKER = ResidencyTracker(RESIDENCY_TIMEOUT)
 # E2 indication callbacks  (pattern mirrors xapp_functs.py) [[23]]
 # ----------------------------------------------------------------------
 class MACCb(ric.mac_cb):
-    def __init__(self, node_label, node_type, cu_du_id):
-        ric.mac_cb.__init__(self)
-        self.nl, self.nt, self.cu = node_label, node_type, cu_du_id
+    def __init__(self, nl, nt, cu):
+        ric.mac_cb.__init__(self); self.nl, self.nt, self.cu = nl, nt, cu
     def handle(self, ind):
-        n = len(ind.ue_stats)
-        if n and (int(time.time()) % 5 == 0):
-            print(f"[dbg-mac] {self.nl} ue_stats={n} "
-                  f"rntis={[hex(ind.ue_stats[i].rnti) for i in range(n)]}", flush=True)
-        if n:
-            now = time.time()
-            for i in range(n):
-                TRACKER.observe(self.nl, self.nt, self.cu, ind.ue_stats[i].rnti, now)
+        if len(ind.ue_stats) == 0: return
+        now = time.time()
+        with SNAP_LOCK:
+            for i in range(len(ind.ue_stats)):
+                s = ind.ue_stats[i]; r = s.rnti & 0xffff
+                MAC_SNAP[(self.nl, r)] = {
+                    "dl_aggr_tbs": s.dl_aggr_tbs, "ul_aggr_tbs": s.ul_aggr_tbs,
+                    "dl_aggr_prb": s.dl_aggr_prb, "ul_aggr_prb": s.ul_aggr_prb,
+                    "dl_mcs1": s.dl_mcs1, "ul_mcs1": s.ul_mcs1,
+                    "wb_cqi": s.wb_cqi, "pusch_snr": s.pusch_snr,
+                    "dl_bler": s.dl_bler, "ul_bler": s.ul_bler, "bsr": s.bsr,
+                    "_ts": now,
+                }
+                TRACKER.observe(self.nl, self.nt, self.cu, r, now)
 
 class PDCPCb(ric.pdcp_cb):
     def __init__(self, node_label, node_type, cu_du_id):
@@ -227,24 +268,33 @@ class PDCPCb(ric.pdcp_cb):
                 TRACKER.observe(self.nl, self.nt, self.cu, ind.rb_stats[i].rnti, now)
 
 class GTPCb(ric.gtp_cb):
-    def __init__(self, node_label, node_type, cu_du_id):
-        ric.gtp_cb.__init__(self)
-        self.nl, self.nt, self.cu = node_label, node_type, cu_du_id
+    def __init__(self, nl, nt, cu):
+        ric.gtp_cb.__init__(self); self.nl, self.nt, self.cu = nl, nt, cu
     def handle(self, ind):
-        if len(ind.gtp_stats) > 0:
-            now = time.time()
+        if len(ind.gtp_stats) == 0: return
+        now = time.time()
+        with SNAP_LOCK:
             for i in range(len(ind.gtp_stats)):
-                TRACKER.observe(self.nl, self.nt, self.cu, ind.gtp_stats[i].rnti, now)
+                s = ind.gtp_stats[i]; r = s.rnti & 0xffff
+                GTP_SNAP[(self.nl, r, s.qfi)] = {
+                    "teidgnb": s.teidgnb, "teidupf": s.teidupf, "_ts": now}
 
 class RLCCb(ric.rlc_cb):
-    def __init__(self, node_label, node_type, cu_du_id):
-        ric.rlc_cb.__init__(self)
-        self.nl, self.nt, self.cu = node_label, node_type, cu_du_id
+    def __init__(self, nl, nt, cu):
+        ric.rlc_cb.__init__(self); self.nl, self.nt, self.cu = nl, nt, cu
     def handle(self, ind):
-        if len(ind.rb_stats) > 0:
-            now = time.time()
+        if len(ind.rb_stats) == 0: return
+        now = time.time()
+        with SNAP_LOCK:
             for i in range(len(ind.rb_stats)):
-                TRACKER.observe(self.nl, self.nt, self.cu, ind.rb_stats[i].rnti, now)
+                s = ind.rb_stats[i]; r = s.rnti & 0xffff
+                RLC_SNAP[(self.nl, r, s.rbid)] = {
+                    "txpdu_bytes": s.txpdu_bytes, "rxpdu_bytes": s.rxpdu_bytes,
+                    "txbuf_occ_bytes": s.txbuf_occ_bytes,
+                    "rxbuf_occ_bytes": s.rxbuf_occ_bytes,
+                    "txsdu_wt_us": s.txsdu_wt_us, "_ts": now,
+                }
+                TRACKER.observe(self.nl, self.nt, self.cu, r, now)
 
 class SliceCb(ric.slice_cb):
     """Detect UEs + their current DL slice id per DU (structure from xapp_slice_moni_ctrl.py [[14]])."""
