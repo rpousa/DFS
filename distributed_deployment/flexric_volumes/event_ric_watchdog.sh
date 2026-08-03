@@ -10,6 +10,8 @@ XAPP_SCRIPT="/usr/local/flexric/xApp/python3/xapp_daemon.py"
 XAPP_PID_FILE="/var/run/xapp_daemon.pid"
 PAUSE_FILE="/tmp/ric_watchdog.pause"
 PROBE="/usr/local/etc/flexric/probe_nodes.py"
+DB_PATH="/usr/local/xappdb/xapp_db"
+INDEX_DONE="/var/run/kpm_index.done"
 CHECK_INTERVAL=2
 
 mkdir -p "$RIC_LOG_DIR"
@@ -26,6 +28,20 @@ probe_nodes() {
     python3 "$PROBE" 2>/dev/null | tail -1
 }
 
+create_kpm_index() {
+    [ -f "$INDEX_DONE" ] && return 0
+    # wait until the KPM xApp has created the table
+    for _ in $(seq 1 60); do
+        if sqlite3 "$DB_PATH" "SELECT 1 FROM KPM_MeasRecord LIMIT 1;" >/dev/null 2>&1; then
+            sqlite3 "$DB_PATH" "CREATE INDEX IF NOT EXISTS idx_kpm_meas ON KPM_MeasRecord(meas_name, tstamp, ran_ue_id);"
+            touch "$INDEX_DONE"
+            echo "$(date '+%F %T') - KPM index created" >> "$WATCHDOG_LOG"
+            return 0
+        fi
+        sleep 5
+    done
+    echo "$(date '+%F %T') - KPM index: table not present after wait" >> "$WATCHDOG_LOG"
+}
 
 wait_for_ran() {
     local log="$1"
@@ -89,7 +105,7 @@ start_xapp() {
     nohup stdbuf -oL -eL python3 -u "$XAPP_SCRIPT" > "$XAPP_LOG" 2>&1 &    
     local xapp_pid=$!
     echo "$xapp_pid" > "$XAPP_PID_FILE"
-
+    create_kpm_index
     echo "$(date '+%Y-%m-%d %H:%M:%S') - [Instance #${RESTART_INDEX}] xApp started (PID: $xapp_pid, Log: $XAPP_LOG)" >> "$WATCHDOG_LOG"
 }
 
