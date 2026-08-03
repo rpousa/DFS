@@ -59,8 +59,8 @@
           "refId": "A",
           "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" },
           "queryType": "time series",
-          "rawQueryText": "SELECT tstamp AS \"time\",\n       CASE WHEN ran_ue_id = 2 THEN 'cuup_e (URLLC)' ELSE 'cuup_co (eMBB+mIoT)' END AS metric,\n       SUM(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\nGROUP BY tstamp, metric\nORDER BY tstamp",
-          "queryText": "SELECT tstamp AS \"time\",\n       CASE WHEN ran_ue_id = 2 THEN 'cuup_e (URLLC)' ELSE 'cuup_co (eMBB+mIoT)' END AS metric,\n       SUM(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\nGROUP BY tstamp, metric\nORDER BY tstamp",
+          "rawQueryText": "SELECT tstamp AS \"time\",\n       CASE WHEN ran_ue_id = 2 THEN 'cuup_e (URLLC)' ELSE 'cuup_co (eMBB+mIoT)' END AS metric,\n       SUM(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, metric\nORDER BY tstamp",
+          "queryText": "SELECT tstamp AS \"time\",\n       CASE WHEN ran_ue_id = 2 THEN 'cuup_e (URLLC)' ELSE 'cuup_co (eMBB+mIoT)' END AS metric,\n       SUM(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, metric\nORDER BY tstamp",
           "timeColumns": ["time", "ts"]
         }
       ]
@@ -160,9 +160,9 @@
       "pluginVersion": "12.0.1+security-01",
       "targets": [
         {
-          "queryText": "SELECT\n  binZ AS \"MCS\",\n  MAX(CASE WHEN binX = 1 THEN measure_value END) AS \"RI 1\",\n  MAX(CASE WHEN binX = 2 THEN measure_value END) AS \"RI 2\",\n  MAX(CASE WHEN binX = 3 THEN measure_value END) AS \"RI 3\",\n  MAX(CASE WHEN binX = 4 THEN measure_value END) AS \"RI 4\",\n  MAX(CASE WHEN binX = 5 THEN measure_value END) AS \"RI 5\",\n  MAX(CASE WHEN binX = 6 THEN measure_value END) AS \"RI 6\",\n  MAX(CASE WHEN binX = 7 THEN measure_value END) AS \"RI 7\",\n  MAX(CASE WHEN binX = 8 THEN measure_value END) AS \"RI 8\"\nFROM\n  KPM_MeasRecord\nWHERE\n  meas_name = 'CARR.PDSCHMCSDist' AND\n  binY = 1 AND -- Filtering for MCS Table 1\n  tstamp = (SELECT MAX(tstamp) FROM KPM_MeasRecord WHERE meas_name = 'CARR.PDSCHMCSDist')\nGROUP BY\n  binZ\nORDER BY\n  binZ",
+          "queryText": "SELECT\n  binZ AS \"MCS\",\n  MAX(CASE WHEN binX = 1 THEN measure_value END) AS \"RI 1\",\n  MAX(CASE WHEN binX = 2 THEN measure_value END) AS \"RI 2\",\n  MAX(CASE WHEN binX = 3 THEN measure_value END) AS \"RI 3\",\n  MAX(CASE WHEN binX = 4 THEN measure_value END) AS \"RI 4\",\n  MAX(CASE WHEN binX = 5 THEN measure_value END) AS \"RI 5\",\n  MAX(CASE WHEN binX = 6 THEN measure_value END) AS \"RI 6\",\n  MAX(CASE WHEN binX = 7 THEN measure_value END) AS \"RI 7\",\n  MAX(CASE WHEN binX = 8 THEN measure_value END) AS \"RI 8\"\nFROM\n  KPM_MeasRecord\nWHERE\n  meas_name = 'CARR.PDSCHMCSDist' AND\n  binY = 1 AND -- Filtering for MCS Table 1\n  tstamp = (SELECT MAX(tstamp) FROM KPM_MeasRecord WHERE meas_name = 'CARR.PDSCHMCSDist' AND tstamp BETWEEN $__from/1000 AND $__to/1000))\nGROUP BY\n  binZ\nORDER BY\n  binZ",
           "queryType": "table",
-          "rawQueryText": "SELECT\n  binZ AS \"MCS\",\n  MAX(CASE WHEN binX = 1 THEN measure_value END) AS \"RI 1\",\n  MAX(CASE WHEN binX = 2 THEN measure_value END) AS \"RI 2\",\n  MAX(CASE WHEN binX = 3 THEN measure_value END) AS \"RI 3\",\n  MAX(CASE WHEN binX = 4 THEN measure_value END) AS \"RI 4\",\n  MAX(CASE WHEN binX = 5 THEN measure_value END) AS \"RI 5\",\n  MAX(CASE WHEN binX = 6 THEN measure_value END) AS \"RI 6\",\n  MAX(CASE WHEN binX = 7 THEN measure_value END) AS \"RI 7\",\n  MAX(CASE WHEN binX = 8 THEN measure_value END) AS \"RI 8\"\nFROM\n  KPM_MeasRecord\nWHERE\n  meas_name = 'CARR.PDSCHMCSDist' AND\n  binY = 1 AND -- Filtering for MCS Table 1\n  tstamp = (SELECT MAX(tstamp) FROM KPM_MeasRecord WHERE meas_name = 'CARR.PDSCHMCSDist')\nGROUP BY\n  binZ\nORDER BY\n  binZ",
+          "rawQueryText": "SELECT\n  binZ AS \"MCS\",\n  MAX(CASE WHEN binX = 1 THEN measure_value END) AS \"RI 1\",\n  MAX(CASE WHEN binX = 2 THEN measure_value END) AS \"RI 2\",\n  MAX(CASE WHEN binX = 3 THEN measure_value END) AS \"RI 3\",\n  MAX(CASE WHEN binX = 4 THEN measure_value END) AS \"RI 4\",\n  MAX(CASE WHEN binX = 5 THEN measure_value END) AS \"RI 5\",\n  MAX(CASE WHEN binX = 6 THEN measure_value END) AS \"RI 6\",\n  MAX(CASE WHEN binX = 7 THEN measure_value END) AS \"RI 7\",\n  MAX(CASE WHEN binX = 8 THEN measure_value END) AS \"RI 8\"\nFROM\n  KPM_MeasRecord\nWHERE\n  meas_name = 'CARR.PDSCHMCSDist' AND\n  binY = 1 AND -- Filtering for MCS Table 1\n  tstamp = (SELECT MAX(tstamp) FROM KPM_MeasRecord WHERE meas_name = 'CARR.PDSCHMCSDist' AND tstamp BETWEEN $__from/1000 AND $__to/1000))\nGROUP BY\n  binZ\nORDER BY\n  binZ",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -242,9 +242,9 @@
       "pluginVersion": "12.0.1+security-01",
       "targets": [
         {
-          "queryText": "SELECT\n  binZ AS \"MCS\",\n  MAX(CASE WHEN binX = 1 THEN measure_value END) AS \"RI 1\",\n  MAX(CASE WHEN binX = 2 THEN measure_value END) AS \"RI 2\",\n  MAX(CASE WHEN binX = 3 THEN measure_value END) AS \"RI 3\",\n  MAX(CASE WHEN binX = 4 THEN measure_value END) AS \"RI 4\",\n  MAX(CASE WHEN binX = 5 THEN measure_value END) AS \"RI 5\",\n  MAX(CASE WHEN binX = 6 THEN measure_value END) AS \"RI 6\",\n  MAX(CASE WHEN binX = 7 THEN measure_value END) AS \"RI 7\",\n  MAX(CASE WHEN binX = 8 THEN measure_value END) AS \"RI 8\"\nFROM\n  KPM_MeasRecord\nWHERE\n  meas_name = 'CARR.PDSCHMCSDist' AND\n  binY = 2 AND -- Filtering for MCS Table 2\n  tstamp = (SELECT MAX(tstamp) FROM KPM_MeasRecord WHERE meas_name = 'CARR.PDSCHMCSDist')\nGROUP BY\n  binZ\nORDER BY\n  binZ",
+          "queryText": "SELECT\n  binZ AS \"MCS\",\n  MAX(CASE WHEN binX = 1 THEN measure_value END) AS \"RI 1\",\n  MAX(CASE WHEN binX = 2 THEN measure_value END) AS \"RI 2\",\n  MAX(CASE WHEN binX = 3 THEN measure_value END) AS \"RI 3\",\n  MAX(CASE WHEN binX = 4 THEN measure_value END) AS \"RI 4\",\n  MAX(CASE WHEN binX = 5 THEN measure_value END) AS \"RI 5\",\n  MAX(CASE WHEN binX = 6 THEN measure_value END) AS \"RI 6\",\n  MAX(CASE WHEN binX = 7 THEN measure_value END) AS \"RI 7\",\n  MAX(CASE WHEN binX = 8 THEN measure_value END) AS \"RI 8\"\nFROM\n  KPM_MeasRecord\nWHERE\n  meas_name = 'CARR.PDSCHMCSDist' AND\n  binY = 2 AND -- Filtering for MCS Table 2\n  tstamp = (SELECT MAX(tstamp) FROM KPM_MeasRecord WHERE meas_name = 'CARR.PDSCHMCSDist' AND tstamp BETWEEN $__from/1000 AND $__to/1000))\nGROUP BY\n  binZ\nORDER BY\n  binZ",
           "queryType": "table",
-          "rawQueryText": "SELECT\n  binZ AS \"MCS\",\n  MAX(CASE WHEN binX = 1 THEN measure_value END) AS \"RI 1\",\n  MAX(CASE WHEN binX = 2 THEN measure_value END) AS \"RI 2\",\n  MAX(CASE WHEN binX = 3 THEN measure_value END) AS \"RI 3\",\n  MAX(CASE WHEN binX = 4 THEN measure_value END) AS \"RI 4\",\n  MAX(CASE WHEN binX = 5 THEN measure_value END) AS \"RI 5\",\n  MAX(CASE WHEN binX = 6 THEN measure_value END) AS \"RI 6\",\n  MAX(CASE WHEN binX = 7 THEN measure_value END) AS \"RI 7\",\n  MAX(CASE WHEN binX = 8 THEN measure_value END) AS \"RI 8\"\nFROM\n  KPM_MeasRecord\nWHERE\n  meas_name = 'CARR.PDSCHMCSDist' AND\n  binY = 2 AND -- Filtering for MCS Table 2\n  tstamp = (SELECT MAX(tstamp) FROM KPM_MeasRecord WHERE meas_name = 'CARR.PDSCHMCSDist')\nGROUP BY\n  binZ\nORDER BY\n  binZ",
+          "rawQueryText": "SELECT\n  binZ AS \"MCS\",\n  MAX(CASE WHEN binX = 1 THEN measure_value END) AS \"RI 1\",\n  MAX(CASE WHEN binX = 2 THEN measure_value END) AS \"RI 2\",\n  MAX(CASE WHEN binX = 3 THEN measure_value END) AS \"RI 3\",\n  MAX(CASE WHEN binX = 4 THEN measure_value END) AS \"RI 4\",\n  MAX(CASE WHEN binX = 5 THEN measure_value END) AS \"RI 5\",\n  MAX(CASE WHEN binX = 6 THEN measure_value END) AS \"RI 6\",\n  MAX(CASE WHEN binX = 7 THEN measure_value END) AS \"RI 7\",\n  MAX(CASE WHEN binX = 8 THEN measure_value END) AS \"RI 8\"\nFROM\n  KPM_MeasRecord\nWHERE\n  meas_name = 'CARR.PDSCHMCSDist' AND\n  binY = 2 AND -- Filtering for MCS Table 2\n  tstamp = (SELECT MAX(tstamp) FROM KPM_MeasRecord WHERE meas_name = 'CARR.PDSCHMCSDist' AND tstamp BETWEEN $__from/1000 AND $__to/1000))\nGROUP BY\n  binZ\nORDER BY\n  binZ",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -324,9 +324,9 @@
       "pluginVersion": "12.0.1+security-01",
       "targets": [
         {
-          "queryText": "SELECT\n  binZ AS \"MCS\",\n  MAX(CASE WHEN binX = 1 THEN measure_value END) AS \"RI 1\",\n  MAX(CASE WHEN binX = 2 THEN measure_value END) AS \"RI 2\",\n  MAX(CASE WHEN binX = 3 THEN measure_value END) AS \"RI 3\",\n  MAX(CASE WHEN binX = 4 THEN measure_value END) AS \"RI 4\",\n  MAX(CASE WHEN binX = 5 THEN measure_value END) AS \"RI 5\",\n  MAX(CASE WHEN binX = 6 THEN measure_value END) AS \"RI 6\",\n  MAX(CASE WHEN binX = 7 THEN measure_value END) AS \"RI 7\",\n  MAX(CASE WHEN binX = 8 THEN measure_value END) AS \"RI 8\"\nFROM\n  KPM_MeasRecord\nWHERE\n  meas_name = 'CARR.PDSCHMCSDist' AND\n  binY = 3 AND -- Filtering for MCS Table 3\n  tstamp = (SELECT MAX(tstamp) FROM KPM_MeasRecord WHERE meas_name = 'CARR.PDSCHMCSDist')\nGROUP BY\n  binZ\nORDER BY\n  binZ",
+          "queryText": "SELECT\n  binZ AS \"MCS\",\n  MAX(CASE WHEN binX = 1 THEN measure_value END) AS \"RI 1\",\n  MAX(CASE WHEN binX = 2 THEN measure_value END) AS \"RI 2\",\n  MAX(CASE WHEN binX = 3 THEN measure_value END) AS \"RI 3\",\n  MAX(CASE WHEN binX = 4 THEN measure_value END) AS \"RI 4\",\n  MAX(CASE WHEN binX = 5 THEN measure_value END) AS \"RI 5\",\n  MAX(CASE WHEN binX = 6 THEN measure_value END) AS \"RI 6\",\n  MAX(CASE WHEN binX = 7 THEN measure_value END) AS \"RI 7\",\n  MAX(CASE WHEN binX = 8 THEN measure_value END) AS \"RI 8\"\nFROM\n  KPM_MeasRecord\nWHERE\n  meas_name = 'CARR.PDSCHMCSDist' AND\n  binY = 3 AND -- Filtering for MCS Table 3\n  tstamp = (SELECT MAX(tstamp) FROM KPM_MeasRecord WHERE meas_name = 'CARR.PDSCHMCSDist' AND tstamp BETWEEN $__from/1000 AND $__to/1000))\nGROUP BY\n  binZ\nORDER BY\n  binZ",
           "queryType": "table",
-          "rawQueryText": "SELECT\n  binZ AS \"MCS\",\n  MAX(CASE WHEN binX = 1 THEN measure_value END) AS \"RI 1\",\n  MAX(CASE WHEN binX = 2 THEN measure_value END) AS \"RI 2\",\n  MAX(CASE WHEN binX = 3 THEN measure_value END) AS \"RI 3\",\n  MAX(CASE WHEN binX = 4 THEN measure_value END) AS \"RI 4\",\n  MAX(CASE WHEN binX = 5 THEN measure_value END) AS \"RI 5\",\n  MAX(CASE WHEN binX = 6 THEN measure_value END) AS \"RI 6\",\n  MAX(CASE WHEN binX = 7 THEN measure_value END) AS \"RI 7\",\n  MAX(CASE WHEN binX = 8 THEN measure_value END) AS \"RI 8\"\nFROM\n  KPM_MeasRecord\nWHERE\n  meas_name = 'CARR.PDSCHMCSDist' AND\n  binY = 3 AND -- Filtering for MCS Table 3\n  tstamp = (SELECT MAX(tstamp) FROM KPM_MeasRecord WHERE meas_name = 'CARR.PDSCHMCSDist')\nGROUP BY\n  binZ\nORDER BY\n  binZ",
+          "rawQueryText": "SELECT\n  binZ AS \"MCS\",\n  MAX(CASE WHEN binX = 1 THEN measure_value END) AS \"RI 1\",\n  MAX(CASE WHEN binX = 2 THEN measure_value END) AS \"RI 2\",\n  MAX(CASE WHEN binX = 3 THEN measure_value END) AS \"RI 3\",\n  MAX(CASE WHEN binX = 4 THEN measure_value END) AS \"RI 4\",\n  MAX(CASE WHEN binX = 5 THEN measure_value END) AS \"RI 5\",\n  MAX(CASE WHEN binX = 6 THEN measure_value END) AS \"RI 6\",\n  MAX(CASE WHEN binX = 7 THEN measure_value END) AS \"RI 7\",\n  MAX(CASE WHEN binX = 8 THEN measure_value END) AS \"RI 8\"\nFROM\n  KPM_MeasRecord\nWHERE\n  meas_name = 'CARR.PDSCHMCSDist' AND\n  binY = 3 AND -- Filtering for MCS Table 3\n  tstamp = (SELECT MAX(tstamp) FROM KPM_MeasRecord WHERE meas_name = 'CARR.PDSCHMCSDist' AND tstamp BETWEEN $__from/1000 AND $__to/1000))\nGROUP BY\n  binZ\nORDER BY\n  binZ",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -470,9 +470,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "unit": "Mbits",
           "timeColumns": [
@@ -620,9 +620,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -766,9 +766,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpDl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpDl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpDl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpDl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -915,9 +915,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpUl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\n GROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpUl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\n GROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpUl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpUl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -1042,9 +1042,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n   tstamp AS \"time\",\n   'UE ' || ran_ue_id AS metric,\n   AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotDl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT\n   tstamp AS \"time\",\n   'UE ' || ran_ue_id AS metric,\n   AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotDl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n   tstamp AS \"time\",\n   'UE ' || ran_ue_id AS metric,\n   AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotDl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT\n   tstamp AS \"time\",\n   'UE ' || ran_ue_id AS metric,\n   AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotDl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -1188,9 +1188,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n   tstamp AS \"time\",\n   'UE ' || ran_ue_id AS metric,\n   AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotUl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT\n   tstamp AS \"time\",\n   'UE ' || ran_ue_id AS metric,\n   AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotUl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n   tstamp AS \"time\",\n   'UE ' || ran_ue_id AS metric,\n   AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotUl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT\n   tstamp AS \"time\",\n   'UE ' || ran_ue_id AS metric,\n   AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotUl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -1336,9 +1336,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.RlcSduDelayDl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.RlcSduDelayDl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.RlcSduDelayDl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.RlcSduDelayDl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "timeColumns": [
             "time",
