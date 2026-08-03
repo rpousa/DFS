@@ -59,8 +59,8 @@
           "refId": "A",
           "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" },
           "queryType": "time series",
-          "rawQueryText": "SELECT tstamp AS \"time\",\n       CASE WHEN ran_ue_id = 2 THEN 'cuup_e (URLLC)' ELSE 'cuup_co (eMBB+mIoT)' END AS metric,\n       SUM(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, metric\nORDER BY tstamp",
-          "queryText": "SELECT tstamp AS \"time\",\n       CASE WHEN ran_ue_id = 2 THEN 'cuup_e (URLLC)' ELSE 'cuup_co (eMBB+mIoT)' END AS metric,\n       SUM(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, metric\nORDER BY tstamp",
+          "rawQueryText": "SELECT tstamp AS \"time\",\n       CASE WHEN ran_ue_id = 2 THEN 'cuup_e (URLLC)' ELSE 'cuup_co (eMBB+mIoT)' END AS metric,\n       SUM(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\nGROUP BY tstamp, metric\nORDER BY tstamp",
+          "queryText": "SELECT tstamp AS \"time\",\n       CASE WHEN ran_ue_id = 2 THEN 'cuup_e (URLLC)' ELSE 'cuup_co (eMBB+mIoT)' END AS metric,\n       SUM(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\nGROUP BY tstamp, metric\nORDER BY tstamp",
           "timeColumns": ["time", "ts"]
         }
       ]
@@ -470,9 +470,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "unit": "Mbits",
           "timeColumns": [
@@ -620,9 +620,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -766,9 +766,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpDl' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpDl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpDl' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpDl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -915,9 +915,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpUl' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpUl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\n GROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpUl' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpUl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -1042,9 +1042,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n   tstamp AS \"time\",\n   'UE ' || ran_ue_id AS metric,\n   AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotDl' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT\n   tstamp AS \"time\",\n   'UE ' || ran_ue_id AS metric,\n   AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotDl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n   tstamp AS \"time\",\n   'UE ' || ran_ue_id AS metric,\n   AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotDl' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT\n   tstamp AS \"time\",\n   'UE ' || ran_ue_id AS metric,\n   AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotDl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -1188,9 +1188,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n   tstamp AS \"time\",\n   'UE ' || ran_ue_id AS metric,\n   AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotUl' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT\n   tstamp AS \"time\",\n   'UE ' || ran_ue_id AS metric,\n   AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotUl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n   tstamp AS \"time\",\n   'UE ' || ran_ue_id AS metric,\n   AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotUl' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT\n   tstamp AS \"time\",\n   'UE ' || ran_ue_id AS metric,\n   AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotUl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -1336,9 +1336,9 @@
             "type": "frser-sqlite-datasource",
             "uid": "edthsvykzynswc"
           },
-          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.RlcSduDelayDl' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.RlcSduDelayDl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "queryType": "time series",
-          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.RlcSduDelayDl' AND ran_ue_id IS NOT NULL\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
+          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.RlcSduDelayDl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__unixEpochFrom() AND $__unixEpochTo()\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
           "refId": "A",
           "timeColumns": [
             "time",
