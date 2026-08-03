@@ -175,34 +175,34 @@ class ResidencyTracker:
 
     def refresh_metrics(self):
         now = time.time()
-        with SNAP_LOCK:                           
-            for (nl, r), d in list(GTP_SNAP.items()):
-                if now - d["_ts"] > RESIDENCY_TIMEOUT:
-                    del GTP_SNAP[(nl, r)]; continue
-                for f, v in d.items():
-                    if f != "_ts":
-                        G_GTP.labels(nl, f"{r:#06x}", f).set(v)
-
-            for (nl, r), d in list(RLC_SNAP.items()):
-                if now - d["_ts"] > RESIDENCY_TIMEOUT:
-                    del RLC_SNAP[(nl, r)]; continue
-                for f, v in d.items():
-                    if f != "_ts":
-                        G_RLC.labels(nl, f"{r:#06x}", f).set(v)
-
-            for (nl, r), d in list(PDCP_SNAP.items()):
-                if now - d["_ts"] > RESIDENCY_TIMEOUT:
-                    del PDCP_SNAP[(nl, r)]; continue
-                for f, v in d.items():
-                    if f != "_ts":
-                        G_PDCP.labels(nl, f"{r:#06x}", f).set(v)
-
+        with SNAP_LOCK:                                   # reader side
+            # MAC: (node, rnti)
             for (nl, r), d in list(MAC_SNAP.items()):
                 if now - d["_ts"] > RESIDENCY_TIMEOUT:
                     del MAC_SNAP[(nl, r)]; continue
                 for f, v in d.items():
-                    if f != "_ts":
-                        G_MAC.labels(nl, f"{r:#06x}", f).set(v)
+                    if f != "_ts": G_MAC.labels(nl, f"{r:#06x}", f).set(v)
+
+            # RLC: (node, rnti, rbid)   <-- 3-tuple, this is what crashed
+            for (nl, r, rb), d in list(RLC_SNAP.items()):
+                if now - d["_ts"] > RESIDENCY_TIMEOUT:
+                    del RLC_SNAP[(nl, r, rb)]; continue
+                for f, v in d.items():
+                    if f != "_ts": G_RLC.labels(nl, f"{r:#06x}", str(rb), f).set(v)
+
+            # PDCP: (node, rnti, rbid)   <-- also 3-tuple
+            for (nl, r, rb), d in list(PDCP_SNAP.items()):
+                if now - d["_ts"] > RESIDENCY_TIMEOUT:
+                    del PDCP_SNAP[(nl, r, rb)]; continue
+                for f, v in d.items():
+                    if f != "_ts": G_PDCP.labels(nl, f"{r:#06x}", str(rb), f).set(v)
+
+            # GTP: (node, rnti, qfi)     <-- 3-tuple
+            for (nl, r, qfi), d in list(GTP_SNAP.items()):
+                if now - d["_ts"] > RESIDENCY_TIMEOUT:
+                    del GTP_SNAP[(nl, r, qfi)]; continue
+                for f, v in d.items():
+                    if f != "_ts": G_GTP.labels(nl, f"{r:#06x}", str(qfi), f).set(v)
 
         with self._lock:
             per_node_active = {}
