@@ -279,13 +279,13 @@ class GTPCb(ric.gtp_cb):
         ric.gtp_cb.__init__(self); self.nl, self.nt, self.cu = nl, nt, cu
     def handle(self, ind):
         if len(ind.gtp_stats) == 0: return
-        now = time.time()
-        with SNAP_LOCK:
-            for i in range(len(ind.gtp_stats)):
-                s = ind.gtp_stats[i]; r = s.rnti & 0xffff
-                GTP_SNAP[(self.nl, r, s.qfi)] = {
-                    "teidgnb": s.teidgnb, "teidupf": s.teidupf, "_ts": now}
-                TRACKER.observe(self.nl, self.nt, self.cu, r, now)
+        # now = time.time()
+        # with SNAP_LOCK:
+        #     for i in range(len(ind.gtp_stats)):
+        #         s = ind.gtp_stats[i]; r = s.rnti & 0xffff
+        #         GTP_SNAP[(self.nl, r, s.qfi)] = {
+        #             "teidgnb": s.teidgnb, "teidupf": s.teidupf, "_ts": now}
+        TRACKER.observe(self.nl, self.nt, self.cu, r, now)
                 
 class RLCCb(ric.rlc_cb):
     def __init__(self, nl, nt, cu):
