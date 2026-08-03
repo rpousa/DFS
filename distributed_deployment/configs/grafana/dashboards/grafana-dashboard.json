@@ -1,20 +1,6 @@
-{
-  "annotations": {
-    "list": [
-      {
-        "builtIn": 1,
-        "datasource": {
-          "type": "grafana",
-          "uid": "-- Grafana --"
-        },
-        "enable": true,
-        "hide": true,
-        "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations & Alerts",
-        "type": "dashboard"
-      }
-    ]
-  },
+
+  {
+  "annotations": { "list": [ { "builtIn": 1, "datasource": { "type": "grafana", "uid": "-- Grafana --" }, "enable": true, "hide": true, "iconColor": "rgba(0, 211, 255, 1)", "name": "Annotations & Alerts", "type": "dashboard" } ] },
   "editable": true,
   "graphTooltip": 0,
   "id": 21,
@@ -22,1362 +8,232 @@
   "panels": [
     {
       "id": 200,
-      "title": "CU-UP Backhaul Volume (per CU-UP)",
+      "title": "CU-UP Backhaul Volume DL (per CU-UP)",
       "type": "timeseries",
       "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" },
       "gridPos": { "h": 9, "w": 12, "x": 0, "y": 0 },
       "fieldConfig": {
         "defaults": {
           "unit": "Mbits",
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "smooth",
-            "lineWidth": 2,
-            "fillOpacity": 15,
-            "showPoints": "never",
-            "spanNulls": true
-          },
-          "color": { "mode": "palette-classic" }
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 15, "gradientMode": "none", "showPoints": "never", "spanNulls": true }
         },
         "overrides": [
-          {
-            "matcher": { "id": "byName", "options": "cuup_co (eMBB+mIoT)" },
-            "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } } ]
-          },
-          {
-            "matcher": { "id": "byName", "options": "cuup_e (URLLC)" },
-            "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "orange" } } ]
-          }
+          { "matcher": { "id": "byName", "options": "cuup_co (eMBB+mIoT)" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } } ] },
+          { "matcher": { "id": "byName", "options": "cuup_e (URLLC)" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "orange" } } ] }
         ]
       },
-      "options": {
-        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["last", "max", "mean"] },
-        "tooltip": { "mode": "multi", "sort": "desc" }
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" },
-          "queryType": "time series",
-          "rawQueryText": "SELECT tstamp AS \"time\",\n       CASE WHEN ran_ue_id = 2 THEN 'cuup_e (URLLC)' ELSE 'cuup_co (eMBB+mIoT)' END AS metric,\n       SUM(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, metric\nORDER BY tstamp",
-          "queryText": "SELECT tstamp AS \"time\",\n       CASE WHEN ran_ue_id = 2 THEN 'cuup_e (URLLC)' ELSE 'cuup_co (eMBB+mIoT)' END AS metric,\n       SUM(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, metric\nORDER BY tstamp",
-          "timeColumns": ["time", "ts"]
-        }
-      ]
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["last","max","mean"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [ { "refId": "A", "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" }, "queryType": "time series", "rawQueryText": "SELECT tstamp AS \"time\",\n       CASE WHEN ran_ue_id = 2 THEN 'cuup_e (URLLC)' ELSE 'cuup_co (eMBB+mIoT)' END AS metric,\n       SUM(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, metric\nORDER BY tstamp", "queryText": "SELECT tstamp AS \"time\",\n       CASE WHEN ran_ue_id = 2 THEN 'cuup_e (URLLC)' ELSE 'cuup_co (eMBB+mIoT)' END AS metric,\n       SUM(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, metric\nORDER BY tstamp", "timeColumns": ["time","ts"] } ]
     },
     {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 9
-      },
-      "id": 12,
-      "panels": [],
-      "title": "E2SM-KPM",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "frser-sqlite-datasource",
-        "uid": "depbmy9sb6m0wb"
-      },
+      "id": 201,
+      "title": "CU-UP Backhaul Volume UL (per CU-UP)",
+      "type": "timeseries",
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 0 },
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "scaleDistribution": {
-              "type": "linear"
-            }
-          }
+          "unit": "Mbits",
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 15, "gradientMode": "none", "showPoints": "never", "spanNulls": true }
         },
-        "overrides": []
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "cuup_co (eMBB+mIoT)" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } } ] },
+          { "matcher": { "id": "byName", "options": "cuup_e (URLLC)" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "orange" } } ] }
+        ]
       },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 0,
-        "y": 10
-      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["last","max","mean"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [ { "refId": "A", "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" }, "queryType": "time series", "rawQueryText": "SELECT tstamp AS \"time\",\n       CASE WHEN ran_ue_id = 2 THEN 'cuup_e (URLLC)' ELSE 'cuup_co (eMBB+mIoT)' END AS metric,\n       SUM(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, metric\nORDER BY tstamp", "queryText": "SELECT tstamp AS \"time\",\n       CASE WHEN ran_ue_id = 2 THEN 'cuup_e (URLLC)' ELSE 'cuup_co (eMBB+mIoT)' END AS metric,\n       SUM(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, metric\nORDER BY tstamp", "timeColumns": ["time","ts"] } ]
+    },
+    { "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 }, "id": 12, "panels": [], "title": "E2SM-KPM", "type": "row" },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "depbmy9sb6m0wb" },
+      "fieldConfig": { "defaults": { "custom": { "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "scaleDistribution": { "type": "linear" } } }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 10 },
       "id": 8,
-      "options": {
-        "calculate": false,
-        "calculation": {
-          "xBuckets": {
-            "mode": "size",
-            "value": "MCS"
-          },
-          "yBuckets": {
-            "mode": "size",
-            "scale": {
-              "type": "linear"
-            },
-            "value": ""
-          }
-        },
-        "cellGap": 1,
-        "cellValues": {
-          "unit": "PDSCH RBs"
-        },
-        "color": {
-          "exponent": 0.3,
-          "fill": "dark-orange",
-          "max": 30000,
-          "min": 0,
-          "mode": "scheme",
-          "reverse": false,
-          "scale": "exponential",
-          "scheme": "Warm",
-          "steps": 56
-        },
-        "exemplars": {
-          "color": "rgba(255,0,255,0.7)"
-        },
-        "filterValues": {
-          "le": -1
-        },
-        "legend": {
-          "show": true
-        },
-        "rowsFrame": {
-          "layout": "auto"
-        },
-        "tooltip": {
-          "mode": "single",
-          "showColorScale": false,
-          "yHistogram": false
-        },
-        "yAxis": {
-          "axisPlacement": "left",
-          "reverse": false
-        }
-      },
-      "pluginVersion": "12.0.1+security-01",
-      "targets": [
-        {
-          "queryText": "SELECT\n  binZ AS \"MCS\",\n  MAX(CASE WHEN binX = 1 THEN measure_value END) AS \"RI 1\",\n  MAX(CASE WHEN binX = 2 THEN measure_value END) AS \"RI 2\",\n  MAX(CASE WHEN binX = 3 THEN measure_value END) AS \"RI 3\",\n  MAX(CASE WHEN binX = 4 THEN measure_value END) AS \"RI 4\",\n  MAX(CASE WHEN binX = 5 THEN measure_value END) AS \"RI 5\",\n  MAX(CASE WHEN binX = 6 THEN measure_value END) AS \"RI 6\",\n  MAX(CASE WHEN binX = 7 THEN measure_value END) AS \"RI 7\",\n  MAX(CASE WHEN binX = 8 THEN measure_value END) AS \"RI 8\"\nFROM\n  KPM_MeasRecord\nWHERE\n  meas_name = 'CARR.PDSCHMCSDist' AND\n  binY = 1 AND -- Filtering for MCS Table 1\n  tstamp = (SELECT MAX(tstamp) FROM KPM_MeasRecord WHERE meas_name = 'CARR.PDSCHMCSDist' AND tstamp BETWEEN $__from/1000 AND $__to/1000)\nGROUP BY\n  binZ\nORDER BY\n  binZ",
-          "queryType": "table",
-          "rawQueryText": "SELECT\n  binZ AS \"MCS\",\n  MAX(CASE WHEN binX = 1 THEN measure_value END) AS \"RI 1\",\n  MAX(CASE WHEN binX = 2 THEN measure_value END) AS \"RI 2\",\n  MAX(CASE WHEN binX = 3 THEN measure_value END) AS \"RI 3\",\n  MAX(CASE WHEN binX = 4 THEN measure_value END) AS \"RI 4\",\n  MAX(CASE WHEN binX = 5 THEN measure_value END) AS \"RI 5\",\n  MAX(CASE WHEN binX = 6 THEN measure_value END) AS \"RI 6\",\n  MAX(CASE WHEN binX = 7 THEN measure_value END) AS \"RI 7\",\n  MAX(CASE WHEN binX = 8 THEN measure_value END) AS \"RI 8\"\nFROM\n  KPM_MeasRecord\nWHERE\n  meas_name = 'CARR.PDSCHMCSDist' AND\n  binY = 1 AND -- Filtering for MCS Table 1\n  tstamp = (SELECT MAX(tstamp) FROM KPM_MeasRecord WHERE meas_name = 'CARR.PDSCHMCSDist' AND tstamp BETWEEN $__from/1000 AND $__to/1000)\nGROUP BY\n  binZ\nORDER BY\n  binZ",
-          "refId": "A",
-          "timeColumns": [
-            "time",
-            "ts"
-          ]
-        }
-      ],
+      "options": { "calculate": false, "cellGap": 1, "cellValues": { "unit": "PDSCH RBs" }, "color": { "exponent": 0.3, "fill": "dark-orange", "max": 30000, "min": 0, "mode": "scheme", "reverse": false, "scale": "exponential", "scheme": "Warm", "steps": 56 }, "exemplars": { "color": "rgba(255,0,255,0.7)" }, "filterValues": { "le": -1 }, "legend": { "show": true }, "rowsFrame": { "layout": "auto" }, "tooltip": { "mode": "single", "showColorScale": false, "yHistogram": false }, "yAxis": { "axisPlacement": "left", "reverse": false } },
+      "targets": [ { "queryText": "SELECT\n  binZ AS \"MCS\",\n  MAX(CASE WHEN binX = 1 THEN measure_value END) AS \"RI 1\",\n  MAX(CASE WHEN binX = 2 THEN measure_value END) AS \"RI 2\",\n  MAX(CASE WHEN binX = 3 THEN measure_value END) AS \"RI 3\",\n  MAX(CASE WHEN binX = 4 THEN measure_value END) AS \"RI 4\",\n  MAX(CASE WHEN binX = 5 THEN measure_value END) AS \"RI 5\",\n  MAX(CASE WHEN binX = 6 THEN measure_value END) AS \"RI 6\",\n  MAX(CASE WHEN binX = 7 THEN measure_value END) AS \"RI 7\",\n  MAX(CASE WHEN binX = 8 THEN measure_value END) AS \"RI 8\"\nFROM KPM_MeasRecord\nWHERE meas_name = 'CARR.PDSCHMCSDist' AND binY = 1\n  AND tstamp = (SELECT MAX(tstamp) FROM KPM_MeasRecord WHERE meas_name = 'CARR.PDSCHMCSDist' AND tstamp BETWEEN $__from/1000 AND $__to/1000)\nGROUP BY binZ ORDER BY binZ", "queryType": "table", "rawQueryText": "SELECT\n  binZ AS \"MCS\",\n  MAX(CASE WHEN binX = 1 THEN measure_value END) AS \"RI 1\",\n  MAX(CASE WHEN binX = 2 THEN measure_value END) AS \"RI 2\",\n  MAX(CASE WHEN binX = 3 THEN measure_value END) AS \"RI 3\",\n  MAX(CASE WHEN binX = 4 THEN measure_value END) AS \"RI 4\",\n  MAX(CASE WHEN binX = 5 THEN measure_value END) AS \"RI 5\",\n  MAX(CASE WHEN binX = 6 THEN measure_value END) AS \"RI 6\",\n  MAX(CASE WHEN binX = 7 THEN measure_value END) AS \"RI 7\",\n  MAX(CASE WHEN binX = 8 THEN measure_value END) AS \"RI 8\"\nFROM KPM_MeasRecord\nWHERE meas_name = 'CARR.PDSCHMCSDist' AND binY = 1\n  AND tstamp = (SELECT MAX(tstamp) FROM KPM_MeasRecord WHERE meas_name = 'CARR.PDSCHMCSDist' AND tstamp BETWEEN $__from/1000 AND $__to/1000)\nGROUP BY binZ ORDER BY binZ", "refId": "A", "timeColumns": ["time","ts"] } ],
       "title": "CARR.PDSCHMCSDist (MCS table = 1)",
       "type": "heatmap"
     },
     {
-      "datasource": {
-        "type": "frser-sqlite-datasource",
-        "uid": "depbmy9sb6m0wb"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "scaleDistribution": {
-              "type": "linear"
-            }
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 8,
-        "y": 10
-      },
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "depbmy9sb6m0wb" },
+      "fieldConfig": { "defaults": { "custom": { "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "scaleDistribution": { "type": "linear" } } }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 10 },
       "id": 9,
-      "options": {
-        "calculate": false,
-        "cellGap": 1,
-        "cellValues": {
-          "unit": "PDSCH RBs"
-        },
-        "color": {
-          "exponent": 0.3,
-          "fill": "dark-orange",
-          "max": 30000,
-          "min": 0,
-          "mode": "scheme",
-          "reverse": false,
-          "scale": "exponential",
-          "scheme": "Warm",
-          "steps": 56
-        },
-        "exemplars": {
-          "color": "rgba(255,0,255,0.7)"
-        },
-        "filterValues": {
-          "le": -1
-        },
-        "legend": {
-          "show": true
-        },
-        "rowsFrame": {
-          "layout": "auto"
-        },
-        "tooltip": {
-          "mode": "single",
-          "showColorScale": false,
-          "yHistogram": false
-        },
-        "yAxis": {
-          "axisPlacement": "left",
-          "reverse": false
-        }
-      },
-      "pluginVersion": "12.0.1+security-01",
-      "targets": [
-        {
-          "queryText": "SELECT\n  binZ AS \"MCS\",\n  MAX(CASE WHEN binX = 1 THEN measure_value END) AS \"RI 1\",\n  MAX(CASE WHEN binX = 2 THEN measure_value END) AS \"RI 2\",\n  MAX(CASE WHEN binX = 3 THEN measure_value END) AS \"RI 3\",\n  MAX(CASE WHEN binX = 4 THEN measure_value END) AS \"RI 4\",\n  MAX(CASE WHEN binX = 5 THEN measure_value END) AS \"RI 5\",\n  MAX(CASE WHEN binX = 6 THEN measure_value END) AS \"RI 6\",\n  MAX(CASE WHEN binX = 7 THEN measure_value END) AS \"RI 7\",\n  MAX(CASE WHEN binX = 8 THEN measure_value END) AS \"RI 8\"\nFROM\n  KPM_MeasRecord\nWHERE\n  meas_name = 'CARR.PDSCHMCSDist' AND\n  binY = 2 AND -- Filtering for MCS Table 2\n  tstamp = (SELECT MAX(tstamp) FROM KPM_MeasRecord WHERE meas_name = 'CARR.PDSCHMCSDist' AND tstamp BETWEEN $__from/1000 AND $__to/1000)\nGROUP BY\n  binZ\nORDER BY\n  binZ",
-          "queryType": "table",
-          "rawQueryText": "SELECT\n  binZ AS \"MCS\",\n  MAX(CASE WHEN binX = 1 THEN measure_value END) AS \"RI 1\",\n  MAX(CASE WHEN binX = 2 THEN measure_value END) AS \"RI 2\",\n  MAX(CASE WHEN binX = 3 THEN measure_value END) AS \"RI 3\",\n  MAX(CASE WHEN binX = 4 THEN measure_value END) AS \"RI 4\",\n  MAX(CASE WHEN binX = 5 THEN measure_value END) AS \"RI 5\",\n  MAX(CASE WHEN binX = 6 THEN measure_value END) AS \"RI 6\",\n  MAX(CASE WHEN binX = 7 THEN measure_value END) AS \"RI 7\",\n  MAX(CASE WHEN binX = 8 THEN measure_value END) AS \"RI 8\"\nFROM\n  KPM_MeasRecord\nWHERE\n  meas_name = 'CARR.PDSCHMCSDist' AND\n  binY = 2 AND -- Filtering for MCS Table 2\n  tstamp = (SELECT MAX(tstamp) FROM KPM_MeasRecord WHERE meas_name = 'CARR.PDSCHMCSDist' AND tstamp BETWEEN $__from/1000 AND $__to/1000)\nGROUP BY\n  binZ\nORDER BY\n  binZ",
-          "refId": "A",
-          "timeColumns": [
-            "time",
-            "ts"
-          ]
-        }
-      ],
+      "options": { "calculate": false, "cellGap": 1, "cellValues": { "unit": "PDSCH RBs" }, "color": { "exponent": 0.3, "fill": "dark-orange", "max": 30000, "min": 0, "mode": "scheme", "reverse": false, "scale": "exponential", "scheme": "Warm", "steps": 56 }, "exemplars": { "color": "rgba(255,0,255,0.7)" }, "filterValues": { "le": -1 }, "legend": { "show": true }, "rowsFrame": { "layout": "auto" }, "tooltip": { "mode": "single", "showColorScale": false, "yHistogram": false }, "yAxis": { "axisPlacement": "left", "reverse": false } },
+      "targets": [ { "queryText": "SELECT\n  binZ AS \"MCS\",\n  MAX(CASE WHEN binX = 1 THEN measure_value END) AS \"RI 1\",\n  MAX(CASE WHEN binX = 2 THEN measure_value END) AS \"RI 2\",\n  MAX(CASE WHEN binX = 3 THEN measure_value END) AS \"RI 3\",\n  MAX(CASE WHEN binX = 4 THEN measure_value END) AS \"RI 4\",\n  MAX(CASE WHEN binX = 5 THEN measure_value END) AS \"RI 5\",\n  MAX(CASE WHEN binX = 6 THEN measure_value END) AS \"RI 6\",\n  MAX(CASE WHEN binX = 7 THEN measure_value END) AS \"RI 7\",\n  MAX(CASE WHEN binX = 8 THEN measure_value END) AS \"RI 8\"\nFROM KPM_MeasRecord\nWHERE meas_name = 'CARR.PDSCHMCSDist' AND binY = 2\n  AND tstamp = (SELECT MAX(tstamp) FROM KPM_MeasRecord WHERE meas_name = 'CARR.PDSCHMCSDist' AND tstamp BETWEEN $__from/1000 AND $__to/1000)\nGROUP BY binZ ORDER BY binZ", "queryType": "table", "rawQueryText": "SELECT\n  binZ AS \"MCS\",\n  MAX(CASE WHEN binX = 1 THEN measure_value END) AS \"RI 1\",\n  MAX(CASE WHEN binX = 2 THEN measure_value END) AS \"RI 2\",\n  MAX(CASE WHEN binX = 3 THEN measure_value END) AS \"RI 3\",\n  MAX(CASE WHEN binX = 4 THEN measure_value END) AS \"RI 4\",\n  MAX(CASE WHEN binX = 5 THEN measure_value END) AS \"RI 5\",\n  MAX(CASE WHEN binX = 6 THEN measure_value END) AS \"RI 6\",\n  MAX(CASE WHEN binX = 7 THEN measure_value END) AS \"RI 7\",\n  MAX(CASE WHEN binX = 8 THEN measure_value END) AS \"RI 8\"\nFROM KPM_MeasRecord\nWHERE meas_name = 'CARR.PDSCHMCSDist' AND binY = 2\n  AND tstamp = (SELECT MAX(tstamp) FROM KPM_MeasRecord WHERE meas_name = 'CARR.PDSCHMCSDist' AND tstamp BETWEEN $__from/1000 AND $__to/1000)\nGROUP BY binZ ORDER BY binZ", "refId": "A", "timeColumns": ["time","ts"] } ],
       "title": "CARR.PDSCHMCSDist (MCS table = 2)",
       "type": "heatmap"
     },
     {
-      "datasource": {
-        "type": "frser-sqlite-datasource",
-        "uid": "depbmy9sb6m0wb"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "scaleDistribution": {
-              "type": "linear"
-            }
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 16,
-        "y": 10
-      },
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "depbmy9sb6m0wb" },
+      "fieldConfig": { "defaults": { "custom": { "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "scaleDistribution": { "type": "linear" } } }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 10 },
       "id": 10,
-      "options": {
-        "calculate": false,
-        "cellGap": 1,
-        "cellValues": {
-          "unit": "PDSCH RBs"
-        },
-        "color": {
-          "exponent": 0.3,
-          "fill": "dark-orange",
-          "max": 30000,
-          "min": 0,
-          "mode": "scheme",
-          "reverse": false,
-          "scale": "exponential",
-          "scheme": "Warm",
-          "steps": 56
-        },
-        "exemplars": {
-          "color": "rgba(255,0,255,0.7)"
-        },
-        "filterValues": {
-          "le": -1
-        },
-        "legend": {
-          "show": true
-        },
-        "rowsFrame": {
-          "layout": "auto"
-        },
-        "tooltip": {
-          "mode": "single",
-          "showColorScale": false,
-          "yHistogram": false
-        },
-        "yAxis": {
-          "axisPlacement": "left",
-          "reverse": false
-        }
-      },
-      "pluginVersion": "12.0.1+security-01",
-      "targets": [
-        {
-          "queryText": "SELECT\n  binZ AS \"MCS\",\n  MAX(CASE WHEN binX = 1 THEN measure_value END) AS \"RI 1\",\n  MAX(CASE WHEN binX = 2 THEN measure_value END) AS \"RI 2\",\n  MAX(CASE WHEN binX = 3 THEN measure_value END) AS \"RI 3\",\n  MAX(CASE WHEN binX = 4 THEN measure_value END) AS \"RI 4\",\n  MAX(CASE WHEN binX = 5 THEN measure_value END) AS \"RI 5\",\n  MAX(CASE WHEN binX = 6 THEN measure_value END) AS \"RI 6\",\n  MAX(CASE WHEN binX = 7 THEN measure_value END) AS \"RI 7\",\n  MAX(CASE WHEN binX = 8 THEN measure_value END) AS \"RI 8\"\nFROM\n  KPM_MeasRecord\nWHERE\n  meas_name = 'CARR.PDSCHMCSDist' AND\n  binY = 3 AND -- Filtering for MCS Table 3\n  tstamp = (SELECT MAX(tstamp) FROM KPM_MeasRecord WHERE meas_name = 'CARR.PDSCHMCSDist' AND tstamp BETWEEN $__from/1000 AND $__to/1000)\nGROUP BY\n  binZ\nORDER BY\n  binZ",
-          "queryType": "table",
-          "rawQueryText": "SELECT\n  binZ AS \"MCS\",\n  MAX(CASE WHEN binX = 1 THEN measure_value END) AS \"RI 1\",\n  MAX(CASE WHEN binX = 2 THEN measure_value END) AS \"RI 2\",\n  MAX(CASE WHEN binX = 3 THEN measure_value END) AS \"RI 3\",\n  MAX(CASE WHEN binX = 4 THEN measure_value END) AS \"RI 4\",\n  MAX(CASE WHEN binX = 5 THEN measure_value END) AS \"RI 5\",\n  MAX(CASE WHEN binX = 6 THEN measure_value END) AS \"RI 6\",\n  MAX(CASE WHEN binX = 7 THEN measure_value END) AS \"RI 7\",\n  MAX(CASE WHEN binX = 8 THEN measure_value END) AS \"RI 8\"\nFROM\n  KPM_MeasRecord\nWHERE\n  meas_name = 'CARR.PDSCHMCSDist' AND\n  binY = 3 AND -- Filtering for MCS Table 3\n  tstamp = (SELECT MAX(tstamp) FROM KPM_MeasRecord WHERE meas_name = 'CARR.PDSCHMCSDist' AND tstamp BETWEEN $__from/1000 AND $__to/1000)\nGROUP BY\n  binZ\nORDER BY\n  binZ",
-          "refId": "A",
-          "timeColumns": [
-            "time",
-            "ts"
-          ]
-        }
-      ],
+      "options": { "calculate": false, "cellGap": 1, "cellValues": { "unit": "PDSCH RBs" }, "color": { "exponent": 0.3, "fill": "dark-orange", "max": 30000, "min": 0, "mode": "scheme", "reverse": false, "scale": "exponential", "scheme": "Warm", "steps": 56 }, "exemplars": { "color": "rgba(255,0,255,0.7)" }, "filterValues": { "le": -1 }, "legend": { "show": true }, "rowsFrame": { "layout": "auto" }, "tooltip": { "mode": "single", "showColorScale": false, "yHistogram": false }, "yAxis": { "axisPlacement": "left", "reverse": false } },
+      "targets": [ { "queryText": "SELECT\n  binZ AS \"MCS\",\n  MAX(CASE WHEN binX = 1 THEN measure_value END) AS \"RI 1\",\n  MAX(CASE WHEN binX = 2 THEN measure_value END) AS \"RI 2\",\n  MAX(CASE WHEN binX = 3 THEN measure_value END) AS \"RI 3\",\n  MAX(CASE WHEN binX = 4 THEN measure_value END) AS \"RI 4\",\n  MAX(CASE WHEN binX = 5 THEN measure_value END) AS \"RI 5\",\n  MAX(CASE WHEN binX = 6 THEN measure_value END) AS \"RI 6\",\n  MAX(CASE WHEN binX = 7 THEN measure_value END) AS \"RI 7\",\n  MAX(CASE WHEN binX = 8 THEN measure_value END) AS \"RI 8\"\nFROM KPM_MeasRecord\nWHERE meas_name = 'CARR.PDSCHMCSDist' AND binY = 3\n  AND tstamp = (SELECT MAX(tstamp) FROM KPM_MeasRecord WHERE meas_name = 'CARR.PDSCHMCSDist' AND tstamp BETWEEN $__from/1000 AND $__to/1000)\nGROUP BY binZ ORDER BY binZ", "queryType": "table", "rawQueryText": "SELECT\n  binZ AS \"MCS\",\n  MAX(CASE WHEN binX = 1 THEN measure_value END) AS \"RI 1\",\n  MAX(CASE WHEN binX = 2 THEN measure_value END) AS \"RI 2\",\n  MAX(CASE WHEN binX = 3 THEN measure_value END) AS \"RI 3\",\n  MAX(CASE WHEN binX = 4 THEN measure_value END) AS \"RI 4\",\n  MAX(CASE WHEN binX = 5 THEN measure_value END) AS \"RI 5\",\n  MAX(CASE WHEN binX = 6 THEN measure_value END) AS \"RI 6\",\n  MAX(CASE WHEN binX = 7 THEN measure_value END) AS \"RI 7\",\n  MAX(CASE WHEN binX = 8 THEN measure_value END) AS \"RI 8\"\nFROM KPM_MeasRecord\nWHERE meas_name = 'CARR.PDSCHMCSDist' AND binY = 3\n  AND tstamp = (SELECT MAX(tstamp) FROM KPM_MeasRecord WHERE meas_name = 'CARR.PDSCHMCSDist' AND tstamp BETWEEN $__from/1000 AND $__to/1000)\nGROUP BY binZ ORDER BY binZ", "refId": "A", "timeColumns": ["time","ts"] } ],
       "title": "CARR.PDSCHMCSDist (MCS table = 3)",
       "type": "heatmap"
     },
     {
-      "datasource": {"type":"frser-sqlite-datasource","uid":"edthsvykzynswc"},
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" },
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "continuous-GrYlRd"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 20,
-            "gradientMode": "scheme",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 3,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute"
-          },
-          "unit": "Mbits"
+          "color": { "mode": "palette-classic" },
+          "custom": { "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 20, "gradientMode": "none", "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "insertNulls": false, "lineInterpolation": "smooth", "lineWidth": 3, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "auto", "spanNulls": false, "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" } },
+          "mappings": [], "thresholds": { "mode": "absolute" }, "unit": "Mbits"
         },
         "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "UE 1"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "UE 1"
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "blue",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "UE 2"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "UE 2"
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "UE 3"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "UE 3"
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "green",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
+          { "matcher": { "id": "byName", "options": "UE 1" }, "properties": [ { "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } } ] },
+          { "matcher": { "id": "byName", "options": "UE 2" }, "properties": [ { "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } } ] },
+          { "matcher": { "id": "byName", "options": "UE 3" }, "properties": [ { "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } } ] }
         ]
       },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 18
-      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 18 },
       "id": 3,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.0.1+security-01",
-      "targets": [
-        {
-          "datasource": {
-            "type": "frser-sqlite-datasource",
-            "uid": "edthsvykzynswc"
-          },
-          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
-          "queryType": "time series",
-          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
-          "refId": "A",
-          "unit": "Mbits",
-          "timeColumns": [
-            "time",
-            "ts"
-          ]
-        }
-      ],
+      "options": { "legend": { "calcs": [], "displayMode": "list", "placement": "right", "showLegend": true }, "tooltip": { "mode": "single", "sort": "none" } },
+      "targets": [ { "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" }, "queryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp", "queryType": "time series", "rawQueryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp", "refId": "A", "timeColumns": ["time","ts"] } ],
       "title": "DRB.PdcpSduVolumeDL",
       "type": "timeseries"
     },
     {
-      "datasource": {
-            "type": "frser-sqlite-datasource",
-            "uid": "edthsvykzynswc"},
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" },
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "continuous-GrYlRd"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 21,
-            "gradientMode": "scheme",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "fieldMinMax": false,
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute"
-          },
-          "unit": "Mbits"
+          "color": { "mode": "palette-classic" },
+          "custom": { "axisPlacement": "auto", "drawStyle": "line", "fillOpacity": 21, "gradientMode": "none", "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "auto", "spanNulls": false, "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" } },
+          "mappings": [], "thresholds": { "mode": "absolute" }, "unit": "Mbits"
         },
         "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "UE 1"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "blue",
-                  "mode": "fixed"
-                }
-              },
-              {
-                "id": "displayName",
-                "value": "UE 1"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "UE 2"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "UE 2"
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "UE 3"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "UE 3"
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "green",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
+          { "matcher": { "id": "byName", "options": "UE 1" }, "properties": [ { "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } } ] },
+          { "matcher": { "id": "byName", "options": "UE 2" }, "properties": [ { "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } } ] },
+          { "matcher": { "id": "byName", "options": "UE 3" }, "properties": [ { "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } } ] }
         ]
       },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 18
-      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 18 },
       "id": 1,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.0.1+security-01",
-      "targets": [
-        {
-          "datasource": {
-            "type": "frser-sqlite-datasource",
-            "uid": "edthsvykzynswc"
-          },
-          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
-          "queryType": "time series",
-          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
-          "refId": "A",
-          "timeColumns": [
-            "time",
-            "ts"
-          ]
-        }
-      ],
+      "options": { "legend": { "calcs": [], "displayMode": "list", "placement": "right", "showLegend": true }, "tooltip": { "mode": "single", "sort": "none" } },
+      "targets": [ { "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" }, "queryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp", "queryType": "time series", "rawQueryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp", "refId": "A", "timeColumns": ["time","ts"] } ],
       "title": "DRB.PdcpSduVolumeUL",
       "type": "timeseries"
     },
     {
-      "datasource": {"type":"frser-sqlite-datasource","uid":"edthsvykzynswc"},
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" },
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "continuous-GrYlRd"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 20,
-            "gradientMode": "scheme",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 3,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute"
-          },
-          "unit": "Mbits/s"
+          "color": { "mode": "palette-classic" },
+          "custom": { "axisPlacement": "auto", "drawStyle": "line", "fillOpacity": 20, "gradientMode": "none", "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "lineInterpolation": "smooth", "lineWidth": 3, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "auto", "spanNulls": false, "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" } },
+          "mappings": [], "thresholds": { "mode": "absolute" }, "unit": "Mbits/s"
         },
         "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "UE 1"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "blue",
-                  "mode": "fixed"
-                }
-              },
-              {
-                "id": "displayName",
-                "value": "UE 1"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "UE 2"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "UE 2"
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "UE 3"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "UE 3"
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "green",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
+          { "matcher": { "id": "byName", "options": "UE 1" }, "properties": [ { "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } } ] },
+          { "matcher": { "id": "byName", "options": "UE 2" }, "properties": [ { "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } } ] },
+          { "matcher": { "id": "byName", "options": "UE 3" }, "properties": [ { "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } } ] }
         ]
       },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 26
-      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 26 },
       "id": 4,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.0.1+security-01",
-      "targets": [
-        {
-          "datasource": {
-            "type": "frser-sqlite-datasource",
-            "uid": "edthsvykzynswc"
-          },
-          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpDl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
-          "queryType": "time series",
-          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpDl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
-          "refId": "A",
-          "timeColumns": [
-            "time",
-            "ts"
-          ]
-        }
-      ],
+      "options": { "legend": { "calcs": [], "displayMode": "list", "placement": "right", "showLegend": true }, "tooltip": { "mode": "single", "sort": "none" } },
+      "targets": [ { "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" }, "queryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpDl' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp", "queryType": "time series", "rawQueryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpDl' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp", "refId": "A", "timeColumns": ["time","ts"] } ],
       "title": "DRB.UEThpDl",
       "type": "timeseries"
     },
     {
-      "datasource": {
-            "type": "frser-sqlite-datasource",
-            "uid": "edthsvykzynswc"
-          },
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" },
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "continuous-GrYlRd"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 20,
-            "gradientMode": "scheme",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 3,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute"
-          },
-          "unit": "Mbits/s"
+          "color": { "mode": "palette-classic" },
+          "custom": { "axisPlacement": "auto", "drawStyle": "line", "fillOpacity": 20, "gradientMode": "none", "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "lineInterpolation": "smooth", "lineWidth": 3, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "auto", "spanNulls": false, "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" } },
+          "mappings": [], "thresholds": { "mode": "absolute" }, "unit": "Mbits/s"
         },
         "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "UE 1"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "UE 1"
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "blue",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "UE 2"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "UE 2"
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "UE 3"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "UE 3"
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "green",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
+          { "matcher": { "id": "byName", "options": "UE 1" }, "properties": [ { "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } } ] },
+          { "matcher": { "id": "byName", "options": "UE 2" }, "properties": [ { "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } } ] },
+          { "matcher": { "id": "byName", "options": "UE 3" }, "properties": [ { "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } } ] }
         ]
       },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 26
-      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 26 },
       "id": 5,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.0.1+security-01",
-      "targets": [
-        {
-          "datasource": {
-            "type": "frser-sqlite-datasource",
-            "uid": "edthsvykzynswc"
-          },
-          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpUl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\n GROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
-          "queryType": "time series",
-          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpUl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
-          "refId": "A",
-          "timeColumns": [
-            "time",
-            "ts"
-          ]
-        }
-      ],
+      "options": { "legend": { "calcs": [], "displayMode": "list", "placement": "right", "showLegend": true }, "tooltip": { "mode": "single", "sort": "none" } },
+      "targets": [ { "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" }, "queryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpUl' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp", "queryType": "time series", "rawQueryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpUl' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp", "refId": "A", "timeColumns": ["time","ts"] } ],
       "title": "DRB.UEThpUl",
       "type": "timeseries"
     },
     {
-      "datasource": {"type":"frser-sqlite-datasource","uid":"edthsvykzynswc"},
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" },
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "continuous-GrYlRd"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 20,
-            "gradientMode": "scheme",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 3,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute"
-          },
-          "unit": "short"
+          "color": { "mode": "palette-classic" },
+          "custom": { "axisPlacement": "auto", "drawStyle": "line", "fillOpacity": 20, "gradientMode": "none", "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "lineInterpolation": "smooth", "lineWidth": 3, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "auto", "spanNulls": false, "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" } },
+          "mappings": [], "thresholds": { "mode": "absolute" }, "unit": "short"
         },
         "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "UE 1"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "blue",
-                  "mode": "fixed"
-                }
-              },
-              {
-                "id": "displayName",
-                "value": "UE 1"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "UE 2"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "UE 2"
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
+          { "matcher": { "id": "byName", "options": "UE 1" }, "properties": [ { "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } } ] },
+          { "matcher": { "id": "byName", "options": "UE 2" }, "properties": [ { "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } } ] },
+          { "matcher": { "id": "byName", "options": "UE 3" }, "properties": [ { "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } } ] }
         ]
       },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 34
-      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 34 },
       "id": 7,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.0.1+security-01",
-      "targets": [
-        {
-          "datasource": {
-            "type": "frser-sqlite-datasource",
-            "uid": "edthsvykzynswc"
-          },
-          "queryText": "SELECT\n   tstamp AS \"time\",\n   'UE ' || ran_ue_id AS metric,\n   AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotDl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
-          "queryType": "time series",
-          "rawQueryText": "SELECT\n   tstamp AS \"time\",\n   'UE ' || ran_ue_id AS metric,\n   AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotDl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
-          "refId": "A",
-          "timeColumns": [
-            "time",
-            "ts"
-          ]
-        }
-      ],
+      "options": { "legend": { "calcs": [], "displayMode": "list", "placement": "right", "showLegend": true }, "tooltip": { "mode": "single", "sort": "none" } },
+      "targets": [ { "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" }, "queryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotDl' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp", "queryType": "time series", "rawQueryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotDl' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp", "refId": "A", "timeColumns": ["time","ts"] } ],
       "title": "RRU.PrbTotDl",
       "type": "timeseries"
     },
     {
-      "datasource": {"type":"frser-sqlite-datasource","uid":"edthsvykzynswc"},
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" },
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "continuous-GrYlRd"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 20,
-            "gradientMode": "scheme",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 3,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute"
-          },
-          "unit": "short"
+          "color": { "mode": "palette-classic" },
+          "custom": { "axisPlacement": "auto", "drawStyle": "line", "fillOpacity": 20, "gradientMode": "none", "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "lineInterpolation": "smooth", "lineWidth": 3, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "auto", "spanNulls": false, "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" } },
+          "mappings": [], "thresholds": { "mode": "absolute" }, "unit": "short"
         },
         "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "UE 1"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "blue",
-                  "mode": "fixed"
-                }
-              },
-              {
-                "id": "displayName",
-                "value": "UE 1"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "UE 2"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "UE 2"
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "UE 3"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "UE 3"
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
+          { "matcher": { "id": "byName", "options": "UE 1" }, "properties": [ { "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } } ] },
+          { "matcher": { "id": "byName", "options": "UE 2" }, "properties": [ { "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } } ] },
+          { "matcher": { "id": "byName", "options": "UE 3" }, "properties": [ { "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } } ] }
         ]
       },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 34
-      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 34 },
       "id": 6,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.0.1+security-01",
-      "targets": [
-        {
-          "datasource": {
-            "type": "frser-sqlite-datasource",
-            "uid": "edthsvykzynswc"
-          },
-          "queryText": "SELECT\n   tstamp AS \"time\",\n   'UE ' || ran_ue_id AS metric,\n   AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotUl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
-          "queryType": "time series",
-          "rawQueryText": "SELECT\n   tstamp AS \"time\",\n   'UE ' || ran_ue_id AS metric,\n   AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotUl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
-          "refId": "A",
-          "timeColumns": [
-            "time",
-            "ts"
-          ]
-        }
-      ],
+      "options": { "legend": { "calcs": [], "displayMode": "list", "placement": "right", "showLegend": true }, "tooltip": { "mode": "single", "sort": "none" } },
+      "targets": [ { "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" }, "queryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotUl' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp", "queryType": "time series", "rawQueryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotUl' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp", "refId": "A", "timeColumns": ["time","ts"] } ],
       "title": "RRU.PrbTotUl",
       "type": "timeseries"
     },
     {
-      "datasource": {
-        "type": "frser-sqlite-datasource",
-        "uid": "edthsvykzynswc"},
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" },
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "continuous-GrYlRd"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 20,
-            "gradientMode": "scheme",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 3,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute"
-          },
-          "unit": "µs"
+          "color": { "mode": "palette-classic" },
+          "custom": { "axisPlacement": "auto", "drawStyle": "line", "fillOpacity": 20, "gradientMode": "none", "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "lineInterpolation": "smooth", "lineWidth": 3, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "auto", "spanNulls": false, "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" } },
+          "mappings": [], "thresholds": { "mode": "absolute" }, "unit": "µs"
         },
         "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "UE 1"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "blue",
-                  "mode": "fixed"
-                }
-              },
-              {
-                "id": "displayName",
-                "value": "UE 1"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "UE 2"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "UE 2"
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "UE 3"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "UE 3"
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
+          { "matcher": { "id": "byName", "options": "UE 1" }, "properties": [ { "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } } ] },
+          { "matcher": { "id": "byName", "options": "UE 2" }, "properties": [ { "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } } ] },
+          { "matcher": { "id": "byName", "options": "UE 3" }, "properties": [ { "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } } ] }
         ]
       },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 42
-      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 42 },
       "id": 2,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.0.1+security-01",
-      "targets": [
-        {
-          "datasource": {
-            "type": "frser-sqlite-datasource",
-            "uid": "edthsvykzynswc"
-          },
-          "queryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.RlcSduDelayDl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
-          "queryType": "time series",
-          "rawQueryText": "SELECT\n    tstamp AS \"time\",\n    'UE ' || ran_ue_id AS metric,\n    AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.RlcSduDelayDl' AND ran_ue_id IS NOT NULL\n AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp",
-          "refId": "A",
-          "timeColumns": [
-            "time",
-            "ts"
-          ]
-        }
-      ],
+      "options": { "legend": { "calcs": [], "displayMode": "list", "placement": "right", "showLegend": true }, "tooltip": { "mode": "single", "sort": "none" } },
+      "targets": [ { "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" }, "queryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.RlcSduDelayDl' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp", "queryType": "time series", "rawQueryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.RlcSduDelayDl' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp", "refId": "A", "timeColumns": ["time","ts"] } ],
       "title": "DRB.RlcSduDelayDl",
       "type": "timeseries"
     }
   ],
   "preload": false,
-  "refresh": "5s",
+  "refresh": "30s",
   "schemaVersion": 41,
   "tags": [],
-  "templating": {
-    "list": []
-  },
-  "time": {
-    "from": "now-15m",
-    "to": "now"
-  },
-  "timepicker": {
-    "refresh_intervals": [
-      "1s",
-      "5s",
-      "10s",
-      "30s",
-      "1m",
-      "5m",
-      "15m",
-      "30m",
-      "1h",
-      "2h",
-      "1d"
-    ]
-  },
+  "templating": { "list": [] },
+  "time": { "from": "now-15m", "to": "now" },
+  "timepicker": {},
   "timezone": "UTC",
   "title": "KPI measurements",
   "uid": "cdtipm2on2f40e",
-  "version": 2
+  "version": 3
 }
