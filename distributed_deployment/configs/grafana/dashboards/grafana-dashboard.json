@@ -494,7 +494,9 @@
       "type": "timeseries"
     },
     {
-      "datasource": {},
+      "datasource": {
+            "type": "frser-sqlite-datasource",
+            "uid": "edthsvykzynswc"},
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -583,6 +585,25 @@
                 "id": "color",
                 "value": {
                   "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "UE 3"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "UE 3"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
                   "mode": "fixed"
                 }
               }
