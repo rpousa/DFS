@@ -258,14 +258,21 @@ class MACCb(ric.mac_cb):
                 TRACKER.observe(self.nl, self.nt, self.cu, r, now)
 
 class PDCPCb(ric.pdcp_cb):
-    def __init__(self, node_label, node_type, cu_du_id):
-        ric.pdcp_cb.__init__(self)
-        self.nl, self.nt, self.cu = node_label, node_type, cu_du_id
+    def __init__(self, nl, nt, cu):
+        ric.pdcp_cb.__init__(self); self.nl, self.nt, self.cu = nl, nt, cu
     def handle(self, ind):
-        if len(ind.rb_stats) > 0:
-            now = time.time()
+        if len(ind.rb_stats) == 0: return
+        now = time.time()
+        with SNAP_LOCK:
             for i in range(len(ind.rb_stats)):
-                TRACKER.observe(self.nl, self.nt, self.cu, ind.rb_stats[i].rnti, now)
+                s = ind.rb_stats[i]; r = s.rnti & 0xffff
+                PDCP_SNAP[(self.nl, r, s.rbid)] = {
+                    "txpdu_bytes": s.txpdu_bytes, "rxpdu_bytes": s.rxpdu_bytes,
+                    "txpdu_pkts":  s.txpdu_pkts,  "rxpdu_pkts":  s.rxpdu_pkts,
+                    "txsdu_bytes": s.txsdu_bytes, "rxsdu_bytes": s.rxsdu_bytes,
+                    "_ts": now,
+                }
+                TRACKER.observe(self.nl, self.nt, self.cu, r, now)
 
 class GTPCb(ric.gtp_cb):
     def __init__(self, nl, nt, cu):
@@ -278,7 +285,8 @@ class GTPCb(ric.gtp_cb):
                 s = ind.gtp_stats[i]; r = s.rnti & 0xffff
                 GTP_SNAP[(self.nl, r, s.qfi)] = {
                     "teidgnb": s.teidgnb, "teidupf": s.teidupf, "_ts": now}
-
+                TRACKER.observe(self.nl, self.nt, self.cu, r, now)
+                
 class RLCCb(ric.rlc_cb):
     def __init__(self, nl, nt, cu):
         ric.rlc_cb.__init__(self); self.nl, self.nt, self.cu = nl, nt, cu
