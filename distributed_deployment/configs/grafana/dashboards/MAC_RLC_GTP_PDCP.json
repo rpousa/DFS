@@ -43,13 +43,28 @@
       "datasource": {"type":"prometheus","uid":"prometheus"},
       "fieldConfig": {"defaults": {"unit":"Bps","color":{"mode":"palette-classic"}}},
       "targets": [ {"expr":"rate(ran_pdcp_bearer{field=\"txpdu_bytes\"}[1m])",
-                    "legendFormat":"{{e2_node}} rnti {{rnti}}"} ] },
+                    "legendFormat":" rnti {{rnti}}"} ] },
 
     { "id": 6, "title": "PDCP throughput UL (bytes/s)", "type": "timeseries",
       "gridPos": {"h":8,"w":12,"x":12,"y":16},
       "datasource": {"type":"prometheus","uid":"prometheus"},
       "fieldConfig": {"defaults": {"unit":"Bps","color":{"mode":"palette-classic"}}},
       "targets": [ {"expr":"rate(ran_pdcp_bearer{field=\"rxpdu_bytes\"}[1m])",
-                    "legendFormat":"{{e2_node}} rnti {{rnti}}"} ] }
+                    "legendFormat":" rnti {{rnti}}"} ] },
+                    
+    { "id": 7, "title": "PDCP throughput DL (packets/s)", "type": "timeseries",
+      "gridPos": {"h":8,"w":12,"x":12,"y":16},
+      "datasource": {"type":"prometheus","uid":"prometheus"},
+      "fieldConfig": {"defaults": {"unit":"pps","color":{"mode":"palette-classic"}}},
+      "targets": [ {"expr":"rate(ran_pdcp_bearer{field=\"txpdu_pkts\"}[1m])",
+                    "legendFormat":" rnti {{rnti}}"} ] },
+
+    { "id": 8, "title": "PDCP throughput UL (packets/s)", "type": "timeseries",
+      "gridPos": {"h":8,"w":12,"x":12,"y":16},
+      "datasource": {"type":"prometheus","uid":"prometheus"},
+      "fieldConfig": {"defaults": {"unit":"pps","color":{"mode":"palette-classic"}}},
+      "targets": [ {"expr":"rate(ran_pdcp_bearer{field=\"rxpdu_pkts\"}[1m])",
+                    "legendFormat":" rnti {{rnti}}"} ] }
+    
   ]
 }
