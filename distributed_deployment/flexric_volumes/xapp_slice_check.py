@@ -198,11 +198,11 @@ class ResidencyTracker:
                     if f != "_ts": G_PDCP.labels(nl, f"{r:#06x}", str(rb), f).set(v)
 
             # GTP: (node, rnti, qfi)     <-- 3-tuple
-            for (nl, r, qfi), d in list(GTP_SNAP.items()):
-                if now - d["_ts"] > RESIDENCY_TIMEOUT:
-                    del GTP_SNAP[(nl, r, qfi)]; continue
-                for f, v in d.items():
-                    if f != "_ts": G_GTP.labels(nl, f"{r:#06x}", str(qfi), f).set(v)
+            # for (nl, r, qfi), d in list(GTP_SNAP.items()):
+            #     if now - d["_ts"] > RESIDENCY_TIMEOUT:
+            #         del GTP_SNAP[(nl, r, qfi)]; continue
+            #     for f, v in d.items():
+            #         if f != "_ts": G_GTP.labels(nl, f"{r:#06x}", str(qfi), f).set(v)
 
         with self._lock:
             per_node_active = {}
@@ -285,7 +285,7 @@ class GTPCb(ric.gtp_cb):
         #         s = ind.gtp_stats[i]; r = s.rnti & 0xffff
         #         GTP_SNAP[(self.nl, r, s.qfi)] = {
         #             "teidgnb": s.teidgnb, "teidupf": s.teidupf, "_ts": now}
-        TRACKER.observe(self.nl, self.nt, self.cu, r, now)
+        #TRACKER.observe(self.nl, self.nt, self.cu, r, now)
                 
 class RLCCb(ric.rlc_cb):
     def __init__(self, nl, nt, cu):
@@ -455,8 +455,8 @@ def main():
                 p = PDCPCb(label, ntype, cu_lbl); 
                 cb_refs += [p]
                 handlers.append(("pdcp", ric.report_pdcp_sm(nid, REPORT_INTERVAL, p)))
-                g = GTPCb(label, ntype, cu_lbl); cb_refs += [g]                 
-                handlers.append(("gtp",  ric.report_gtp_sm(nid, REPORT_INTERVAL, g))) 
+                # g = GTPCb(label, ntype, cu_lbl); cb_refs += [g]                 
+                # handlers.append(("gtp",  ric.report_gtp_sm(nid, REPORT_INTERVAL, g))) 
 
             subscribed.add(key)
         return cb_refs, handlers, du_nodes, subscribed
