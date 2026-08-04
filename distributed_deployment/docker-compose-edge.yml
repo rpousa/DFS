@@ -248,13 +248,13 @@ services:
         -E --rfsim
         --L1s.[0].max_ldpc_iterations 2
         --MACRLCs.[0].ulsch_max_frame_inactivity 0
-        --MACRLCs.[0].ul_max_mcs 6
         --gNBs.[0].min_rxtxtime 6
         --L1s.[0].L1_rx_thread_core 4
         --thread-pool 5,6,7,8
         --L1s.[0].L1_tx_thread_core 3
         --rfsimulator.[0].serveraddr server
         --rfsimulator.[0].serverport 4043
+#         --MACRLCs.[0].ul_max_mcs 6
 #        --log_config.hw_log_level debug
 #  --vrtsim.cirdb 1
 # --log_config.phy_log_level debug
