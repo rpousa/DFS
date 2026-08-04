@@ -23,13 +23,13 @@
       "targets": [ {"expr":"rate(ran_mac_ue{field=\"ul_aggr_prb\",e2_node=~\"$node\"}[1m])",
                     "legendFormat":"{{e2_node}} {{rnti}}"} ] },
 
-    { "id": 3, "title": "Radio quality (CQI / PUSCH SNR)", "type": "timeseries",
+    { "id": 3, "title": "MCS usage per UE", "type": "timeseries",
       "gridPos": {"h":8,"w":12,"x":0,"y":8},
       "datasource": {"type":"prometheus","uid":"prometheus"},
       "fieldConfig": {"defaults": {"unit":"short","color":{"mode":"palette-classic"}}},
       "targets": [
-        {"expr":"ran_mac_ue{field=\"wb_cqi\",e2_node=~\"$node\"}","legendFormat":"CQI {{rnti}}"},
-        {"expr":"ran_mac_ue{field=\"pusch_snr\",e2_node=~\"$node\"}","legendFormat":"SNR {{rnti}}"} ] },
+        {"expr":"ran_mac_ue{field=\"dl_mcs1\",e2_node=~\"$node\"}","legendFormat":"MCS Slot DL  {{rnti}}"},
+        {"expr":"ran_mac_ue{field=\"ul_mcs1\",e2_node=~\"$node\"}","legendFormat":"MCS Slot UL {{rnti}}"} ] },
 
     { "id": 4, "title": "RLC buffer occupancy (TX bytes)", "type": "timeseries",
       "gridPos": {"h":8,"w":12,"x":12,"y":8},
@@ -51,16 +51,16 @@
       "fieldConfig": {"defaults": {"unit":"Bps","color":{"mode":"palette-classic"}}},
       "targets": [ {"expr":"rate(ran_pdcp_bearer{field=\"rxpdu_bytes\"}[1m])",
                     "legendFormat":" rnti {{rnti}}"} ] },
-                    
+
     { "id": 7, "title": "PDCP throughput DL (packets/s)", "type": "timeseries",
-      "gridPos": {"h":8,"w":12,"x":12,"y":16},
+      "gridPos": {"h":8,"w":12,"x":0,"y":24},
       "datasource": {"type":"prometheus","uid":"prometheus"},
       "fieldConfig": {"defaults": {"unit":"pps","color":{"mode":"palette-classic"}}},
       "targets": [ {"expr":"rate(ran_pdcp_bearer{field=\"txpdu_pkts\"}[1m])",
                     "legendFormat":" rnti {{rnti}}"} ] },
 
     { "id": 8, "title": "PDCP throughput UL (packets/s)", "type": "timeseries",
-      "gridPos": {"h":8,"w":12,"x":12,"y":16},
+      "gridPos": {"h":8,"w":12,"x":12,"y":24},
       "datasource": {"type":"prometheus","uid":"prometheus"},
       "fieldConfig": {"defaults": {"unit":"pps","color":{"mode":"palette-classic"}}},
       "targets": [ {"expr":"rate(ran_pdcp_bearer{field=\"rxpdu_pkts\"}[1m])",
