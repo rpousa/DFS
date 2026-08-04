@@ -23,13 +23,13 @@
       "targets": [ {"expr":"rate(ran_mac_ue{field=\"ul_aggr_prb\",e2_node=~\"$node\"}[1m])",
                     "legendFormat":"{{e2_node}} {{rnti}}"} ] },
 
-    { "id": 3, "title": "MCS usage per UE", "type": "timeseries",
+    { "id": 3, "title": "Transport block usage per UE", "type": "timeseries",
       "gridPos": {"h":8,"w":12,"x":0,"y":8},
       "datasource": {"type":"prometheus","uid":"prometheus"},
       "fieldConfig": {"defaults": {"unit":"short","color":{"mode":"palette-classic"}}},
       "targets": [
-        {"expr":"ran_mac_ue{field=\"dl_mcs1\",e2_node=~\"$node\"}","legendFormat":"MCS Slot DL  {{rnti}}"},
-        {"expr":"ran_mac_ue{field=\"ul_mcs1\",e2_node=~\"$node\"}","legendFormat":"MCS Slot UL {{rnti}}"} ] },
+        {"expr":"rate(ran_mac_ue{field=\"dl_aggr_tbs\",e2_node=~\"$node\"}[1m])","legendFormat":"Transport Block Throughput DL  {{rnti}}"},
+        {"expr":"rate(ran_mac_ue{field=\"ul_aggr_tbs\",e2_node=~\"$node\"}[1m])","legendFormat":"Transport Block Throughput UL {{rnti}}"} ] },
 
     { "id": 4, "title": "RLC buffer occupancy (TX bytes)", "type": "timeseries",
       "gridPos": {"h":8,"w":12,"x":12,"y":8},
