@@ -42,21 +42,14 @@
       "gridPos": {"h":8,"w":12,"x":0,"y":16},
       "datasource": {"type":"prometheus","uid":"prometheus"},
       "fieldConfig": {"defaults": {"unit":"Bps","color":{"mode":"palette-classic"}}},
-      "targets": [ {"expr":"rate(ran_pdcp_bearer{field=\"txpdu_bytes\",e2_node=~\"$node\"}[1m])",
+      "targets": [ {"expr":"rate(ran_pdcp_bearer{field=\"txpdu_bytes\"}[1m])",
                     "legendFormat":"{{e2_node}} rnti {{rnti}}"} ] },
 
     { "id": 6, "title": "PDCP throughput UL (bytes/s)", "type": "timeseries",
       "gridPos": {"h":8,"w":12,"x":12,"y":16},
       "datasource": {"type":"prometheus","uid":"prometheus"},
       "fieldConfig": {"defaults": {"unit":"Bps","color":{"mode":"palette-classic"}}},
-      "targets": [ {"expr":"rate(ran_pdcp_bearer{field=\"rxpdu_bytes\",e2_node=~\"$node\"}[1m])",
-                    "legendFormat":"{{e2_node}} rnti {{rnti}}"} ] },
-
-    { "id": 7, "title": "GTP-U active bearers (QFI presence)", "type": "timeseries",
-      "gridPos": {"h":8,"w":24,"x":0,"y":24},
-      "datasource": {"type":"prometheus","uid":"prometheus"},
-      "fieldConfig": {"defaults": {"unit":"short","color":{"mode":"palette-classic"}}},
-      "targets": [ {"expr":"count by (e2_node) (ran_gtp_bearer{field=\"teidupf\",e2_node=~\"$node\"})",
-                    "legendFormat":"{{e2_node}} active QFIs"} ] }
+      "targets": [ {"expr":"rate(ran_pdcp_bearer{field=\"rxpdu_bytes\"}[1m])",
+                    "legendFormat":"{{e2_node}} rnti {{rnti}}"} ] }
   ]
 }
