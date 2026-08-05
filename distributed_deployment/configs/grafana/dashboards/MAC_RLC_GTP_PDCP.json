@@ -44,14 +44,14 @@
       "gridPos": {"h":8,"w":12,"x":0,"y":16},
       "datasource": {"type":"prometheus","uid":"prometheus"},
       "fieldConfig": {"defaults": {"unit":"Bps","color":{"mode":"palette-classic"}}},
-      "targets": [ {"expr":"rate(ran_pdcp_bearer{field=\"txpdu_bytes\"}*10[1m])",
+      "targets": [ {"expr":"rate(ran_pdcp_bearer{field=\"txpdu_bytes\"}[1m])*10",
                     "legendFormat":" rnti {{rnti}}"} ] },
 
     { "id": 6, "title": "PDCP PDU throughput UL (bytes/s)", "type": "timeseries",
       "gridPos": {"h":8,"w":12,"x":12,"y":16},
       "datasource": {"type":"prometheus","uid":"prometheus"},
       "fieldConfig": {"defaults": {"unit":"Bps","color":{"mode":"palette-classic"}}},
-      "targets": [ {"expr":"rate(ran_pdcp_bearer{field=\"rxpdu_bytes\"}*10[1m])",
+      "targets": [ {"expr":"rate(ran_pdcp_bearer{field=\"rxpdu_bytes\"}[1m])*10",
                     "legendFormat":" rnti {{rnti}}"} ] },
 
     { "id": 7, "title": "PDCP throughput DL (packets/s)", "type": "timeseries",
