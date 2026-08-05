@@ -71,14 +71,14 @@
     { "id": 9, "title": "RLC buffer occupancy (TX bytes)", "type": "timeseries",
       "gridPos": {"h":8,"w":12,"x":0,"y":32},
       "datasource": {"type":"prometheus","uid":"prometheus"},
-      "fieldConfig": {"defaults": {"unit":"bytes","color":{"mode":"palette-classic"}}},
+      "fieldConfig": {"defaults": {"unit":"MB","color":{"mode":"palette-classic"}}},
       "targets": [ {"expr":"ran_rlc_bearer{field=\"txbuf_occ_bytes\",e2_node=~\"$node\"}",
                     "legendFormat":"{{e2_node}} rnti {{rnti}} rb {{rbid}}"} ] },
 
     { "id": 10, "title": "RLC buffer occupancy (RX bytes)", "type": "timeseries",
       "gridPos": {"h":8,"w":12,"x":12,"y":32},
       "datasource": {"type":"prometheus","uid":"prometheus"},
-      "fieldConfig": {"defaults": {"unit":"bytes","color":{"mode":"palette-classic"}}},
+      "fieldConfig": {"defaults": {"unit":"MB","color":{"mode":"palette-classic"}}},
       "targets": [ {"expr":"ran_rlc_bearer{field=\"rxbuf_occ_bytes\",e2_node=~\"$node\"}",
                     "legendFormat":"{{e2_node}} rnti {{rnti}} rb {{rbid}}"} ] },
 
