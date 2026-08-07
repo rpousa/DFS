@@ -203,6 +203,10 @@
       "gridPos": { "x": 0, "y": 55, "w": 12, "h": 6 },
       "targets": [ { "expr": "slice_throughput_bps", "legendFormat": "{{slice}}", "instant": true } ],
       "fieldConfig": { "defaults": { "unit": "bps" } }
-    }
+    },
+    { "id": 18, "type": "timeseries", "title": "Slice RTT (ms)",
+    "gridPos": { "x": 12, "y": 47, "w": 12, "h": 8 },
+    "targets": [ { "expr": "slice_rtt_ms", "legendFormat": "{{slice}}" } ],
+    "fieldConfig": { "defaults": { "unit": "ms" } } }
   ]
 }

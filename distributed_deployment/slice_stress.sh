@@ -21,6 +21,10 @@ run_slice() {
 
   docker exec "$UE_CTR" ip addr show "$iface" 2>/dev/null | grep -q "$src" \
     || { echo "[stress] $slice SKIP — $iface ($src) missing"; return 1; }
+  
+  rtt=$(docker exec "$UE_CTR" ping -c 5 -I "$iface" "$ip" 2>/dev/null \
+      | awk -F'/' '/rtt|round-trip/ {print $5}')   # avg ms
+  [ -n "$rtt" ] && push "$slice" <<< "slice_rtt_ms ${rtt}"
 
   local OPTS
   if [ "$proto" = tcp ]; then
