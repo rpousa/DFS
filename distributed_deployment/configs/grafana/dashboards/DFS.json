@@ -204,9 +204,15 @@
       "targets": [ { "expr": "slice_throughput_bps", "legendFormat": "{{slice}}", "instant": true } ],
       "fieldConfig": { "defaults": { "unit": "bps" } }
     },
-    { "id": 18, "type": "timeseries", "title": "Slice RTT (ms)",
-    "gridPos": { "x": 12, "y": 47, "w": 12, "h": 8 },
-    "targets": [ { "expr": "slice_rtt_ms", "legendFormat": "{{slice}}" } ],
-    "fieldConfig": { "defaults": { "unit": "ms" } } }
+    {
+      "id": 18, "type": "timeseries", "title": "Slice RTT (ms) — live",
+      "gridPos": { "x": 12, "y": 47, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "slice_rtt_ms and (time() - push_time_seconds{job=\"stress\"} < 15)",
+          "legendFormat": "{{slice}}" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ms" } }
+    }
   ]
 }

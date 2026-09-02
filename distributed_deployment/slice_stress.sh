@@ -21,10 +21,6 @@ run_slice() {
 
   docker exec "$UE_CTR" ip addr show "$iface" 2>/dev/null | grep -q "$src" \
     || { echo "[stress] $slice SKIP — $iface ($src) missing"; return 1; }
-  
-  rtt=$(docker exec "$UE_CTR" ping -c 5 -I "$iface" "$ip" 2>/dev/null \
-      | awk -F'/' '/rtt|round-trip/ {print $5}')   # avg ms
-  [ -n "$rtt" ] && push "$slice" <<< "slice_rtt_ms ${rtt}"
 
   local OPTS
   if [ "$proto" = tcp ]; then
@@ -35,6 +31,9 @@ run_slice() {
   fi
 
   # 3.16: stream text intervals; stdbuf+--forceflush prevent pipe buffering
+  ( docker exec "$UE_CTR" ping -n -i 1 -w "$DUR" -I "$iface" "$ip" 2>/dev/null \
+  | stdbuf -oL grep -oE 'time=[0-9.]+' \
+  | while IFS= read -r t; do push "$slice" <<< "slice_rtt_ms ${t#time=}"; done ) &
   docker exec "$UE_CTR" stdbuf -oL iperf3 -c "$ip" -B "$src" -p "$port" \
         $OPTS -t "$DUR" -i 1 --forceflush 2>&1 \
   | tee "$raw" \
