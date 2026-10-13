@@ -1,4 +1,14 @@
-FROM oai-gnb:latest
+# Base image comes from the inter-CU-UP relocation tree: ci-scripts/cuup-reloc-sync.sh
+# in OAI_EWOC builds oai-gnb / oai-nr-cuup / oai-nr-ue tagged :reloc from branch
+# cuup-reloc, with OAI's E2 agent compiled in (E2=ON).
+#
+# Do NOT point this back at a :latest tag.  :latest is built from develop and has
+# neither the change of gNB-CU-UP state machine nor the telnet cuup_reloc command,
+# and nothing in the deploy would tell you -- the containers come up healthy and
+# the handover simply does not exist.  To check what an image carries:
+#   docker image inspect -f '{{index .Config.Labels "reloc.commit"}}' oai-gnb:reloc
+#was: FROM oai-gnb:latest
+FROM oai-gnb:reloc
 
 #ENV USE_ADDITIONAL_OPTIONS "--sa -E --rfsim"
 

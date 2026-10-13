@@ -1,5 +1,10 @@
 #FROM oaisoftwarealliance/oai-smf:v2.0.1
-FROM oaisoftwarealliance/oai-smf:v2.2.1
+# Base image comes from the rpousa fork, not the upstream release.  The relocation
+# needs NGAP procedure 27 (PDU Session Resource Modify Indication / Confirm), which
+# v2.2.1 does not implement, plus the common-src fix at 1f604507 that makes the PDU
+# Session Resource Modify Confirm Transfer encode instead of returning -1.
+#was: FROM oaisoftwarealliance/oai-smf:v2.2.1
+FROM oai-smf:modind
 
 HEALTHCHECK --interval=10s --timeout=5s --retries=5 CMD pgrep oai_smf || exit 1
 
