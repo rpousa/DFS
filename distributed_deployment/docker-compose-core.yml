@@ -472,7 +472,7 @@ services:
         --log_config.e1ap_log_level debug
         --e2_agent.near_ric_ip_addr 192.168.71.150
         --e2_agent.sm_dir /usr/local/lib/flexric/
-        --telnetsrv --telnetsrv.shrmod ci
+        --telnetsrv --telnetsrv.shrmod ci,rrc
         --gNBs.[0].gNB_ID 0xe00
         --gNBs.[0].gNB_name gNB-OAI
         --gNBs.[0].nr_cellid 11111111

@@ -163,9 +163,9 @@ services:
         --log_config.sctp_log_level debug
         --e2_agent.near_ric_ip_addr 192.168.0.200
         --e2_agent.sm_dir /usr/local/lib/flexric/
-        --telnetsrv --telnetsrv.shrmod ci
-        --gNBs.[0].gNB_ID 0xe04
-        --gNBs.[0].gNB_CU_UP_ID 0xe04
+        --telnetsrv --telnetsrv.shrmod ci,rrc
+        --gNBs.[0].gNB_ID 0xe00
+        --gNBs.[0].gNB_CU_UP_ID 0xe02
         --gNBs.[0].E1_INTERFACE.[0].type up
         --gNBs.[0].E1_INTERFACE.[0].ipv4_cucp 192.168.0.200
         --gNBs.[0].E1_INTERFACE.[0].ipv4_cuup 192.168.81.140
@@ -229,9 +229,9 @@ services:
       USE_ADDITIONAL_OPTIONS: >-
         --e2_agent.near_ric_ip_addr 192.168.0.200
         --e2_agent.sm_dir /usr/local/lib/flexric/
-        --telnetsrv --telnetsrv.shrmod ci
+        --telnetsrv --telnetsrv.shrmod ci,rrc
         --Active_gNBs gNB-OAI
-        --gNBs.[0].gNB_ID 0xe03
+        --gNBs.[0].gNB_ID 0xe00
         --gNBs.[0].gNB_DU_ID 0xe03
         --gNBs.[0].gNB_name gNB-OAI
         --gNBs.[0].nr_cellid 22222222
