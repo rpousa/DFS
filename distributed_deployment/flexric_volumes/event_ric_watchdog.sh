@@ -14,6 +14,18 @@ DB_PATH="/usr/local/xappdb/xapp_db"
 INDEX_DONE="/var/run/kpm_index.done"
 CHECK_INTERVAL=2
 
+# Minimum number of E2 nodes before the xApp is launched.  4 = CU-CP + 2 CU-UP
+# + 1 DU for this deployment; override to run with a reduced RAN.
+MIN_E2_NODES=${MIN_E2_NODES:-4}
+
+# Floor on how often the xApp may be relaunched.  Without it, an xApp that
+# exits immediately (xapp_slice_check.py does exactly that when fewer nodes
+# than it expects are connected) gets relaunched every CHECK_INTERVAL seconds,
+# and every relaunch tears down and re-establishes all subscriptions.  During a
+# relocation or guard-timer test that destroys the very metric series being
+# measured, so hold off instead and say so in the log.
+XAPP_MIN_RESTART_INTERVAL=${XAPP_MIN_RESTART_INTERVAL:-60}
+
 mkdir -p "$RIC_LOG_DIR"
 
 if [ -f "$INDEX_FILE" ]; then
@@ -21,6 +33,18 @@ if [ -f "$INDEX_FILE" ]; then
 else
     RESTART_INDEX=0
 fi
+
+# wait_for_ran needs a log to read.  RIC_LOG is normally assigned by the restart
+# branch of the main loop, which is reached on a cold container start because
+# nothing else launches nearRT-RIC.  If this watchdog is restarted while the RIC
+# survives, that branch never runs and RIC_LOG would stay empty -- so adopt the
+# newest existing instance log up front.
+RIC_LOG="${RIC_LOG_DIR}/flexric_instance_${RESTART_INDEX}.log"
+_newest_ric_log=$(ls -1t "${RIC_LOG_DIR}"/flexric_instance_*.log 2>/dev/null | head -1)
+[ -n "$_newest_ric_log" ] && RIC_LOG="$_newest_ric_log"
+
+# Epoch of the last xApp launch, for XAPP_MIN_RESTART_INTERVAL.
+last_xapp_start=0
 
 echo "$(date '+%Y-%m-%d %H:%M:%S') - Starting nearRT-RIC watchdog (current index: $RESTART_INDEX)..." >> "$WATCHDOG_LOG"
 
@@ -48,26 +72,45 @@ wait_for_ran() {
     local start=$(date +%s)
     local STALL=9000
     local POLL=30
-    total_n_nodes=4  
+    local min_n_nodes=$MIN_E2_NODES
 
+    # The caller passes the log explicitly; use it.  The body used to read the
+    # global RIC_LOG regardless, which happened to work only because the main
+    # loop had assigned it before calling.
+    if [ ! -r "$log" ]; then
+        echo "$(date '+%F %T') - wait_for_ran: no readable RIC log at '${log}'" >> "$WATCHDOG_LOG"
+        return 1
+    fi
+
+    # NOTE: these counts are cumulative over the whole log, so a node that
+    # disconnects and re-registers is counted more than once.  De-duplicating
+    # needs the exact "E2 SETUP" line format, which differs between the CU-UP
+    # pattern (carries "ID <n>") and the CU-CP/DU ones (do not), so it is left
+    # alone rather than guessed at.  The >= test and the restart interval above
+    # mean an inflated count no longer causes harm: it can only make the xApp
+    # start sooner, never trap the watchdog in a relaunch loop.
     while true; do
         # Honor pause
         [ -f "$PAUSE_FILE" ] && { sleep "$POLL"; continue; }
-        
-        cuup_n=$(grep "E2 SETUP" "$RIC_LOG" | grep -oP 'ngran_gNB_CUUP ID \K[0-9]+' | wc -l )
+
+        local cuup_n cucp_n du_n connected
+        cuup_n=$(grep "E2 SETUP" "$log" | grep -oP 'ngran_gNB_CUUP ID \K[0-9]+' | wc -l )
         echo "Number of CUUPs connected: $cuup_n" >> "$WATCHDOG_LOG"
 
-        cucp_n=$(grep "E2 SETUP" "$RIC_LOG" | grep -oP 'ngran_gNB_CUCP' | wc -l)
+        cucp_n=$(grep "E2 SETUP" "$log" | grep -oP 'ngran_gNB_CUCP' | wc -l)
         echo "Number of CUCPs connected: $cucp_n" >> "$WATCHDOG_LOG"
-        
-        du_n=$(grep "E2 SETUP" "$RIC_LOG" | grep -oP 'ngran_gNB_DU' | wc -l )
+
+        du_n=$(grep "E2 SETUP" "$log" | grep -oP 'ngran_gNB_DU' | wc -l )
         echo "Number of DUs connected: $du_n" >> "$WATCHDOG_LOG"
 
         connected=$((cuup_n + cucp_n + du_n))
 
-        echo "Connected: $connected, Total Nodes expected : $total_n_nodes" >> "$WATCHDOG_LOG"
+        echo "Connected: $connected, Minimum nodes expected : $min_n_nodes" >> "$WATCHDOG_LOG"
 
-        if (( connected == total_n_nodes )); then
+        # >= rather than ==: an exact match never succeeds once a node has
+        # re-registered and the cumulative count has gone past the target, which
+        # would leave the xApp permanently unlaunched.
+        if (( connected >= min_n_nodes )); then
             echo "$(date '+%F %T') - RAN ready ($connected nodes)" >> "$WATCHDOG_LOG"
             return 0
         fi
@@ -105,6 +148,7 @@ start_xapp() {
     nohup stdbuf -oL -eL python3 -u "$XAPP_SCRIPT" > "$XAPP_LOG" 2>&1 &    
     local xapp_pid=$!
     echo "$xapp_pid" > "$XAPP_PID_FILE"
+    last_xapp_start=$(date +%s)
     create_kpm_index
     echo "$(date '+%Y-%m-%d %H:%M:%S') - [Instance #${RESTART_INDEX}] xApp started (PID: $xapp_pid, Log: $XAPP_LOG)" >> "$WATCHDOG_LOG"
 }
@@ -143,8 +187,13 @@ while true; do
         if [ -f "$XAPP_PID_FILE" ]; then
             xapp_pid=$(cat "$XAPP_PID_FILE")
             if ! kill -0 "$xapp_pid" 2>/dev/null; then
-                echo "$(date '+%Y-%m-%d %H:%M:%S') - xApp died, restarting..." >> "$WATCHDOG_LOG"
-                start_xapp
+                since=$(( $(date +%s) - last_xapp_start ))
+                if (( since < XAPP_MIN_RESTART_INTERVAL )); then
+                    echo "$(date '+%F %T') - xApp died ${since}s after launch; holding off until ${XAPP_MIN_RESTART_INTERVAL}s to avoid a relaunch loop" >> "$WATCHDOG_LOG"
+                else
+                    echo "$(date '+%Y-%m-%d %H:%M:%S') - xApp died, restarting..." >> "$WATCHDOG_LOG"
+                    start_xapp
+                fi
             fi
         else
             # No PID file means xApp was never started
