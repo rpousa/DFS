@@ -1,5 +1,18 @@
 FROM flexric_test:comnetsemu AS flexric
 
+# Never let apt/debconf stop to ask a question (tzdata, keyboard-configuration,
+# changed conffiles): a build has no terminal, so a prompt waits forever.  The
+# first RUN below upgraded without this, and only the second block set it.
+# The Acquire options make an unreachable mirror or PPA fail within minutes
+# instead of hanging the build.  ForceIPv4: on core, connections to
+# archive.ubuntu.com stalled ("Ign: ... jammy InRelease" after a 30 s wait, then
+# a hang on the package lists) while security.ubuntu.com downloaded at once --
+# the pattern of an AAAA address tried first with no working IPv6 route.  The
+# APT_FORCE_IPV4 build-arg adapt_docker_images.sh passes is not read by this
+# Dockerfile, so it never had an effect.
+ENV DEBIAN_FRONTEND=noninteractive
+RUN printf 'Acquire::ForceIPv4 "true";\nAcquire::Retries "3";\nAcquire::http::Timeout "30";\nAcquire::https::Timeout "30";\nDpkg::Options { "--force-confdef"; "--force-confold"; };\n' > /etc/apt/apt.conf.d/99build
+
 RUN apt update --fix-missing && apt upgrade -y && \
     apt-get install apt-utils net-tools iputils-ping -y && \
     apt-get install bash bash-completion ethtool -y && \
