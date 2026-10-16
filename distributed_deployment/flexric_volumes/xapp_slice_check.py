@@ -19,10 +19,21 @@ EXPECTED_NODES = 4          # cucp + cuup_co + cuup_e + du_co (5 if du_e1 presen
 
 _kpm_proc = None
 _rc_proc  = None
+_kpm_last_start = 0.0
+KPM_RESTART_BACKOFF = 60.0               # s between launches, so a crash loop stays slow
 def start_kpm_if_ready(conn):
-    """Launch the C KPM xApp once, only after the RAN is fully connected."""
-    global _kpm_proc
-    if _kpm_proc is not None:            # already launched
+    """Launch the C KPM xApp once the RAN is fully connected, and relaunch it
+    if it has exited.  Checking only "_kpm_proc is not None" left a dead xApp
+    as a zombie forever: the RIC kept forwarding its orphaned subscriptions to
+    it ("xApp N disconnected" several times a second) and KPM data stopped."""
+    global _kpm_proc, _kpm_last_start
+    if _kpm_proc is not None:
+        rc = _kpm_proc.poll()            # also reaps the zombie
+        if rc is None:                   # still running
+            return
+        print(f"[xapp] C KPM xApp pid={_kpm_proc.pid} exited rc={rc}", flush=True)
+        _kpm_proc = None
+    if time.time() - _kpm_last_start < KPM_RESTART_BACKOFF:
         return
     if len(conn) < EXPECTED_NODES:
         return
@@ -35,6 +46,8 @@ def start_kpm_if_ready(conn):
         stdout=logf, stderr=logf,
         preexec_fn=os.setsid,            # own process group -> clean signalling
     )
+    logf.close()                         # the child holds its own copy
+    _kpm_last_start = time.time()
     print(f"[xapp] Launched C KPM xApp pid={_kpm_proc.pid} "
           f"(nodes={len(conn)})", flush=True)
 
