@@ -428,6 +428,8 @@ services:
 
         FILES="/var/log/ric_watchdog.log"
         for f in /usr/local/etc/flexric_logs/*.log; do
+          # the KPM monitor prints every indication; it stays in its file, not in docker logs
+          case "$$f" in *kpm_moni_xapp.log) continue ;; esac
           [ -e "$$f" ] && FILES="$$FILES $$f"
         done
 

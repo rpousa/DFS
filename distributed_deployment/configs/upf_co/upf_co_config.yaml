@@ -27,7 +27,10 @@
 
 # Log level for all the NFs
 log_level:
-  general: debug
+  # warning, not debug/info: with the simple-switch datapath (enable_bpf_datapath: off)
+  # the UPF logs "PDR/PDI IP is ..." / "Upstream IP is ..." at INFO for every packet,
+  # which floods the log and costs throughput. Set back to info to see PFCP sessions.
+  general: warning
 
 # If you enable registration, the other NFs will use the NRF discovery mechanism
 register_nf:

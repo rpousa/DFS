@@ -24,7 +24,7 @@
         ]
       },
       "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["last","max","mean"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
-      "targets": [ { "refId": "A", "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" }, "queryType": "time series", "rawQueryText": "SELECT tstamp AS \"time\",\n       CASE ran_ue_id WHEN 1 THEN 'URLLC' WHEN 2 THEN 'eMBB' WHEN 3 THEN 'mIoT' END AS metric,\n       SUM(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, metric\nORDER BY tstamp", "queryText": "SELECT tstamp AS \"time\",\n       CASE WHEN ran_ue_id = 2 THEN 'cuup_e (URLLC)' ELSE 'cuup_co (eMBB+mIoT)' END AS metric,\n       SUM(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, metric\nORDER BY tstamp", "timeColumns": ["time","ts"] } ]
+      "targets": [ { "refId": "A", "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" }, "queryType": "time series", "rawQueryText": "SELECT tstamp AS \"time\",\n       CASE cu_du_id WHEN 3585 THEN 'cuup_co (CU-UP 0xe01)'\n                     WHEN 3586 THEN 'cuup_e (CU-UP 0xe02)'\n                     ELSE 'CU-UP ' || cu_du_id END AS metric,\n       SUM(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ngran_type = 'ngran_gNB_CUUP'\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, cu_du_id\nORDER BY tstamp", "queryText": "SELECT tstamp AS \"time\",\n       CASE cu_du_id WHEN 3585 THEN 'cuup_co (CU-UP 0xe01)'\n                     WHEN 3586 THEN 'cuup_e (CU-UP 0xe02)'\n                     ELSE 'CU-UP ' || cu_du_id END AS metric,\n       SUM(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ngran_type = 'ngran_gNB_CUUP'\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, cu_du_id\nORDER BY tstamp", "timeColumns": ["time","ts"] } ]
     },
     {
       "id": 201,
@@ -44,7 +44,7 @@
         ]
       },
       "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["last","max","mean"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
-      "targets": [ { "refId": "A", "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" }, "queryType": "time series", "rawQueryText": "SELECT tstamp AS \"time\",\n       CASE ran_ue_id WHEN 1 THEN 'URLLC' WHEN 2 THEN 'eMBB' WHEN 3 THEN 'mIoT' END AS metric,\n       SUM(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, metric\nORDER BY tstamp", "queryText": "SELECT tstamp AS \"time\",\n       CASE WHEN ran_ue_id = 2 THEN 'cuup_e (URLLC)' ELSE 'cuup_co (eMBB+mIoT)' END AS metric,\n       SUM(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, metric\nORDER BY tstamp", "timeColumns": ["time","ts"] } ]
+      "targets": [ { "refId": "A", "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" }, "queryType": "time series", "rawQueryText": "SELECT tstamp AS \"time\",\n       CASE cu_du_id WHEN 3585 THEN 'cuup_co (CU-UP 0xe01)'\n                     WHEN 3586 THEN 'cuup_e (CU-UP 0xe02)'\n                     ELSE 'CU-UP ' || cu_du_id END AS metric,\n       SUM(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL' AND ngran_type = 'ngran_gNB_CUUP'\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, cu_du_id\nORDER BY tstamp", "queryText": "SELECT tstamp AS \"time\",\n       CASE cu_du_id WHEN 3585 THEN 'cuup_co (CU-UP 0xe01)'\n                     WHEN 3586 THEN 'cuup_e (CU-UP 0xe02)'\n                     ELSE 'CU-UP ' || cu_du_id END AS metric,\n       SUM(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL' AND ngran_type = 'ngran_gNB_CUUP'\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, cu_du_id\nORDER BY tstamp", "timeColumns": ["time","ts"] } ]
     },
     { "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 }, "id": 12, "panels": [], "title": "E2SM-KPM", "type": "row" },
     {
@@ -64,7 +64,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 18 },
       "id": 3,
       "options": { "legend": { "calcs": [], "displayMode": "list", "placement": "right", "showLegend": true }, "tooltip": { "mode": "single", "sort": "none" } },
-      "targets": [ { "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" }, "queryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp", "queryType": "time series", "rawQueryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeDL' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp", "refId": "A", "timeColumns": ["time","ts"] } ],
+      "targets": [ { "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" }, "queryText": "SELECT k.tstamp AS \"time\",\n       'UE ' || k.ran_ue_id || COALESCE(' · ' || m.slice, '') AS metric,\n       AVG(k.measure_value) AS value\nFROM KPM_MeasRecord k\nLEFT JOIN UE_SLICE_MAP m ON m.ran_ue_id = k.ran_ue_id\nWHERE k.meas_name = 'DRB.PdcpSduVolumeDL' AND k.ran_ue_id IS NOT NULL\n  AND k.tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY k.tstamp, k.ran_ue_id\nORDER BY k.tstamp", "queryType": "time series", "rawQueryText": "SELECT k.tstamp AS \"time\",\n       'UE ' || k.ran_ue_id || COALESCE(' · ' || m.slice, '') AS metric,\n       AVG(k.measure_value) AS value\nFROM KPM_MeasRecord k\nLEFT JOIN UE_SLICE_MAP m ON m.ran_ue_id = k.ran_ue_id\nWHERE k.meas_name = 'DRB.PdcpSduVolumeDL' AND k.ran_ue_id IS NOT NULL\n  AND k.tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY k.tstamp, k.ran_ue_id\nORDER BY k.tstamp", "refId": "A", "timeColumns": ["time","ts"] } ],
       "title": "DRB.PdcpSduVolumeDL",
       "type": "timeseries"
     },
@@ -85,7 +85,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 18 },
       "id": 1,
       "options": { "legend": { "calcs": [], "displayMode": "list", "placement": "right", "showLegend": true }, "tooltip": { "mode": "single", "sort": "none" } },
-      "targets": [ { "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" }, "queryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp", "queryType": "time series", "rawQueryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.PdcpSduVolumeUL' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp", "refId": "A", "timeColumns": ["time","ts"] } ],
+      "targets": [ { "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" }, "queryText": "SELECT k.tstamp AS \"time\",\n       'UE ' || k.ran_ue_id || COALESCE(' · ' || m.slice, '') AS metric,\n       AVG(k.measure_value) AS value\nFROM KPM_MeasRecord k\nLEFT JOIN UE_SLICE_MAP m ON m.ran_ue_id = k.ran_ue_id\nWHERE k.meas_name = 'DRB.PdcpSduVolumeUL' AND k.ran_ue_id IS NOT NULL\n  AND k.tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY k.tstamp, k.ran_ue_id\nORDER BY k.tstamp", "queryType": "time series", "rawQueryText": "SELECT k.tstamp AS \"time\",\n       'UE ' || k.ran_ue_id || COALESCE(' · ' || m.slice, '') AS metric,\n       AVG(k.measure_value) AS value\nFROM KPM_MeasRecord k\nLEFT JOIN UE_SLICE_MAP m ON m.ran_ue_id = k.ran_ue_id\nWHERE k.meas_name = 'DRB.PdcpSduVolumeUL' AND k.ran_ue_id IS NOT NULL\n  AND k.tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY k.tstamp, k.ran_ue_id\nORDER BY k.tstamp", "refId": "A", "timeColumns": ["time","ts"] } ],
       "title": "DRB.PdcpSduVolumeUL",
       "type": "timeseries"
     },
@@ -106,7 +106,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 26 },
       "id": 4,
       "options": { "legend": { "calcs": [], "displayMode": "list", "placement": "right", "showLegend": true }, "tooltip": { "mode": "single", "sort": "none" } },
-      "targets": [ { "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" }, "queryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpDl' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp", "queryType": "time series", "rawQueryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpDl' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp", "refId": "A", "timeColumns": ["time","ts"] } ],
+      "targets": [ { "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" }, "queryText": "SELECT k.tstamp AS \"time\",\n       'UE ' || k.ran_ue_id || COALESCE(' · ' || m.slice, '') AS metric,\n       AVG(k.measure_value)/1000 AS value\nFROM KPM_MeasRecord k\nLEFT JOIN UE_SLICE_MAP m ON m.ran_ue_id = k.ran_ue_id\nWHERE k.meas_name = 'DRB.UEThpDl' AND k.ran_ue_id IS NOT NULL\n  AND k.tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY k.tstamp, k.ran_ue_id\nORDER BY k.tstamp", "queryType": "time series", "rawQueryText": "SELECT k.tstamp AS \"time\",\n       'UE ' || k.ran_ue_id || COALESCE(' · ' || m.slice, '') AS metric,\n       AVG(k.measure_value)/1000 AS value\nFROM KPM_MeasRecord k\nLEFT JOIN UE_SLICE_MAP m ON m.ran_ue_id = k.ran_ue_id\nWHERE k.meas_name = 'DRB.UEThpDl' AND k.ran_ue_id IS NOT NULL\n  AND k.tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY k.tstamp, k.ran_ue_id\nORDER BY k.tstamp", "refId": "A", "timeColumns": ["time","ts"] } ],
       "title": "DRB.UEThpDl",
       "type": "timeseries"
     },
@@ -127,7 +127,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 26 },
       "id": 5,
       "options": { "legend": { "calcs": [], "displayMode": "list", "placement": "right", "showLegend": true }, "tooltip": { "mode": "single", "sort": "none" } },
-      "targets": [ { "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" }, "queryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpUl' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp", "queryType": "time series", "rawQueryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value)/1000000 AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.UEThpUl' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp", "refId": "A", "timeColumns": ["time","ts"] } ],
+      "targets": [ { "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" }, "queryText": "SELECT k.tstamp AS \"time\",\n       'UE ' || k.ran_ue_id || COALESCE(' · ' || m.slice, '') AS metric,\n       AVG(k.measure_value)/1000 AS value\nFROM KPM_MeasRecord k\nLEFT JOIN UE_SLICE_MAP m ON m.ran_ue_id = k.ran_ue_id\nWHERE k.meas_name = 'DRB.UEThpUl' AND k.ran_ue_id IS NOT NULL\n  AND k.tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY k.tstamp, k.ran_ue_id\nORDER BY k.tstamp", "queryType": "time series", "rawQueryText": "SELECT k.tstamp AS \"time\",\n       'UE ' || k.ran_ue_id || COALESCE(' · ' || m.slice, '') AS metric,\n       AVG(k.measure_value)/1000 AS value\nFROM KPM_MeasRecord k\nLEFT JOIN UE_SLICE_MAP m ON m.ran_ue_id = k.ran_ue_id\nWHERE k.meas_name = 'DRB.UEThpUl' AND k.ran_ue_id IS NOT NULL\n  AND k.tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY k.tstamp, k.ran_ue_id\nORDER BY k.tstamp", "refId": "A", "timeColumns": ["time","ts"] } ],
       "title": "DRB.UEThpUl",
       "type": "timeseries"
     },
@@ -148,7 +148,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 34 },
       "id": 7,
       "options": { "legend": { "calcs": [], "displayMode": "list", "placement": "right", "showLegend": true }, "tooltip": { "mode": "single", "sort": "none" } },
-      "targets": [ { "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" }, "queryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotDl' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp", "queryType": "time series", "rawQueryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotDl' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp", "refId": "A", "timeColumns": ["time","ts"] } ],
+      "targets": [ { "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" }, "queryText": "SELECT k.tstamp AS \"time\",\n       'UE ' || k.ran_ue_id || COALESCE(' · ' || m.slice, '') AS metric,\n       AVG(k.measure_value) AS value\nFROM KPM_MeasRecord k\nLEFT JOIN UE_SLICE_MAP m ON m.ran_ue_id = k.ran_ue_id\nWHERE k.meas_name = 'RRU.PrbTotDl' AND k.ran_ue_id IS NOT NULL\n  AND k.tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY k.tstamp, k.ran_ue_id\nORDER BY k.tstamp", "queryType": "time series", "rawQueryText": "SELECT k.tstamp AS \"time\",\n       'UE ' || k.ran_ue_id || COALESCE(' · ' || m.slice, '') AS metric,\n       AVG(k.measure_value) AS value\nFROM KPM_MeasRecord k\nLEFT JOIN UE_SLICE_MAP m ON m.ran_ue_id = k.ran_ue_id\nWHERE k.meas_name = 'RRU.PrbTotDl' AND k.ran_ue_id IS NOT NULL\n  AND k.tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY k.tstamp, k.ran_ue_id\nORDER BY k.tstamp", "refId": "A", "timeColumns": ["time","ts"] } ],
       "title": "RRU.PrbTotDl",
       "type": "timeseries"
     },
@@ -169,7 +169,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 34 },
       "id": 6,
       "options": { "legend": { "calcs": [], "displayMode": "list", "placement": "right", "showLegend": true }, "tooltip": { "mode": "single", "sort": "none" } },
-      "targets": [ { "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" }, "queryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotUl' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp", "queryType": "time series", "rawQueryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'RRU.PrbTotUl' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp", "refId": "A", "timeColumns": ["time","ts"] } ],
+      "targets": [ { "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" }, "queryText": "SELECT k.tstamp AS \"time\",\n       'UE ' || k.ran_ue_id || COALESCE(' · ' || m.slice, '') AS metric,\n       AVG(k.measure_value) AS value\nFROM KPM_MeasRecord k\nLEFT JOIN UE_SLICE_MAP m ON m.ran_ue_id = k.ran_ue_id\nWHERE k.meas_name = 'RRU.PrbTotUl' AND k.ran_ue_id IS NOT NULL\n  AND k.tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY k.tstamp, k.ran_ue_id\nORDER BY k.tstamp", "queryType": "time series", "rawQueryText": "SELECT k.tstamp AS \"time\",\n       'UE ' || k.ran_ue_id || COALESCE(' · ' || m.slice, '') AS metric,\n       AVG(k.measure_value) AS value\nFROM KPM_MeasRecord k\nLEFT JOIN UE_SLICE_MAP m ON m.ran_ue_id = k.ran_ue_id\nWHERE k.meas_name = 'RRU.PrbTotUl' AND k.ran_ue_id IS NOT NULL\n  AND k.tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY k.tstamp, k.ran_ue_id\nORDER BY k.tstamp", "refId": "A", "timeColumns": ["time","ts"] } ],
       "title": "RRU.PrbTotUl",
       "type": "timeseries"
     },
@@ -190,10 +190,268 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 42 },
       "id": 2,
       "options": { "legend": { "calcs": [], "displayMode": "list", "placement": "right", "showLegend": true }, "tooltip": { "mode": "single", "sort": "none" } },
-      "targets": [ { "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" }, "queryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.RlcSduDelayDl' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp", "queryType": "time series", "rawQueryText": "SELECT tstamp AS \"time\",\n       'UE ' || ran_ue_id AS metric,\n       AVG(measure_value) AS value\nFROM KPM_MeasRecord\nWHERE meas_name = 'DRB.RlcSduDelayDl' AND ran_ue_id IS NOT NULL\n  AND tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY tstamp, ran_ue_id\nORDER BY tstamp", "refId": "A", "timeColumns": ["time","ts"] } ],
+      "targets": [ { "datasource": { "type": "frser-sqlite-datasource", "uid": "edthsvykzynswc" }, "queryText": "SELECT k.tstamp AS \"time\",\n       'UE ' || k.ran_ue_id || COALESCE(' · ' || m.slice, '') AS metric,\n       AVG(k.measure_value) AS value\nFROM KPM_MeasRecord k\nLEFT JOIN UE_SLICE_MAP m ON m.ran_ue_id = k.ran_ue_id\nWHERE k.meas_name = 'DRB.RlcSduDelayDl' AND k.ran_ue_id IS NOT NULL\n  AND k.tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY k.tstamp, k.ran_ue_id\nORDER BY k.tstamp", "queryType": "time series", "rawQueryText": "SELECT k.tstamp AS \"time\",\n       'UE ' || k.ran_ue_id || COALESCE(' · ' || m.slice, '') AS metric,\n       AVG(k.measure_value) AS value\nFROM KPM_MeasRecord k\nLEFT JOIN UE_SLICE_MAP m ON m.ran_ue_id = k.ran_ue_id\nWHERE k.meas_name = 'DRB.RlcSduDelayDl' AND k.ran_ue_id IS NOT NULL\n  AND k.tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY k.tstamp, k.ran_ue_id\nORDER BY k.tstamp", "refId": "A", "timeColumns": ["time","ts"] } ],
       "title": "DRB.RlcSduDelayDl",
       "type": "timeseries"
+    },
+{
+  "datasource": {
+    "type": "frser-sqlite-datasource",
+    "uid": "edthsvykzynswc"
+  },
+  "fieldConfig": {
+    "defaults": {
+      "color": {
+        "mode": "palette-classic"
+      },
+      "custom": {
+        "axisPlacement": "auto",
+        "drawStyle": "line",
+        "fillOpacity": 20,
+        "gradientMode": "none",
+        "hideFrom": {
+          "legend": false,
+          "tooltip": false,
+          "viz": false
+        },
+        "lineInterpolation": "smooth",
+        "lineWidth": 3,
+        "pointSize": 5,
+        "scaleDistribution": {
+          "type": "linear"
+        },
+        "showPoints": "auto",
+        "spanNulls": false,
+        "stacking": {
+          "group": "A",
+          "mode": "none"
+        },
+        "thresholdsStyle": {
+          "mode": "off"
+        }
+      },
+      "mappings": [],
+      "thresholds": {
+        "mode": "absolute"
+      },
+      "unit": "decbytes"
+    },
+    "overrides": [
+      {
+        "matcher": {
+          "id": "byName",
+          "options": "UE 1"
+        },
+        "properties": [
+          {
+            "id": "color",
+            "value": {
+              "fixedColor": "blue",
+              "mode": "fixed"
+            }
+          }
+        ]
+      },
+      {
+        "matcher": {
+          "id": "byName",
+          "options": "UE 2"
+        },
+        "properties": [
+          {
+            "id": "color",
+            "value": {
+              "fixedColor": "red",
+              "mode": "fixed"
+            }
+          }
+        ]
+      },
+      {
+        "matcher": {
+          "id": "byName",
+          "options": "UE 3"
+        },
+        "properties": [
+          {
+            "id": "color",
+            "value": {
+              "fixedColor": "green",
+              "mode": "fixed"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 12,
+    "y": 42
+  },
+  "id": 202,
+  "options": {
+    "legend": {
+      "calcs": [],
+      "displayMode": "list",
+      "placement": "right",
+      "showLegend": true
+    },
+    "tooltip": {
+      "mode": "single",
+      "sort": "none"
     }
+  },
+  "targets": [
+    {
+      "datasource": {
+        "type": "frser-sqlite-datasource",
+        "uid": "edthsvykzynswc"
+      },
+      "queryText": "SELECT k.tstamp AS \"time\",\n       'UE ' || k.ran_ue_id || COALESCE(' · ' || m.slice, '') AS metric,\n       AVG(k.measure_value) AS value\nFROM KPM_MeasRecord k\nLEFT JOIN UE_SLICE_MAP m ON m.ran_ue_id = k.ran_ue_id\nWHERE k.meas_name = 'DRB.RlcBufOccDl' AND k.ran_ue_id IS NOT NULL\n  AND k.tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY k.tstamp, k.ran_ue_id\nORDER BY k.tstamp",
+      "queryType": "time series",
+      "rawQueryText": "SELECT k.tstamp AS \"time\",\n       'UE ' || k.ran_ue_id || COALESCE(' · ' || m.slice, '') AS metric,\n       AVG(k.measure_value) AS value\nFROM KPM_MeasRecord k\nLEFT JOIN UE_SLICE_MAP m ON m.ran_ue_id = k.ran_ue_id\nWHERE k.meas_name = 'DRB.RlcBufOccDl' AND k.ran_ue_id IS NOT NULL\n  AND k.tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY k.tstamp, k.ran_ue_id\nORDER BY k.tstamp",
+      "refId": "A",
+      "timeColumns": [
+        "time",
+        "ts"
+      ]
+    }
+  ],
+  "title": "DRB.RlcBufOccDl",
+  "type": "timeseries",
+  "description": "Bytes queued in the UE's DL RLC buffer at report time (gNB-DU). Vendor-specific measurement of OAI_EWOC."
+},
+{
+  "datasource": {
+    "type": "frser-sqlite-datasource",
+    "uid": "edthsvykzynswc"
+  },
+  "fieldConfig": {
+    "defaults": {
+      "color": {
+        "mode": "palette-classic"
+      },
+      "custom": {
+        "axisPlacement": "auto",
+        "drawStyle": "line",
+        "fillOpacity": 20,
+        "gradientMode": "none",
+        "hideFrom": {
+          "legend": false,
+          "tooltip": false,
+          "viz": false
+        },
+        "lineInterpolation": "smooth",
+        "lineWidth": 3,
+        "pointSize": 5,
+        "scaleDistribution": {
+          "type": "linear"
+        },
+        "showPoints": "auto",
+        "spanNulls": false,
+        "stacking": {
+          "group": "A",
+          "mode": "none"
+        },
+        "thresholdsStyle": {
+          "mode": "off"
+        }
+      },
+      "mappings": [],
+      "thresholds": {
+        "mode": "absolute"
+      },
+      "unit": "ms"
+    },
+    "overrides": [
+      {
+        "matcher": {
+          "id": "byName",
+          "options": "UE 1"
+        },
+        "properties": [
+          {
+            "id": "color",
+            "value": {
+              "fixedColor": "blue",
+              "mode": "fixed"
+            }
+          }
+        ]
+      },
+      {
+        "matcher": {
+          "id": "byName",
+          "options": "UE 2"
+        },
+        "properties": [
+          {
+            "id": "color",
+            "value": {
+              "fixedColor": "red",
+              "mode": "fixed"
+            }
+          }
+        ]
+      },
+      {
+        "matcher": {
+          "id": "byName",
+          "options": "UE 3"
+        },
+        "properties": [
+          {
+            "id": "color",
+            "value": {
+              "fixedColor": "green",
+              "mode": "fixed"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 0,
+    "y": 50
+  },
+  "id": 203,
+  "options": {
+    "legend": {
+      "calcs": [],
+      "displayMode": "list",
+      "placement": "right",
+      "showLegend": true
+    },
+    "tooltip": {
+      "mode": "single",
+      "sort": "none"
+    }
+  },
+  "targets": [
+    {
+      "datasource": {
+        "type": "frser-sqlite-datasource",
+        "uid": "edthsvykzynswc"
+      },
+      "queryText": "SELECT k.tstamp AS \"time\",\n       'UE ' || k.ran_ue_id || COALESCE(' · ' || m.slice, '') AS metric,\n       AVG(k.measure_value)/10 AS value\nFROM KPM_MeasRecord k\nLEFT JOIN UE_SLICE_MAP m ON m.ran_ue_id = k.ran_ue_id\nWHERE k.meas_name = 'DRB.PdcpSduDelayDl' AND k.ran_ue_id IS NOT NULL\n  AND k.tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY k.tstamp, k.ran_ue_id\nORDER BY k.tstamp",
+      "queryType": "time series",
+      "rawQueryText": "SELECT k.tstamp AS \"time\",\n       'UE ' || k.ran_ue_id || COALESCE(' · ' || m.slice, '') AS metric,\n       AVG(k.measure_value)/10 AS value\nFROM KPM_MeasRecord k\nLEFT JOIN UE_SLICE_MAP m ON m.ran_ue_id = k.ran_ue_id\nWHERE k.meas_name = 'DRB.PdcpSduDelayDl' AND k.ran_ue_id IS NOT NULL\n  AND k.tstamp BETWEEN $__from/1000 AND $__to/1000\nGROUP BY k.tstamp, k.ran_ue_id\nORDER BY k.tstamp",
+      "refId": "A",
+      "timeColumns": [
+        "time",
+        "ts"
+      ]
+    }
+  ],
+  "title": "DRB.PdcpSduDelayDl",
+  "type": "timeseries",
+  "description": "Mean DL delay inside the gNB-CU-UP, NG-U arrival to F1-U departure (TS 28.552 5.1.3.3.1), 1 s window."
+}
   ],
   "preload": false,
   "refresh": "30s",

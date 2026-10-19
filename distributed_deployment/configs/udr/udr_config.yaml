@@ -31,7 +31,7 @@
 
 # Log level for all the NFs
 log_level:
-  general: debug
+  general: info   # was debug: debug adds the NRF heartbeat/HTTP chatter, info keeps registrations, PDU sessions, errors
 
 # If you enable registration, the other NFs will use the NRF discovery mechanism
 register_nf:
