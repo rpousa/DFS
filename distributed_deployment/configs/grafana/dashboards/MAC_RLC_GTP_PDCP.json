@@ -44,7 +44,7 @@
       "gridPos": {"h":8,"w":12,"x":0,"y":16},
       "datasource": {"type":"prometheus","uid":"prometheus"},
       "fieldConfig": {"defaults": {"unit":"Bps","color":{"mode":"palette-classic"}}},
-      "targets": [ {"expr":"rate(ran_pdcp_bearer{field=\"txpdu_bytes\"}[1m])*10",
+      "targets": [ {"expr":"rate(ran_pdcp_bearer{field=\"txpdu_bytes\"}[1m])",
                     "legendFormat":" rnti {{rnti}}"} ] },
 
     { "id": 6, "title": "PDCP PDU throughput UL (bytes/s)", "type": "timeseries",
@@ -84,18 +84,18 @@
       "targets": [ {"expr":"ran_rlc_bearer{field=\"rxbuf_occ_bytes\",e2_node=~\"$node\"}",
                     "legendFormat":"{{e2_node}} rnti {{rnti}} rb {{rbid}}"} ] },
 
-    { "id": 11, "title": "RLC TX pdu bytes", "type": "timeseries",
+    { "id": 11, "title": "RLC TX PDU throughput (bytes/s)", "type": "timeseries",
       "gridPos": {"h":8,"w":12,"x":0,"y":40},
       "datasource": {"type":"prometheus","uid":"prometheus"},
       "fieldConfig": {"defaults": {"unit":"Bps","color":{"mode":"palette-classic"}}},
-      "targets": [ {"expr":"ran_rlc_bearer{field=\"txpdu_bytes\",e2_node=~\"$node\"}",
+      "targets": [ {"expr":"rate(ran_rlc_bearer{field=\"txpdu_bytes\",e2_node=~\"$node\"}[1m])",
                     "legendFormat":"{{e2_node}} rnti {{rnti}} rb {{rbid}}"} ] },
 
-    { "id": 12, "title": "RLC RX pdu bytes", "type": "timeseries",
+    { "id": 12, "title": "RLC RX PDU throughput (bytes/s)", "type": "timeseries",
       "gridPos": {"h":8,"w":12,"x":12,"y":40},
       "datasource": {"type":"prometheus","uid":"prometheus"},
       "fieldConfig": {"defaults": {"unit":"Bps","color":{"mode":"palette-classic"}}},
-      "targets": [ {"expr":"ran_rlc_bearer{field=\"rxpdu_bytes\",e2_node=~\"$node\"}",
+      "targets": [ {"expr":"rate(ran_rlc_bearer{field=\"rxpdu_bytes\",e2_node=~\"$node\"}[1m])",
                     "legendFormat":"{{e2_node}} rnti {{rnti}} rb {{rbid}}"} ] },
 
     { "id": 13, "title": "RLC TX sdu wait time", "type": "timeseries",
