@@ -207,7 +207,8 @@ vrtsim:
   # No channel - plain passthrough, no impairments:
   #cirdb: 0
   #chanmod: 1
-  num_ues: 3   # ue_0..ue_2 in docker-compose-edge.yml
+  # ISOLATION TEST: 1 slot, start only du_e1 + ue_0. Back to 3 for ue_0..ue_2.
+  num_ues: 1   # 3 = ue_0..ue_2 in docker-compose-edge.yml
   #
   # Built-in channel model defined in the channelmod: section above:
   # chanmod: 1
