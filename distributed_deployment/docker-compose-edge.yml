@@ -312,13 +312,18 @@ services:
     ipc: host
     volumes:
       - ./configs/ue_1/nrue.rfsim_3.yaml:/opt/oai-nr-ue/etc/nr-ue.yaml
+      # UE capabilities sent to the gNB over RRC: 256QAM DL/UL, up to 4 DL and
+      # 2 UL layers. Without it the UE reports none, and the DU uses neither.
+      - ./configs/ue_1/uecap_ports2.xml:/opt/oai-nr-ue/etc/uecap.xml
       - ./logs/ue_1:/opt/oai-nr-ue/logs
     #  - tmp_data:/tmp/
     environment:
       USE_ADDITIONAL_OPTIONS: >-
         -E --num-ues 3
-        -r 106 --numerology 1 -C 3319680000 
-        --ssb 516 --rfsim 
+        -r 273 --numerology 1 -C 3450720000
+        --ssb 1518 --rfsim
+        --ue-nb-ant-tx 2 --ue-nb-ant-rx 2
+        --uecap_file /opt/oai-nr-ue/etc/uecap.xml
         --log_config.global_log_options level,nocolor,time
 #        --log_config.global_log_level debug
 #        -r 106 --numerology 1 --band 78 -C 3319680000 

@@ -24,33 +24,40 @@ gNBs:
     nr_cellid: 12345678
     ##### Physical parameters:
     min_rxtxtime: 6
-    pusch_AntennaPorts: 1
-    pdsch_AntennaPorts_XP: 1
+    # 2x2 MIMO (doc/RUNMODEM.md "5G gNB MIMO configuration", as in
+    # ci-scripts/conf_files/gnb.sa.band78.273prb.rfsim.2x2.conf): DL needs CSI-RS
+    # for the UE's rank/PMI reports and >= 2 PDSCH logical ports; UL 2 layers
+    # need 2 PUSCH ports and SRS. RUs nb_tx/nb_rx must be >= the ports.
+    pusch_AntennaPorts: 2
+    pdsch_AntennaPorts_XP: 2
+    do_CSIRS: 1
+    do_SRS: periodic
 
     servingCellConfigCommon:
       #spCellConfigCommon
       - physCellId: 0
       #  downlinkConfigCommon
       #frequencyInfoDL
-      # this is 3300.60 MHz + 53*12*30e-3 MHz = 3319.68
-        absoluteFrequencySSB: 621312
-        # this is 3300.60 MHz
-        dl_absoluteFrequencyPointA: 620040
+      # 100 MHz carrier (273 PRB @ 30 kHz), values from OAI's
+      # gnb.sa.band78.273prb.rfsim.2x2.conf: SSB at 3450.72 MHz
+        absoluteFrequencySSB: 630048
+        # point A at 3401.58 MHz
+        dl_absoluteFrequencyPointA: 626772
         #scs-SpecificCarrierList
         dl_offstToCarrier: 0
         # subcarrierSpacing
         # 0=kHz15, 1=kHz30, 2=kHz60, 3=kHz120
         dl_subcarrierSpacing: 1
-        dl_carrierBandwidth: 106
+        dl_carrierBandwidth: 273
         #initialDownlinkBWP
         #genericParameters
-        # this is RBstart=0,L=106 (275*(L-1))+RBstart
-        initialDLBWPlocationAndBandwidth: 28875
+        # RBstart=0, L=273: L > 138, so 275*(275-L+1)+(275-1-RBstart) = 1099
+        initialDLBWPlocationAndBandwidth: 1099
         # subcarrierSpacing
         # 0=kHz15, 1=kHz30, 2=kHz60, 3=kHz120
         initialDLBWPsubcarrierSpacing: 1
         #pdcch-ConfigCommon
-        initialDLBWPcontrolResourceSetZero: 11
+        initialDLBWPcontrolResourceSetZero: 12
         initialDLBWPsearchSpaceZero: 0
         #uplinkConfigCommon
         #frequencyInfoUL
@@ -60,11 +67,11 @@ gNBs:
         # subcarrierSpacing
         # 0=kHz15, 1=kHz30, 2=kHz60, 3=kHz120
         ul_subcarrierSpacing: 1
-        ul_carrierBandwidth: 106
+        ul_carrierBandwidth: 273
         pMax: 20
         #initialUplinkBWP
         #genericParameters
-        initialULBWPlocationAndBandwidth: 28875
+        initialULBWPlocationAndBandwidth: 1099
         # subcarrierSpacing
         # 0=kHz15, 1=kHz30, 2=kHz60, 3=kHz120
         initialULBWPsubcarrierSpacing: 1
@@ -160,8 +167,8 @@ L1s:
 
 RUs:
   - local_rf: yes
-    nb_tx: 1
-    nb_rx: 1
+    nb_tx: 2
+    nb_rx: 2
     att_tx: 0
     att_rx: 0
     bands: [78]
