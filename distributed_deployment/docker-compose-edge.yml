@@ -247,18 +247,28 @@ services:
         --gNBs.[0].TIMERS.t300 1000
         --MACRLCs.[0].local_n_address_f1u 192.168.81.151
         --MACRLCs.[0].local_n_portd 2152
-        -E --device.name vrtsim
+        --device.name vrtsim
         --vrtsim.connection_descriptor /vrtsim/vrtsim_connection
         --vrtsim.timescale 0.2
         --L1s.[0].max_ldpc_iterations 4
         --MACRLCs.[0].ulsch_max_frame_inactivity 0
-        --gNBs.[0].min_rxtxtime 8
+        --gNBs.[0].min_rxtxtime 6
         --L1s.[0].L1_rx_thread_core 4
         --thread-pool 5,6,7,8
         --L1s.[0].L1_tx_thread_core 3
 # vrtsim (role server, num_ues 3, per-UE antennas) is set in the DU yaml's
-# vrtsim: section. min_rxtxtime 8 as in OAI ci-scripts/yaml_files/5g_vrtsim_multiue.
+# vrtsim: section. min_rxtxtime stays 6 (3 ms lead): with the stock 614400-sample
+# shm ring, 8 (4 ms) + one slot only just fits at 122.88 Msps. OAI's
+# 5g_vrtsim_multiue uses 8; go to 8 once the larger ring (OAI_EWOC
+# shm_td_iq_channel.c) is in the DU and UE images.
 # max_ldpc_iterations 2 -> 4: UL BLER was 12-14% at 256QAM MCS 27.
+# No -E: at 273 PRB, 3/4 sampling of a 4096 FFT (3072) is too small for 3276
+# subcarriers, so OAI doubles it to 6144 / 184.32 Msps (nr_parms.c
+# set_scs_parameters), 1.5x MORE samples than plain 4096 / 122.88 Msps.
+# It also overflowed vrtsim's shared-memory ring (614400 samples = 3.3 ms at
+# 184.32 Msps): the DU writes min_rxtxtime (8 slots = 4 ms) ahead, so every
+# DL write was rejected as too early and the UEs never found the SSB.
+# (Most likely cause; the vrtsim exit counters would confirm it.)
 # vrtsim.timescale: the shared-memory clock runs at timescale x wall clock
 # (vrtsim.c timing thread). At 1.0 the DU only managed ~0.2x real time at
 # 273 PRB 2x2, wrote late, and the UEs never synced. 0.2 matches what the DU
@@ -336,7 +346,7 @@ services:
       - vrtsim_ipc:/vrtsim
     environment:
       USE_ADDITIONAL_OPTIONS: >-
-        -E --device.name vrtsim
+        --device.name vrtsim
         --vrtsim.role client
         --vrtsim.ue_id 0
         --vrtsim.connection_descriptor /vrtsim/vrtsim_connection
@@ -380,7 +390,7 @@ services:
       - vrtsim_ipc:/vrtsim
     environment:
       USE_ADDITIONAL_OPTIONS: >-
-        -E --device.name vrtsim
+        --device.name vrtsim
         --vrtsim.role client
         --vrtsim.ue_id 1
         --vrtsim.connection_descriptor /vrtsim/vrtsim_connection
@@ -424,7 +434,7 @@ services:
       - vrtsim_ipc:/vrtsim
     environment:
       USE_ADDITIONAL_OPTIONS: >-
-        -E --device.name vrtsim
+        --device.name vrtsim
         --vrtsim.role client
         --vrtsim.ue_id 2
         --vrtsim.connection_descriptor /vrtsim/vrtsim_connection
