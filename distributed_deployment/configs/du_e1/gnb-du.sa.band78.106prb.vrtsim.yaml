@@ -207,7 +207,7 @@ vrtsim:
   # No channel - plain passthrough, no impairments:
   #cirdb: 0
   #chanmod: 1
-  num_ues: 4
+  num_ues: 3   # ue_0..ue_2 in docker-compose-edge.yml
   #
   # Built-in channel model defined in the channelmod: section above:
   # chanmod: 1
@@ -223,25 +223,25 @@ vrtsim:
   # cir_db.bin. No external emitter required. Generate the database offline
   # with cir_generator.py. Use cirdb-path to point to the directory containing
   # cir_db.bin and cir_db.yaml.
-  cirdb: 1
-  cirdb_file: /cirdb/cir_db.bin
-  cirdb_yaml: /cirdb/cir_db.yaml  
+  # Off while bringing up 273 PRB 2x2 in real time: no channel model, plain
+  # passthrough, so CPU goes to the PHY. Re-enable with the cirdb_data volume.
+  cirdb: 0
+  #cirdb_file: /cirdb/cir_db.bin
+  #cirdb_yaml: /cirdb/cir_db.yaml
   #
   # Per-UE channel configuration for multi-UE operation
   ue_config:
-    - antennas: "1x1"   # NxM where N=UE-TX, M=gNB-TX; M must equal RU nb_tx
-      model_id: 0       # 0=TDL-A 1=TDL-B 2=TDL-C 3=TDL-D 4=TDL-E
-      ds_ns: 1.0        # RMS delay spread in ns
-      speed_mps: 0      # UE speed in m/s # aoa_deg: 0.0    # angle of arrival in degrees; TDL-D/E only
-    - antennas: "1x1"   
+    # "NxM" = UE TX antennas x UE RX antennas (vrtsim.c asserts both against
+    # the UE's --ue-nb-ant-tx/--ue-nb-ant-rx). One entry per vrtsim slot.
+    - antennas: "2x2"   # slot 0: ue_0 eMBB
+      model_id: 0       # 0=TDL-A 1=TDL-B 2=TDL-C 3=TDL-D 4=TDL-E (cirdb only)
+      ds_ns: 1.0
+      speed_mps: 0
+    - antennas: "2x2"   # slot 1: ue_1 URLLC
       model_id: 0
       ds_ns: 1.0
       speed_mps: 0
-    - antennas: "1x1"   
-      model_id: 0
-      ds_ns: 1.0
-      speed_mps: 0
-    - antennas: "1x1"   
+    - antennas: "2x2"   # slot 2: ue_2 mIoT
       model_id: 0
       ds_ns: 1.0
       speed_mps: 0

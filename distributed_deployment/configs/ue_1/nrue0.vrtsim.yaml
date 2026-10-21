@@ -13,7 +13,7 @@ uicc0:
       nssai_sd: 1
 
 #thread-pool: "-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1"
-thread-pool: "-1,-1"
+thread-pool: "-1,-1,-1,-1"   # 4 workers = the container's 4 cores (273 PRB 2x2)
 
 log_config :
   global_log_level: info

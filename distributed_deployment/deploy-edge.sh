@@ -86,13 +86,14 @@ check_ue_connections() {
     [ $connected -eq 3 ] && return 0 || return 1
 }
 
-# Checks if all 4 UEs are connected to DU_e1, 4 different containers
+# Checks the UEs on DU_e1, one container each (vrtsim: ue_0..ue_$((N_UES-1)))
+N_UES=3
 check_ues_connection() {
-    local total_ues=4 connected=0 with_ip=0
+    local total_ues=$N_UES connected=0 with_ip=0
     UE_IPS=(); UE_INTERFACES=()
     print_stage "Checking UE connections (all on DU_e1)..."
     echo ""
-    for i in {0..3}; do
+    for i in $(seq 0 $((N_UES - 1))); do
         local container="ue_$i"
         if docker exec "$container" ip addr show 2>/dev/null | grep -q oaitun_ue1; then
             ((connected++))
@@ -109,7 +110,7 @@ check_ues_connection() {
     echo ""
     print_info "Connected: $connected/$total_ues — with IP: $with_ip/$connected"
     export CONNECTED_UES=$connected UES_WITH_IP=$with_ip
-    [ $connected -eq 4 ] && return 0 || return 1
+    [ $connected -eq $N_UES ] && return 0 || return 1
 }
 
 # ==========================================
@@ -256,13 +257,15 @@ fi
 echo ""
 
 # Stage 5/7: UEs (connect to DU_e1)
-print_stage "Stage 5/7: Starting 3 UEs (→ DU_e1)..."
-# for u in ue_0 ue_1 ue_2 ue_3; do
-#   docker compose -f "$COMPOSE_FILE" up -d --no-deps "$u"; sleep 8
-#   print_info "Launched $u ..."
-# done
-docker compose -f "$COMPOSE_FILE" up -d --no-deps ue_1; sleep 8
-wait_for_service "ue_1" 30
+print_stage "Stage 5/7: Starting 3 UEs (→ DU_e1, vrtsim, one container each)..."
+for u in ue_0 ue_1 ue_2; do
+  docker compose -f "$COMPOSE_FILE" up -d --no-deps "$u"; sleep 8
+  wait_for_service "$u" 30
+  print_info "Launched $u ..."
+done
+# rfsim (single container, 3 UEs):
+# docker compose -f "$COMPOSE_FILE" up -d --no-deps ue_1; sleep 8
+# wait_for_service "ue_1" 30
 print_info "Waiting 30s for UE attach + PDU session..."
 sleep 30
 echo ""
@@ -288,15 +291,15 @@ echo ""
 
 # Stage 7/7: UE connection verification
 print_stage "Stage 7/7: Verifying UE connections..."
-if check_ue_connections ; then
-    print_info "✓ All 3 UEs connected!"
+if check_ues_connection ; then
+    print_info "✓ All $N_UES UEs connected!"
 else
     print_warn "Only $CONNECTED_UES/3 UEs connected"
     while true; do
         echo "Options: [w]ait+recheck  [p]roceed  [q]uit"
         read -p "Choice: " -n 1 -r; echo
         case $REPLY in
-            [Ww]) sleep 10; check_ue_connections  && break ;;
+            [Ww]) sleep 10; check_ues_connection  && break ;;
             [Pp]) print_info "Proceeding with $CONNECTED_UES UE(s)"; break ;;
             [Qq]) break ;;
             *) print_error "Invalid" ;;
@@ -322,11 +325,11 @@ else
 
     # Gate 3: data-plane reachability probes (per slice, through the tunnel)
     print_info "Probing per-slice datapaths..."
-    docker exec ue_1 ping -c2 -W2 -I oaitun_ue1 192.168.72.135 >/dev/null 2>&1 \
+    docker exec ue_0 ping -c2 -W2 -I oaitun_ue1 192.168.72.135 >/dev/null 2>&1 \
         && print_info "  ✓ eMBB  → ext_dn_co  (CO)"   || print_warn "  ✗ eMBB  (CO, cross-machine)"
-    docker exec ue_1 ping -c2 -W2 -I oaitun_ue2 192.168.82.135 >/dev/null 2>&1 \
+    docker exec ue_1 ping -c2 -W2 -I oaitun_ue1 192.168.82.135 >/dev/null 2>&1 \
         && print_info "  ✓ URLLC → ext_dn_e   (local)" || print_warn "  ✗ URLLC (local)"
-    docker exec ue_1 ping -c2 -W2 -I oaitun_ue3 192.168.72.31  >/dev/null 2>&1 \
+    docker exec ue_2 ping -c2 -W2 -I oaitun_ue1 192.168.72.31  >/dev/null 2>&1 \
         && print_info "  ✓ mIoT  → ext_dn_core(Core)" || print_warn "  ✗ mIoT  (Core, cross-machine)"
 
     # Gate 4: pushgateway reachable from Edge
@@ -338,16 +341,16 @@ else
 
     read -p "Run slice stress test now? (y/N): " -n 1 -r; echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        if [ -f ./slice_stress.sh ]; then
+        if [ -f ./slice_stress_multi_containers.sh ]; then
             read -p "Test duration in seconds [60]: " DUR; DUR=${DUR:-60}
-            ./slice_stress.sh "$DUR"
+            ./slice_stress_multi_containers.sh "$DUR"
             print_info "✓ Stress test complete — raw JSON in ./results/"
             print_info "  Grafana → http://172.31.54.33:3000  (panels: Slice throughput / URLLC jitter)"
         else
-            print_error "slice_stress.sh not found in $(pwd)"
+            print_error "slice_stress_multi_containers.sh not found in $(pwd)"
         fi
     else
-        print_info "Skipped. Run later with: ./slice_stress.sh 60"
+        print_info "Skipped. Run later with: ./slice_stress_multi_containers.sh 60"
     fi
 fi
 echo ""
