@@ -249,6 +249,7 @@ services:
         --MACRLCs.[0].local_n_portd 2152
         -E --device.name vrtsim
         --vrtsim.connection_descriptor /vrtsim/vrtsim_connection
+        --vrtsim.timescale 0.2
         --L1s.[0].max_ldpc_iterations 4
         --MACRLCs.[0].ulsch_max_frame_inactivity 0
         --gNBs.[0].min_rxtxtime 8
@@ -258,6 +259,11 @@ services:
 # vrtsim (role server, num_ues 3, per-UE antennas) is set in the DU yaml's
 # vrtsim: section. min_rxtxtime 8 as in OAI ci-scripts/yaml_files/5g_vrtsim_multiue.
 # max_ldpc_iterations 2 -> 4: UL BLER was 12-14% at 256QAM MCS 27.
+# vrtsim.timescale: the shared-memory clock runs at timescale x wall clock
+# (vrtsim.c timing thread). At 1.0 the DU only managed ~0.2x real time at
+# 273 PRB 2x2, wrote late, and the UEs never synced. 0.2 matches what the DU
+# can do; raise it once the DU keeps up (check "VRTSIM: Realtime issues" on
+# exit: TX/RX late % must stay ~0).
 # rfsim (previous setup, with the single 3-UE ue_1 below):
 #        -E --rfsim --L1s.[0].max_ldpc_iterations 2 --gNBs.[0].min_rxtxtime 6
 #        --rfsimulator.[0].serveraddr server
