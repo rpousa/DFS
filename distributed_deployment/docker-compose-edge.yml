@@ -249,7 +249,7 @@ services:
         --MACRLCs.[0].local_n_portd 2152
         --device.name vrtsim
         --vrtsim.connection_descriptor /vrtsim/vrtsim_connection
-        --vrtsim.timescale 0.3
+        --vrtsim.timescale 0.4
         --L1s.[0].max_ldpc_iterations 4
         --MACRLCs.[0].ulsch_max_frame_inactivity 0
         --gNBs.[0].min_rxtxtime 8
