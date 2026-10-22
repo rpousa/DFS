@@ -249,7 +249,7 @@ services:
         --MACRLCs.[0].local_n_portd 2152
         --device.name vrtsim
         --vrtsim.connection_descriptor /vrtsim/vrtsim_connection
-        --vrtsim.timescale 0.5
+        --vrtsim.timescale 0.3
         --L1s.[0].max_ldpc_iterations 4
         --MACRLCs.[0].ulsch_max_frame_inactivity 0
         --gNBs.[0].min_rxtxtime 8
@@ -274,6 +274,11 @@ services:
 # DU at 70% CPU and the UE at 34%; 0.5 should allow ~2.5x. If the DU or UE
 # can't keep up, Frame.Slot lines drift beyond 1.28 s / timescale apart and
 # UEs lose sync: step back down.
+# 0.5 kept Frame.Slot on time and CPU low on average, but under ~150 Mbit/s DL
+# the UE's PUCCH/PUSCH went missing (pucch0_DTX, ulsch_DTX, UL BLER ~1,
+# "Unexpected ULSCH HARQ PID"), DL MCS collapsed to Qm 2 and the UE re-attached
+# with new RNTIs: UL slots sent too late for the per-slot deadline. 0.3 plus
+# ue_0 on all 12 UE cores (ue_1/ue_2 are off).
 # rfsim (previous setup, with the single 3-UE ue_1 below):
 #        -E --rfsim --L1s.[0].max_ldpc_iterations 2 --gNBs.[0].min_rxtxtime 6
 #        --rfsimulator.[0].serveraddr server
@@ -364,8 +369,8 @@ services:
     depends_on:
       du_e1:
         condition: service_started
-    cpuset: "9-12"
-    cpus: 4.0
+    cpuset: "9-20"          # single UE carrying all three slices: all UE cores
+    cpus: 12.0
     cpu_shares: 4096
     ulimits:
       memlock: -1
