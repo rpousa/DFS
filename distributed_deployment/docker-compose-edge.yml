@@ -323,6 +323,12 @@ services:
   #   ue_2  mIoT  SST 3  IMSI ...318  vrtsim slot 2
   # 100 MHz (273 PRB), 2x2, 256QAM capabilities (uecap_ports2.xml).
   # The DU's vrtsim.ue_config must list one 2x2 entry per slot.
+  #
+  # Default now: ue_0 alone carries all three slices (PDU sessions 1-3:
+  # oaitun_ue1 eMBB, oaitun_ue1p2 URLLC, oaitun_ue1p3 mIoT) and the DU has
+  # one vrtsim slot. ue_1/ue_2 are in the "multi-ue" profile, so a plain
+  # "docker compose up" skips them; start them only with num_ues 3 in the DU
+  # yaml and --profile multi-ue.
   # ==========================================
 
   ue_0:
@@ -371,6 +377,7 @@ services:
 
   ue_1:
     image: ue:comnetsemu
+    profiles: ["multi-ue"]
     container_name: ue_1
     hostname: ue_1
     cap_add:
@@ -415,6 +422,7 @@ services:
 
   ue_2:
     image: ue:comnetsemu
+    profiles: ["multi-ue"]
     container_name: ue_2
     hostname: ue_2
     cap_add:

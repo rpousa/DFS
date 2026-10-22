@@ -31,3 +31,9 @@ rule-miot:
   precedence: 10
   refTcData: 
     - steering-scenario-miot
+# No traffic steering (no refTcData): UPF chosen by S-NSSAI + DNN. Used by the
+# multi-slice UE (IMSI ...110), see policy_decisions.yaml.
+rule-any:
+  flowInfos:
+    - flowDescription: permit out ip from any to assigned
+  precedence: 10

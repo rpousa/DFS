@@ -2,13 +2,13 @@
 set -u
 PGW="http://192.168.0.200:9099"
 DUR=${1:-60}
-UE_CTR="ue_1"                       # single container, 3 tun interfaces
+UE_CTR="ue_0"                       # single UE, 3 PDU sessions (one per slice)
 
 # slice  iface        src_ip     target_ip        port proto
 MAP=(
   "embb  oaitun_ue1 12.1.1.2 192.168.72.135 5201 tcp"   # SST1 → ext_dn_co  (CO,   cross-machine)
-  "urllc oaitun_ue2 13.1.1.2 192.168.82.135 5202 udp"   # SST2 → ext_dn_e   (edge, local)
-  "miot  oaitun_ue3 14.1.1.2 192.168.72.31  5203 udp"   # SST3 → ext_dn_core(Core, cross-machine)
+  "urllc oaitun_ue1p2 13.1.1.2 192.168.82.135 5202 udp" # SST2 → ext_dn_e   (edge, local)
+  "miot  oaitun_ue1p3 14.1.1.2 192.168.72.31  5203 udp" # SST3 → ext_dn_core(Core, cross-machine)
 )
 
 push() { curl -s --data-binary @- "$PGW/metrics/job/stress/slice/$1"; }

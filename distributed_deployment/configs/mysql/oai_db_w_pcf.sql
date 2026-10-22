@@ -79,7 +79,7 @@ CREATE TABLE `AccessAndMobilitySubscriptionData` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 INSERT INTO `AccessAndMobilitySubscriptionData` (`ueid`, `servingPlmnid`, `nssai`) VALUES
-('208950000000110', '20895','{\"defaultSingleNssais\": [{\"sst\": 1, \"sd\": \"000001\"}]}'),
+('208950000000110', '20895','{\"defaultSingleNssais\": [{\"sst\": 1, \"sd\": \"000001\"}, {\"sst\": 2, \"sd\": \"000001\"}, {\"sst\": 3, \"sd\": \"000001\"}]}'),
 ('208950000000111', '20895','{\"defaultSingleNssais\": [{\"sst\": 1, \"sd\": \"000001\"}]}'),
 ('208950000000112', '20895','{\"defaultSingleNssais\": [{\"sst\": 1, \"sd\": \"000001\"}]}'),
 ('208950000000113', '20895','{\"defaultSingleNssais\": [{\"sst\": 1, \"sd\": \"000001\"}]}'),
@@ -300,6 +300,8 @@ INSERT INTO `SessionManagementSubscriptionData` (`ueid`, `servingPlmnid`, `singl
 ('208950000000031', '20895', '{\"sst\": 222, \"sd\": \"123\"}','{\"default\":{\"pduSessionTypes\":{ \"defaultSessionType\": \"IPV4\"},\"sscModes\": {\"defaultSscMode\": \"SSC_MODE_1\"},\"5gQosProfile\": {\"5qi\": 9,\"arp\":{\"priorityLevel\": 1,\"preemptCap\": \"NOT_PREEMPT\",\"preemptVuln\":\"NOT_PREEMPTABLE\"},\"priorityLevel\":1},\"sessionAmbr\":{\"uplink\":\"100Mbps\", \"downlink\":\"100Mbps\"},\"staticIpAddress\":[{\"ipv4Addr\": \"12.1.1.15\"}]}}'),
 ('208950000000032', '20895', '{\"sst\": 222, \"sd\": \"123\"}','{\"default\":{\"pduSessionTypes\":{ \"defaultSessionType\": \"IPV4\"},\"sscModes\": {\"defaultSscMode\": \"SSC_MODE_1\"},\"5gQosProfile\": {\"5qi\": 9,\"arp\":{\"priorityLevel\": 1,\"preemptCap\": \"NOT_PREEMPT\",\"preemptVuln\":\"NOT_PREEMPTABLE\"},\"priorityLevel\":1},\"sessionAmbr\":{\"uplink\":\"100Mbps\", \"downlink\":\"100Mbps\"}}}'),
 ('208950000000110', '20895', '{\"sst\": 1, \"sd\": \"000001\"}','{\"oai\":{\"pduSessionTypes\":{ \"defaultSessionType\": \"IPV4\"},\"sscModes\": {\"defaultSscMode\": \"SSC_MODE_1\"},\"5gQosProfile\": {\"5qi\": 9,\"arp\":{\"priorityLevel\": 1,\"preemptCap\": \"NOT_PREEMPT\",\"preemptVuln\":\"NOT_PREEMPTABLE\"},\"priorityLevel\":1},\"sessionAmbr\":{\"uplink\":\"1Mbps\", \"downlink\":\"2Mbps\"},\"staticIpAddress\":[{\"ipv4Addr\": \"12.1.1.2\"}]}}'),
+('208950000000110', '20895', '{\"sst\": 2, \"sd\": \"000001\"}','{\"oai.2\":{\"pduSessionTypes\":{ \"defaultSessionType\": \"IPV4\"},\"sscModes\": {\"defaultSscMode\": \"SSC_MODE_1\"},\"5gQosProfile\": {\"5qi\": 86,\"arp\":{\"priorityLevel\": 1,\"preemptCap\": \"NOT_PREEMPT\",\"preemptVuln\":\"NOT_PREEMPTABLE\"},\"priorityLevel\":1},\"sessionAmbr\":{\"uplink\":\"10Mbps\", \"downlink\":\"10Mbps\"},\"staticIpAddress\":[{\"ipv4Addr\": \"13.1.1.2\"}]}}'),
+('208950000000110', '20895', '{\"sst\": 3, \"sd\": \"000001\"}','{\"oai.3\":{\"pduSessionTypes\":{ \"defaultSessionType\": \"IPV4\"},\"sscModes\": {\"defaultSscMode\": \"SSC_MODE_1\"},\"5gQosProfile\": {\"5qi\": 76,\"arp\":{\"priorityLevel\": 1,\"preemptCap\": \"NOT_PREEMPT\",\"preemptVuln\":\"NOT_PREEMPTABLE\"},\"priorityLevel\":1},\"sessionAmbr\":{\"uplink\":\"20Mbps\", \"downlink\":\"10Mbps\"},\"staticIpAddress\":[{\"ipv4Addr\": \"14.1.1.2\"}]}}'),
 ('208950000000111', '20895', '{\"sst\": 1, \"sd\": \"000001\"}','{\"oai\":{\"pduSessionTypes\":{ \"defaultSessionType\": \"IPV4\"},\"sscModes\": {\"defaultSscMode\": \"SSC_MODE_1\"},\"5gQosProfile\": {\"5qi\": 9,\"arp\":{\"priorityLevel\": 1,\"preemptCap\": \"NOT_PREEMPT\",\"preemptVuln\":\"NOT_PREEMPTABLE\"},\"priorityLevel\":1},\"sessionAmbr\":{\"uplink\":\"1Mbps\", \"downlink\":\"2Mbps\"},\"staticIpAddress\":[{\"ipv4Addr\": \"12.1.1.3\"}]}}'),
 ('208950000000112', '20895', '{\"sst\": 1, \"sd\": \"000001\"}','{\"oai\":{\"pduSessionTypes\":{ \"defaultSessionType\": \"IPV4\"},\"sscModes\": {\"defaultSscMode\": \"SSC_MODE_1\"},\"5gQosProfile\": {\"5qi\": 9,\"arp\":{\"priorityLevel\": 1,\"preemptCap\": \"NOT_PREEMPT\",\"preemptVuln\":\"NOT_PREEMPTABLE\"},\"priorityLevel\":1},\"sessionAmbr\":{\"uplink\":\"1Mbps\", \"downlink\":\"2Mbps\"},\"staticIpAddress\":[{\"ipv4Addr\": \"12.1.1.4\"}]}}'),
 ('208950000000113', '20895', '{\"sst\": 1, \"sd\": \"000001\"}','{\"oai\":{\"pduSessionTypes\":{ \"defaultSessionType\": \"IPV4\"},\"sscModes\": {\"defaultSscMode\": \"SSC_MODE_1\"},\"5gQosProfile\": {\"5qi\": 9,\"arp\":{\"priorityLevel\": 1,\"preemptCap\": \"NOT_PREEMPT\",\"preemptVuln\":\"NOT_PREEMPTABLE\"},\"priorityLevel\":1},\"sessionAmbr\":{\"uplink\":\"1Mbps\", \"downlink\":\"2Mbps\"},\"staticIpAddress\":[{\"ipv4Addr\": \"12.1.1.5\"}]}}'),
@@ -387,8 +389,10 @@ ALTER TABLE `SdmSubscriptions`
 --
 -- Indexes for table `SessionManagementSubscriptionData`
 --
+-- Not unique: a UE subscribed to several slices has one row per S-NSSAI
+-- (IMSI ...110 has SST 1, 2 and 3). UDR selects the row by singleNssai.
 ALTER TABLE `SessionManagementSubscriptionData`
-  ADD PRIMARY KEY (`ueid`,`servingPlmnid`) USING BTREE;
+  ADD KEY `ueid_plmn` (`ueid`,`servingPlmnid`) USING BTREE;
 
 --
 -- Indexes for table `SmfRegistrations`
