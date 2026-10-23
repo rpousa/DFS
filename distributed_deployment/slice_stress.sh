@@ -4,6 +4,18 @@ PGW="http://192.168.0.200:9099"
 DUR=${1:-60}
 UE_CTR="ue_0"                       # single UE, 3 PDU sessions (one per slice)
 
+# What to send, per slice (defaults = the original mix). Override in the env:
+#   SLICES="embb urllc miot"   which slices to run
+#   <SLICE>_PROTO  tcp|udp     EMBB tcp, URLLC/MIOT udp
+#   <SLICE>_DIR    dl|ul       dl = server sends to the UE (iperf3 -R)
+#                              EMBB dl, URLLC/MIOT ul
+#   <SLICE>_RATE   udp target  EMBB 100M, URLLC 8M, MIOT 500K (tcp: no cap)
+#   <SLICE>_STREAMS parallel   EMBB 4, others 1
+#   <SLICE>_LEN    udp payload EMBB 1400, others 200
+# e.g. only eMBB, UDP downlink at 300 Mbit/s:
+#   SLICES=embb EMBB_PROTO=udp EMBB_RATE=300M ./slice_stress.sh 30
+SLICES=${SLICES:-"embb urllc miot"}
+
 # slice  iface        src_ip     target_ip        port proto
 MAP=(
   "embb  oaitun_ue1 12.1.1.2 192.168.72.135 5201 tcp"   # SST1 → ext_dn_co  (CO,   cross-machine)
@@ -22,13 +34,22 @@ run_slice() {
   docker exec "$UE_CTR" ip addr show "$iface" 2>/dev/null | grep -q "$src" \
     || { echo "[stress] $slice SKIP — $iface ($src) missing"; return 1; }
 
-  local OPTS
-  if [ "$proto" = tcp ]; then
-      OPTS="-R -P 4"
-  else
-      local RATE; RATE=$([ "$slice" = urllc ] && echo 8M || echo 500K)
-      OPTS="-u -b $RATE -l 200"
-  fi
+  local U=${slice^^} d_dir d_rate d_streams d_len v
+  case "$slice" in
+    embb) d_dir=dl; d_rate=100M; d_streams=4; d_len=1400 ;;
+    urllc) d_dir=ul; d_rate=8M; d_streams=1; d_len=200 ;;
+    *)     d_dir=ul; d_rate=500K; d_streams=1; d_len=200 ;;
+  esac
+  v="${U}_PROTO";   proto=${!v:-$proto}
+  v="${U}_DIR";     local dir=${!v:-$d_dir}
+  v="${U}_RATE";    local rate=${!v:-$d_rate}
+  v="${U}_STREAMS"; local streams=${!v:-$d_streams}
+  v="${U}_LEN";     local len=${!v:-$d_len}
+
+  local OPTS="-P $streams"
+  [ "$dir" = dl ] && OPTS="$OPTS -R"
+  [ "$proto" = udp ] && OPTS="$OPTS -u -b $rate -l $len"
+  echo "[stress] $slice: $proto $dir, $streams stream(s)$([ "$proto" = udp ] && echo ", $rate each")"
 
   # 3.16: stream text intervals; stdbuf+--forceflush prevent pipe buffering
   ( docker exec "$UE_CTR" ping -n -i 1 -w "$DUR" -I "$iface" "$ip" 2>/dev/null \
@@ -41,6 +62,8 @@ run_slice() {
         # interval lines contain "sec" + a bitrate; skip the final summary
         echo "$line" | grep -qE '[0-9.]+-[0-9.]+ +sec' || continue
         echo "$line" | grep -qiE 'sender|receiver' && continue
+        # with several streams only the [SUM] line is the slice total
+        [ "$streams" -gt 1 ] && ! echo "$line" | grep -q '^\[SUM\]' && continue
         # extract "<value> <unit>bits/sec" → bps
         read val unit <<< "$(echo "$line" | grep -oE '[0-9.]+ [KMG]?bits/sec' | tail -1 | sed 's#bits/sec##')"
         [ -z "$val" ] && continue
@@ -59,7 +82,7 @@ EOF
   if [ "$proto" = udp ]; then
       # e.g.  "... 0.123 ms  5/1000 (0.5%)  receiver"
       local sum jit loss
-      sum=$(grep -iE 'receiver' "$raw" | tail -1)
+      sum=$(grep -iE 'receiver' "$raw" | tail -1) # last = [SUM] with several streams
       jit=$(echo "$sum"  | grep -oE '[0-9.]+ ms' | grep -oE '[0-9.]+' | tail -1)
       loss=$(echo "$sum" | grep -oE '\([0-9.]+%\)' | grep -oE '[0-9.]+' | tail -1)
       [ -n "$jit" ]  && push "$slice" <<< "slice_jitter_ms ${jit}"
@@ -76,6 +99,7 @@ EOF
 mkdir -p ./results
 pids=()
 for row in "${MAP[@]}"; do
+  [[ " $SLICES " == *" ${row%% *} "* ]] || continue
   run_slice "$row" &
   pids+=($!)
 done

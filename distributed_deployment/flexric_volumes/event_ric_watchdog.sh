@@ -53,10 +53,10 @@ probe_nodes() {
 }
 
 create_kpm_index() {
-    # The KPI dashboard LEFT JOINs UE_SLICE_MAP to name each UE's slice. The KPM
+    # UE_SLICE_MAP lists the slices each UE is on (one row per UE and slice). The KPM
     # monitor fills it, but create it here as well so the panels never fail with
     # "no such table" -- before the monitor runs, or with an older monitor build.
-    sqlite3 "$DB_PATH" "CREATE TABLE IF NOT EXISTS UE_SLICE_MAP(ran_ue_id TEXT PRIMARY KEY, sst INT, sd INT, slice TEXT, tstamp INT);" >/dev/null 2>&1
+    sqlite3 "$DB_PATH" "CREATE TABLE IF NOT EXISTS UE_SLICE_MAP(ran_ue_id TEXT, sst INT, sd INT, slice TEXT, tstamp INT, PRIMARY KEY(ran_ue_id, sst, sd));" >/dev/null 2>&1
     [ -f "$INDEX_DONE" ] && return 0
     # wait until the KPM xApp has created the table
     for _ in $(seq 1 60); do
