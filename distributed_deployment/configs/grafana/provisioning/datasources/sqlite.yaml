@@ -12,6 +12,12 @@ datasources:
     access: proxy
     jsonData:
       path: "/var/lib/grafana/sqlite/xapp_db"
+  - name: RELOC_CTL
+    uid: relocctl
+    type: frser-sqlite-datasource
+    access: proxy
+    jsonData:
+      path: "/var/lib/grafana/sqlite/reloc_ctl.db"
   - name: KPM_DB_2
     uid: edthsvykzynswc
     type: frser-sqlite-datasource

@@ -393,6 +393,8 @@ services:
     hostname: flexric
     environment:
       - XAPP_DURATION=-1
+      # reloc-ctl (CU-UP relocation control for the Grafana dashboard)
+      - RELOC_CUUP_NAMES=3585=cuup_co,3586=cuup_e
     cap_add:
       - SYS_NICE
       - SYS_PTRACE 
@@ -403,12 +405,16 @@ services:
       - "192.168.0.200:36421:36421/sctp"
       - "192.168.0.200:36422:36422/sctp"
       - "192.168.0.200:9464:9464/tcp"
+      # reloc-ctl: the dashboard's buttons (browser) and the log agents (other machines)
+      - "172.31.54.33:8085:8085/tcp"
+      - "192.168.0.200:8085:8085/tcp"
     volumes:
       - ./configs/flexric:/usr/local/etc/flexric
       - ./logs/flexric:/usr/local/etc/flexric_logs
       - ./logs/cuup_co:/usr/local/flexric/cu_logs:ro
       - ./flexric_volumes/probe_nodes.py:/usr/local/etc/flexric/probe_nodes.py
       - ./flexric_volumes/event_ric_watchdog.sh:/usr/local/bin/event_ric_watchdog.sh
+      - ./flexric_volumes/reloc_ctl.py:/usr/local/bin/reloc_ctl.py:ro
       #- ./flexric_volumes/ric_watchdog.sh:/usr/local/bin/ric_watchdog.sh
       - ./flexric_volumes/xapp_slice_check.py:/usr/local/flexric/xApp/python3/xapp_daemon.py
       - ./flexric_volumes/topology.py:/usr/local/flexric/xApp/python3/topology.py
@@ -424,12 +430,13 @@ services:
         mkdir -p /usr/local/etc/flexric_logs
         touch /var/log/ric_watchdog.log
         /usr/local/bin/event_ric_watchdog.sh >> /var/log/ric_watchdog.log 2>&1 &
+        python3 /usr/local/bin/reloc_ctl.py >> /usr/local/etc/flexric_logs/reloc_ctl.log 2>&1 &
         sleep 6
 
         FILES="/var/log/ric_watchdog.log"
         for f in /usr/local/etc/flexric_logs/*.log; do
           # the KPM monitor prints every indication; it stays in its file, not in docker logs
-          case "$$f" in *kpm_moni_xapp.log) continue ;; esac
+          case "$$f" in *kpm_moni_xapp.log|*reloc_ctl_run_*.log) continue ;; esac
           [ -e "$$f" ] && FILES="$$FILES $$f"
         done
 

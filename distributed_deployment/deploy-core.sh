@@ -190,6 +190,8 @@ echo ""
 # Stage 5/8: CU-CP
 print_stage "Stage 5/8: Starting CU-CP (control plane)..."
 docker compose -f "$COMPOSE_FILE" up -d cucp
+# CU-CP relocation events for the Grafana "CU-UP relocation" dashboard
+bash ./reloc_agent.sh start cucp
 wait_for_service "cucp" 30
 print_info "Waiting for CU-CP to bind SCTP sockets (F1-C:38472, E1:38462, NGAP)..."
 sleep 15

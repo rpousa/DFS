@@ -143,6 +143,8 @@ echo ""
 # Stage 1/5: CU-UP_co (initiates E1 outbound to Core)
 print_stage "Stage 1/5: Starting CU-UP_co..."
 docker compose -f "$COMPOSE_FILE" up -d cuup_co
+# CU-UP relocation events for the Grafana "CU-UP relocation" dashboard
+bash ./reloc_agent.sh start cuup_co
 wait_for_service "cuup_co" 30
 print_info "Waiting for CU-UP_co to set up E1 to Core CU-CP..."
 sleep 15
