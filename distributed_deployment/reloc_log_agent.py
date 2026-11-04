@@ -2,7 +2,7 @@
 """reloc_log_agent: follow CU-CP / CU-UP container logs on this machine and send
 the gNB-CU-UP relocation events to reloc-ctl on the core (for Grafana).
 
-  python3 reloc_log_agent.py [--ctl http://192.168.0.200:8085] CONTAINER [CONTAINER...]
+  python3 reloc_log_agent.py [--ctl http://192.168.0.200:8095] CONTAINER [CONTAINER...]
 
 Core:          cucp       (procedure steps, "complete in X ms")
 Centraloffice: cuup_co    (source / target side of forwarding)
@@ -113,7 +113,7 @@ def follow(container, ctl):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--ctl", default="http://192.168.0.200:8085")
+    ap.add_argument("--ctl", default="http://192.168.0.200:8095")
     ap.add_argument("containers", nargs="+")
     a = ap.parse_args()
     for c in a.containers:

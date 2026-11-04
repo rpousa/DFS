@@ -17,7 +17,7 @@ Runs inside the flexric container on the core (python3 standard library only).
 Everything Grafana shows comes from reloc_ctl.db, next to the KPM xapp_db on the
 shared volume.
 
-HTTP (port RELOC_CTL_PORT, default 8085):
+HTTP (port RELOC_CTL_PORT, default 8085 in the container; published on the core as 8095):
   GET|POST /arm      start the trigger (Grafana dashboard link: var-* parameters)
   GET|POST /now      relocate on the next report (fires at once)
   GET|POST /stop     stop the trigger

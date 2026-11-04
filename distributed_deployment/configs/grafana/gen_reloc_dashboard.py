@@ -5,7 +5,7 @@ import sys
 
 CTL = {"type": "frser-sqlite-datasource", "uid": "relocctl"}
 KPM = {"type": "frser-sqlite-datasource", "uid": "edthsvykzynswc"}
-CTL_URL = "http://172.31.54.33:8085"
+CTL_URL = "http://172.31.54.33:8095"
 
 ARGS = ("var-ue=${ue}&var-sst=${sst}&var-target=${target}&var-metric=${metric}&var-cmp=${cmp}"
         "&var-threshold=${threshold}&var-consecutive=${consecutive}&var-guard=${guard}"

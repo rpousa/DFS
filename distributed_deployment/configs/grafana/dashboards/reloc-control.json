@@ -30,17 +30,17 @@
       {
         "type": "constant",
         "name": "ctl",
-        "query": "http://172.31.54.33:8085",
+        "query": "http://172.31.54.33:8095",
         "hide": 2,
         "skipUrlSync": true,
         "current": {
-          "text": "http://172.31.54.33:8085",
-          "value": "http://172.31.54.33:8085"
+          "text": "http://172.31.54.33:8095",
+          "value": "http://172.31.54.33:8095"
         },
         "options": [
           {
-            "text": "http://172.31.54.33:8085",
-            "value": "http://172.31.54.33:8085",
+            "text": "http://172.31.54.33:8095",
+            "value": "http://172.31.54.33:8095",
             "selected": true
           }
         ]

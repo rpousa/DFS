@@ -8,10 +8,10 @@
 #   ./reloc_agent.sh stop
 #   ./reloc_agent.sh status
 #
-# RELOC_CTL overrides where reloc-ctl listens (default the core, 192.168.0.200:8085).
+# RELOC_CTL overrides where reloc-ctl listens (default the core, 192.168.0.200:8095).
 set -u
 cd "$(dirname "$0")"
-CTL="${RELOC_CTL:-http://192.168.0.200:8085}"
+CTL="${RELOC_CTL:-http://192.168.0.200:8095}"
 PIDFILE="logs/reloc_log_agent.pid"
 LOG="logs/reloc_log_agent.log"
 mkdir -p logs

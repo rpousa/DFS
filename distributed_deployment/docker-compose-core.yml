@@ -405,9 +405,10 @@ services:
       - "192.168.0.200:36421:36421/sctp"
       - "192.168.0.200:36422:36422/sctp"
       - "192.168.0.200:9464:9464/tcp"
-      # reloc-ctl: the dashboard's buttons (browser) and the log agents (other machines)
-      - "172.31.54.33:8085:8085/tcp"
-      - "192.168.0.200:8085:8085/tcp"
+      # reloc-ctl: the dashboard's buttons (browser) and the log agents (other machines).
+      # Host port 8095: 8085 is the UPF's on every machine.
+      - "172.31.54.33:8095:8085/tcp"
+      - "192.168.0.200:8095:8085/tcp"
     volumes:
       - ./configs/flexric:/usr/local/etc/flexric
       - ./logs/flexric:/usr/local/etc/flexric_logs
