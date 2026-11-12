@@ -1,0 +1,650 @@
+# Docker Compose for Core Machine
+# Deploy on PC: 192.168.1.210
+# Components: 5G Core + CU-CP + UPF_core + ext_dn_core
+
+services:
+  # ==========================================
+  # 5G Core Network Functions
+  # ==========================================
+
+  mysql:
+    image: mysql:comnetsemu
+    container_name: mysql
+    hostname: mysql
+    cap_add:
+      - NET_ADMIN
+      - SYS_NICE
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.131
+    ports:
+      - "192.168.1.210:3306:3306/tcp"
+      - "192.168.1.210:33060:33060/tcp"
+    volumes:
+      - ./configs/mysql/oai_db_w_pcf.sql:/docker-entrypoint-initdb.d/oai_db.sql
+      # - ./configs/pcf/dbs/DnnPolicyDecision.sql:/docker-entrypoint-initdb.d/DnnPolicyDecision.sql
+      # - ./configs/pcf/dbs/SupiPolicyDecision.sql:/docker-entrypoint-initdb.d/SupiPolicyDecision.sql
+      # - ./configs/pcf/dbs/SlicePolicyDecision.sql:/docker-entrypoint-initdb.d/SlicePolicyDecision.sql
+      # - ./configs/pcf/dbs/QosData.sql:/docker-entrypoint-initdb.d/QosData.sql
+      # - ./configs/pcf/dbs/TrafficControlDataODB.sql:/docker-entrypoint-initdb.d/TrafficControlDataODB.sql
+      # - ./configs/pcf/dbs/PccRuleODB.sql:/docker-entrypoint-initdb.d/PccRuleODB.sql
+    environment:
+      - MYSQL_ROOT_PASSWORD=linux
+      - MYSQL_DATABASE=oai_db
+      - MYSQL_USER=test
+      - MYSQL_PASSWORD=test
+    # cpuset: "0-1"
+    # cpus: 1.0
+    # cpu_shares: 256
+    # oom_score_adj: 200
+    command: >
+      sh -c "rm -rf /var/lib/mysql/* &&
+             mysqld -u test --initialize-insecure --init-file=/docker-entrypoint-initdb.d/oai_db.sql --log-error-verbosity=3 &&
+             mysqld -u test"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nrf:
+    image: nrf:comnetsemu
+    container_name: nrf
+    hostname: nrf
+    cap_add:
+      - NET_ADMIN
+      - SYS_NICE
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.130
+    ports:
+      - "192.168.1.210:80:80/tcp"
+      - "192.168.1.210:8080:8080/tcp"
+      - "192.168.1.210:9090:9090/tcp"
+    volumes:
+      - ./configs/nrf/nrf_config.yaml:/openair-nrf/etc/config.yaml
+      - ./logs/nrf:/openair-nrf/logs
+    depends_on:
+      mysql:
+        condition: service_healthy
+    # cpuset: "0-1"
+    # cpus: 0.5
+    # cpu_shares: 512
+    command: >
+      sh -c "sleep 5 &&
+             /openair-nrf/bin/oai_nrf -c /openair-nrf/etc/config.yaml -o"
+
+  amf:
+    image: amf:comnetsemu
+    container_name: amf
+    hostname: amf
+    cap_add:
+      - NET_ADMIN
+      - SYS_NICE
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.132
+    ports:
+      - "192.168.1.210:38412:38412/sctp"    # NGAP
+      - "192.168.1.210:9094:80/tcp"
+      - "192.168.1.210:9104:8080/tcp"
+    volumes:
+      - ./configs/amf/amf_config.yaml:/openair-amf/etc/config.yaml
+      - ./logs/amf:/openair-amf/logs
+    depends_on:
+      - nrf
+      - smf
+    cpuset: "2-3"
+    # cpus: 1.0
+    # cpu_shares: 2048
+    # oom_score_adj: -200
+    # ulimits:
+    #   rtprio: 99
+    #   memlock: -1
+    #   nofile: 1048576
+    command: >
+      sh -c "sleep 5 &&
+             /openair-amf/bin/oai_amf -c /openair-amf/etc/config.yaml -o"
+
+  smf:
+    image: smf:comnetsemu
+    container_name: smf
+    hostname: smf
+    cap_add:
+      - NET_ADMIN
+      - SYS_NICE
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.133
+    ports:
+      - "192.168.1.210:9091:80/tcp"
+      - "192.168.1.210:9101:8080/tcp"
+      - "192.168.1.210:8805:8805/udp"       # PFCP
+    volumes:
+      - ./configs/smf/smf_config.yaml:/openair-smf/etc/config.yaml
+      - ./logs/smf:/openair-smf/logs
+    depends_on:
+      - nrf
+    cpuset: "2-3"
+    # cpus: 1.0
+    # cpu_shares: 2048
+    # oom_score_adj: -200
+    # ulimits:
+    #   rtprio: 99
+    #   memlock: -1
+    #   nofile: 1048576
+    command: >
+      sh -c "sleep 5 &&
+             /openair-smf/bin/oai_smf -c /openair-smf/etc/config.yaml -o"
+
+  pcf:
+    image: pcf:comnetsemu
+    container_name: pcf
+    hostname: pcf
+    cap_add:
+      - NET_ADMIN
+      - SYS_NICE
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.139
+    ports:
+      - "192.168.1.210:9092:80/tcp"
+      - "192.168.1.210:9102:9090/tcp"
+    volumes:
+      - ./configs/pcf/pcf_config.yaml:/openair-pcf/etc/config.yaml
+      - ./configs/pcf/pcc_rules.yaml:/openair-pcf/policies/pcc_rules/pcc_rules.yaml
+      - ./configs/pcf/policy_decisions.yaml:/openair-pcf/policies/policy_decisions/policy_decisions.yaml
+      - ./configs/pcf/traffic_rules.yaml:/openair-pcf/policies/traffic_rules/traffic_rules.yaml
+      - ./logs/pcf:/openair-pcf/logs
+    depends_on:
+      - nrf
+    # cpuset: "0-1"
+    # cpus: 0.3
+    # cpu_shares: 256
+    command: >
+      sh -c "sleep 5 &&
+             /openair-pcf/bin/oai_pcf -c /openair-pcf/etc/config.yaml -o"
+
+  nssf:
+    image: nssf:comnetsemu
+    container_name: nssf
+    hostname: nssf
+    cap_add:
+      - NET_ADMIN
+      - SYS_NICE
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.135
+    ports:
+      - "192.168.1.210:9093:80/tcp"
+      - "192.168.1.210:9103:8080/tcp"
+    volumes:
+      - ./configs/nssf/nssf_config.yaml:/openair-nssf/etc/config.yaml
+      - ./configs/nssf/nssf_slice_config.yaml:/openair-nssf/etc/nssf_slice_config.yaml  
+      - ./logs/nssf:/openair-nssf/logs
+    depends_on:
+      - nrf
+    # cpuset: "0-1"
+    # cpus: 0.3
+    # cpu_shares: 512
+    command: >
+      sh -c "sleep 5 &&
+             /openair-nssf/bin/oai_nssf -c /openair-nssf/etc/config.yaml -o"
+
+  udm:
+    image: udm:comnetsemu
+    container_name: udm
+    hostname: udm
+    cap_add:
+      - NET_ADMIN
+      - SYS_NICE
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.136
+    ports:
+      - "192.168.1.210:9095:80/tcp"
+      - "192.168.1.210:9105:8080/tcp"
+    volumes:
+      - ./configs/udm/udm_config.yaml:/openair-udm/etc/config.yaml
+      - ./logs/udm:/openair-udm/logs
+    depends_on:
+      - nrf
+    # cpuset: "0-1"
+    # cpus: 0.3
+    # cpu_shares: 256
+    command: >
+      sh -c "sleep 5 &&
+             /openair-udm/bin/oai_udm -c /openair-udm/etc/config.yaml -o"
+
+  udr:
+    image: udr:comnetsemu
+    container_name: udr
+    hostname: udr
+    cap_add:
+      - NET_ADMIN
+      - SYS_NICE
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.137
+    ports:
+      - "192.168.1.210:9096:80/tcp"
+    volumes:
+      - ./configs/udr/udr_config.yaml:/openair-udr/etc/config.yaml
+      - ./logs/udr:/openair-udr/logs
+    depends_on:
+      - nrf
+    # cpuset: "0-1"
+    # cpus: 0.3
+    # cpu_shares: 256
+    command: >
+      sh -c "sleep 5 &&
+             /openair-udr/bin/oai_udr -c /openair-udr/etc/config.yaml -o"
+
+  ausf:
+    image: ausf:comnetsemu
+    container_name: ausf
+    hostname: ausf
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+      - SYS_NICE
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.138
+    ports:
+      - "192.168.1.210:9097:80/tcp"
+    volumes:
+      - ./configs/ausf/ausf_config.yaml:/openair-ausf/etc/config.yaml
+      - ./logs/ausf:/openair-ausf/logs
+    depends_on:
+      - nrf
+    # cpuset: "0-1"
+    # cpus: 0.3
+    # cpu_shares: 256
+    command: >
+      sh -c "sleep 5 &&
+             /openair-ausf/bin/oai_ausf -c /openair-ausf/etc/config.yaml -o"
+
+
+  # ==========================================
+  # Core UPF (Central/Anchor) — Slice 1 (SST=1, SD=1)
+  # ==========================================
+  upf_core:
+    image: upf_1:comnetsemu
+    container_name: upf_core
+    hostname: upf_core
+    cap_add:
+      - NET_ADMIN
+      - SYS_NICE
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.134
+        priority: 1000
+        interface_name: eth0
+      ext_net:
+        ipv4_address: 192.168.72.30
+        priority: 900
+        interface_name: eth1
+    ports:
+      - "192.168.1.210:8085:8085/tcp"
+      - "192.168.1.210:8086:8805/udp"
+      - "192.168.1.210:2152:2152/udp"       # GTP-U N3
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    volumes:
+      - ./configs/upf_core/upf_core_config.yaml:/openair-upf/etc/config.yaml
+      - ./logs/upf_core:/openair-upf/logs
+    depends_on:
+      - nrf
+      - smf
+    environment:
+      - ETH0_IP=192.168.71.134
+      - ETH1_IP=192.168.72.30
+    # cpuset: "2-3"
+    # cpus: 1.5
+    # cpu_shares: 4096
+    # oom_score_adj: -500
+    # ulimits:
+    #   rtprio: 99
+    #   memlock: -1
+    #   nofile: 1048576
+    # sysctls:
+    #   - net.core.rmem_max=33554432
+    #   - net.core.wmem_max=33554432
+    entrypoint: [""]
+    command: >
+      sh -c "sysctl -w net.ipv4.ip_forward=1 &&
+             ip route add 172.18.0.0/24 via 192.168.72.31 dev eth1 &&
+             sleep 2 &&
+             /openair-upf/bin/oai_upf -c /openair-upf/etc/config.yaml -o"
+
+  ext_dn_core:
+    image: ext_dn:comnetsemu
+    container_name: ext_dn_core
+    hostname: ext_dn_core
+    cap_add:
+      - SYS_NICE
+      - NET_ADMIN
+    networks:
+      ext_net:
+        ipv4_address: 192.168.72.31
+        interface_name: eth0
+      sgi_net:
+        ipv4_address: 172.18.0.9
+        interface_name: eth1
+    environment:
+      - EBPF_GW_SETUP=no
+      - EBPF_GW_N6_IP_ADDR=192.168.72.31
+      - N6_IF_NAME=eth0
+      - SGI_IF_NAME=eth2
+      - N3_IF_NAME=eth1
+      - GW_SGI_IP_ADDR=172.18.0.9
+      - GW_N3_IP_ADDR=192.168.72.31
+      - UE_IP_ADDRESS_POOL_1=12.1.1.0/24
+      - UE_IP_ADDRESS_POOL_2=13.1.1.0/24
+      - UE_IP_ADDRESS_POOL_3=14.1.1.0/24
+      - SGI_DEMO_OAI_ADDR=172.18.0.1
+      - N6_UPF_IP_ADDR=192.168.72.30
+    #entrypoint: ["/bin/bash", "-c", "sleep infinity"]
+              #"iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE;"\
+              #"ip route add 12.1.1.0/24 via 192.168.72.30 dev eth0;"\
+              #"ip route add 13.1.1.0/24 via 192.168.72.30 dev eth0;"\
+              #"ip route add 14.1.1.0/24 via 192.168.72.30 dev eth0; sleep infinity"
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    volumes:
+      - ./configs/ext_dn:/tmp
+    depends_on:
+      - upf_core
+    # cpuset: "0-3"
+    # cpus: 0.5
+    # cpu_shares: 256
+    command:
+      - /bin/bash
+      - -c
+      - |
+        set -ex
+        update-alternatives --set iptables  /usr/sbin/iptables-nft  || true
+        update-alternatives --set ip6tables /usr/sbin/ip6tables-nft || true 
+        iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+        ip route add 12.1.1.0/24 via 192.168.72.30 dev eth0 || true
+        ip route add 13.1.1.0/24 via 192.168.72.30 dev eth0 || true
+        ip route add 14.1.1.0/24 via 192.168.72.30 dev eth0 || true
+        /tmp/trfgen_entrypoint.sh 
+        iperf3 -s -D -p 5201
+        iperf3 -s -D -p 5202
+        iperf3 -s -D -p 5203
+        sleep infinity
+    healthcheck:
+      test: /bin/bash -c "ping -c 2 192.168.72.30"
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================
+  # FlexRIC Near Real-Time RIC
+  # Needs to start at the core level to enable ran units to boot up
+  # ==========================================
+
+  flexric:
+    image: comnetsemu_flexric:comnetsemu
+    container_name: flexric
+    hostname: flexric
+    environment:
+      - XAPP_DURATION=-1
+      # reloc-ctl (CU-UP relocation control for the Grafana dashboard)
+      - RELOC_CUUP_NAMES=3585=cuup_co,3586=cuup_e
+    cap_add:
+      - SYS_NICE
+      - SYS_PTRACE 
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.150
+    ports:
+      - "192.168.1.210:36421:36421/sctp"
+      - "192.168.1.210:36422:36422/sctp"
+      - "192.168.1.210:9464:9464/tcp"
+      # reloc-ctl: the dashboard's buttons (browser) and the log agents (other machines).
+      # Host port 8095: 8085 is the UPF's on every machine.
+      - "192.168.1.210:8095:8085/tcp"
+    volumes:
+      - ./configs/flexric:/usr/local/etc/flexric
+      - ./logs/flexric:/usr/local/etc/flexric_logs
+      - ./logs/cuup_co:/usr/local/flexric/cu_logs:ro
+      - ./flexric_volumes/probe_nodes.py:/usr/local/etc/flexric/probe_nodes.py
+      - ./flexric_volumes/event_ric_watchdog.sh:/usr/local/bin/event_ric_watchdog.sh
+      - ./flexric_volumes/reloc_ctl.py:/usr/local/bin/reloc_ctl.py:ro
+      #- ./flexric_volumes/ric_watchdog.sh:/usr/local/bin/ric_watchdog.sh
+      - ./flexric_volumes/xapp_slice_check.py:/usr/local/flexric/xApp/python3/xapp_daemon.py
+      - ./flexric_volumes/topology.py:/usr/local/flexric/xApp/python3/topology.py
+      - ./flexric_volumes/xapp_functs.py:/usr/local/flexric/xApp/python3/xapp_functs.py
+      - ./flexric_volumes/xapp_test.py:/usr/local/flexric/xApp/python3/xapp.py
+      - ./flexric_volumes/xapp_daemon_topo.py:/usr/local/flexric/xApp/python3/xapp_daemon_topo.py
+      - xapp_db_data:/usr/local/xappdb           # <-- exposes /tmp/xapp_db
+    # cpuset: "0-1"
+    # cpus: 0.5
+    # cpu_shares: 512
+    command: >
+      sh -c '
+        mkdir -p /usr/local/etc/flexric_logs
+        touch /var/log/ric_watchdog.log
+        /usr/local/bin/event_ric_watchdog.sh >> /var/log/ric_watchdog.log 2>&1 &
+        python3 /usr/local/bin/reloc_ctl.py >> /usr/local/etc/flexric_logs/reloc_ctl.log 2>&1 &
+        sleep 6
+
+        FILES="/var/log/ric_watchdog.log"
+        for f in /usr/local/etc/flexric_logs/*.log; do
+          # the KPM monitor prints every indication; it stays in its file, not in docker logs
+          case "$$f" in *kpm_moni_xapp.log|*reloc_ctl_run_*.log) continue ;; esac
+          [ -e "$$f" ] && FILES="$$FILES $$f"
+        done
+
+        exec tail -n +1 -F $$FILES
+      '
+# sh -c "sleep 5 &&
+#        /usr/local/bin/event_ric_watchdog.sh"
+    healthcheck:
+      test: ["CMD-SHELL", "ss -Sln | grep -q ':36421' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ==========================================
+  # CU-CP (Control Plane only)
+  # ==========================================
+
+  cucp:
+    image: cu:comnetsemu
+    container_name: cucp
+    hostname: cucp
+    cap_add:
+      - SYS_NICE
+      - NET_ADMIN
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.140
+    ports:
+      - "192.168.1.210:38472:38472/sctp"    # F1-C (inbound from all DUs)
+      - "192.168.1.210:38462:38462/sctp"    # E1 (inbound from all CU-UPs)
+    volumes:
+      - ./configs/cucp/gnb-cucp.sa.f1.conf:/opt/oai-gnb/etc/gnb.conf
+      - ./logs/cucp:/opt/oai-gnb/logs
+    environment:
+      USE_ADDITIONAL_OPTIONS: >-
+        -E
+        --log_config.global_log_options level,nocolor,time
+        --log_config.global_log_level info
+        --log_config.ngap_log_level debug
+        --log_config.f1ap_log_level debug
+        --log_config.e1ap_log_level debug
+        --e2_agent.near_ric_ip_addr 192.168.71.150
+        --e2_agent.sm_dir /usr/local/lib/flexric/
+        --telnetsrv --telnetsrv.shrmod ci,rrc
+        --gNBs.[0].gNB_ID 0xe00
+        --gNBs.[0].gNB_name gNB-OAI
+        --gNBs.[0].nr_cellid 11111111
+        --gNBs.[0].tr_s_preference f1
+        --gNBs.[0].local_s_address 192.168.71.140
+        --gNBs.[0].remote_s_address 0.0.0.0
+        --gNBs.[0].amf_ip_address.[0].ipv4 192.168.71.132
+        --gNBs.[0].E1_INTERFACE.[0].type cp
+        --gNBs.[0].E1_INTERFACE.[0].ipv4_cucp 192.168.71.140
+        --gNBs.[0].E1_INTERFACE.[0].ipv4_cuup 0.0.0.0
+        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NG_AMF 192.168.71.140/26
+        --gNBs.[0].NETWORK_INTERFACES.GNB_IPV4_ADDRESS_FOR_NGU 192.168.71.140/26
+    depends_on:
+      - amf
+    # cpuset: "2-3"
+    # cpus: 1.5
+    # cpu_shares: 8192            # highest priority on this host
+    # oom_score_adj: -700
+    # ulimits:
+    #   rtprio: 99
+    #   memlock: -1
+    #   nofile: 1048576
+    # sysctls:
+    #   - net.core.rmem_max=33554432
+    #   - net.core.wmem_max=33554432
+    command: >
+      sh -c "sleep 15 &&
+             exec /tini -sv -- /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem 2>&1 |
+             stdbuf -oL tee /opt/oai-gnb/logs/cucp_stdout.log"
+  # ==========================================
+  # Observability: Prometheus (central TSDB)
+  # ==========================================
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: prometheus
+    hostname: prometheus
+    user: root
+    cap_add:
+      - SYS_NICE
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.180
+    ports:
+      - "192.168.1.210:9080:9080/tcp"
+    volumes:
+      - ./configs/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./configs/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=30d
+      - --storage.tsdb.retention.size=10GB
+      - --web.enable-lifecycle
+      - --web.listen-address=0.0.0.0:9080
+    depends_on:
+      - flexric
+    # cpuset: "0-1"
+    # cpus: 0.5
+    # cpu_shares: 128
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9080/-/healthy"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ==========================================
+  # Observability: Grafana (dashboards)
+  # ==========================================
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: grafana
+    hostname: grafana
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.181
+    ports:
+      - "192.168.1.210:3000:3000/tcp"
+    volumes:
+      - ./configs/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./configs/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+      - xapp_db_data:/var/lib/grafana/sqlite
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel,frser-sqlite-datasource
+      - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=frser-sqlite-datasource
+      - GF_SERVER_HTTP_ADDR=0.0.0.0
+      - GF_SERVER_HTTP_PORT=3000
+      - GF_SERVER_PROTOCOL=http
+      - GF_SERVER_DOMAIN=192.168.1.210
+      - GF_SERVER_ROOT_URL=http://192.168.1.210:3000/
+      - GF_SERVER_SERVE_FROM_SUB_PATH=false
+      - GF_SECURITY_COOKIE_SECURE=false       # set true once you put TLS in front
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+      - GF_LOG_LEVEL=info
+    depends_on:
+      - prometheus
+    # cpuset: "0-1"
+    # cpus: 0.5
+    # cpu_shares: 128
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 25s
+
+  pushgateway:
+    image: prom/pushgateway:v1.9.0
+    container_name: pushgateway
+    networks:
+      core_net:
+        ipv4_address: 192.168.71.182
+    #command: ["--web.listen-address=:9098"]     
+    ports:
+      - "192.168.1.210:9099:9091/tcp"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9091/-/healthy"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+networks:
+  core_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.71.128/26
+          gateway: 192.168.71.129
+    driver_opts:
+      com.docker.network.bridge.name: br-core
+
+  ext_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.72.0/26
+          gateway: 192.168.72.1
+    driver_opts:
+      com.docker.network.bridge.name: br-ext
+
+  sgi_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.18.0.0/24
+          gateway: 172.18.0.1
+    driver_opts:
+      com.docker.network.bridge.name: br-sgi
+
+volumes:
+  mysql_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  xapp_db_data:
+    driver: local

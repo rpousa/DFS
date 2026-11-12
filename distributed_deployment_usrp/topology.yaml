@@ -1,0 +1,26 @@
+# Static topology — derived from the three docker-compose files.
+# Edit only when you change container IPs or host port mappings in compose.
+hosts:
+  core:
+    lan_ip: 192.168.1.210
+    udp_endpoints:
+      - { name: upf_core_n3,    container_ip: 192.168.71.134, container_port: 2152, host_port: 2152 }
+      - { name: smf_pfcp,       container_ip: 192.168.71.133, container_port: 8805, host_port: 8805 }
+      # upf_core_pfcp intentionally omitted — same-host only, no DNAT needed
+  centraloffice:
+    lan_ip: 192.168.1.219
+    udp_endpoints:
+      - { name: cuup_co_f1u,    container_ip: 192.168.61.140, container_port: 2153, host_port: 2153 }
+      - { name: cuup_co_n3,     container_ip: 192.168.61.140, container_port: 2152, host_port: 2154 }
+      - { name: upf_co_n3,      container_ip: 192.168.61.144, container_port: 2152, host_port: 2152 }
+      - { name: upf_co_pfcp,    container_ip: 192.168.61.144, container_port: 8805, host_port: 8805 }
+      - { name: du_co_f1u,      container_ip: 192.168.61.141, container_port: 2152, host_port: 2162 }
+  edge:
+    lan_ip: 192.168.1.221
+    udp_endpoints:
+      - { name: cuup_e_f1u,     container_ip: 192.168.81.140, container_port: 2153, host_port: 2153 }
+      - { name: cuup_e_n3,      container_ip: 192.168.81.140, container_port: 2152, host_port: 2154 } 
+      - { name: upf_e_n3,       container_ip: 192.168.81.154, container_port: 2152, host_port: 2152 }
+      - { name: upf_e_pfcp,     container_ip: 192.168.81.154, container_port: 8805, host_port: 8805 }
+      - { name: du_e1_f1u,      container_ip: 192.168.81.151, container_port: 2152, host_port: 2162 }
+      - { name: du_e2_f1u,      container_ip: 192.168.81.161, container_port: 2152, host_port: 2163 }

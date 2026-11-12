@@ -1,0 +1,108 @@
+{
+  "title": "RAN L2/Transport (MAC/RLC/PDCP/GTP)",
+  "uid": "ran-l2-transport",
+  "timezone": "UTC",
+  "refresh": "5s",
+  "time": { "from": "now-15m", "to": "now" },
+  "templating": { "list": [
+    { "name": "node", "type": "query", "datasource": {"type":"prometheus","uid":"prometheus"},
+      "query": "label_values(ran_mac_ue, e2_node)", "includeAll": true, "multi": true }
+  ]},
+  "panels": [
+    { "id": 1, "title": "MAC PRB usage (DL) per RNTI", "type": "timeseries",
+      "gridPos": {"h":8,"w":12,"x":0,"y":0},
+      "datasource": {"type":"prometheus","uid":"prometheus"},
+      "fieldConfig": {"defaults": {"unit":"short","color":{"mode":"palette-classic"}}},
+      "targets": [ {"expr":"rate(ran_mac_ue{field=\"dl_aggr_prb\",e2_node=~\"$node\"}[1m])",
+                    "legendFormat":"{{e2_node}} {{rnti}}"} ] },
+
+    { "id": 2, "title": "MAC PRB usage (UL) per RNTI", "type": "timeseries",
+      "gridPos": {"h":8,"w":12,"x":12,"y":0},
+      "datasource": {"type":"prometheus","uid":"prometheus"},
+      "fieldConfig": {"defaults": {"unit":"short","color":{"mode":"palette-classic"}}},
+      "targets": [ {"expr":"rate(ran_mac_ue{field=\"ul_aggr_prb\",e2_node=~\"$node\"}[1m])",
+                    "legendFormat":"{{e2_node}} {{rnti}}"} ] },
+
+    { "id": 3, "title": "Transport block DL usage per UE", "type": "timeseries",
+      "gridPos": {"h":8,"w":12,"x":0,"y":8},
+      "datasource": {"type":"prometheus","uid":"prometheus"},
+      "fieldConfig": {"defaults": {"unit":"short","color":{"mode":"palette-classic"}}},
+      "targets": [
+        {"expr":"rate(ran_mac_ue{field=\"dl_aggr_tbs\",e2_node=~\"$node\"}[1m])",
+        "legendFormat":"Transport Block Throughput DL  {{rnti}}"}]},
+    
+    { "id": 4, "title": "Transport block UL usage per UE", "type": "timeseries",
+      "gridPos": {"h":8,"w":12,"x":12,"y":8},
+      "datasource": {"type":"prometheus","uid":"prometheus"},
+      "fieldConfig": {"defaults": {"unit":"short","color":{"mode":"palette-classic"}}},
+      "targets": [
+        {"expr":"rate(ran_mac_ue{field=\"ul_aggr_tbs\",e2_node=~\"$node\"}[1m])"
+        ,"legendFormat":"Transport Block Throughput UL {{rnti}}"}]},
+    
+
+    { "id": 5, "title": "PDCP PDU throughput DL (bytes/s)", "type": "timeseries",
+      "gridPos": {"h":8,"w":12,"x":0,"y":16},
+      "datasource": {"type":"prometheus","uid":"prometheus"},
+      "fieldConfig": {"defaults": {"unit":"Bps","color":{"mode":"palette-classic"}}},
+      "targets": [ {"expr":"rate(ran_pdcp_bearer{field=\"txpdu_bytes\"}[1m])",
+                    "legendFormat":" rnti {{rnti}}"} ] },
+
+    { "id": 6, "title": "PDCP PDU throughput UL (bytes/s)", "type": "timeseries",
+      "gridPos": {"h":8,"w":12,"x":12,"y":16},
+      "datasource": {"type":"prometheus","uid":"prometheus"},
+      "fieldConfig": {"defaults": {"unit":"Bps","color":{"mode":"palette-classic"}}},
+      "targets": [ {"expr":"rate(ran_pdcp_bearer{field=\"rxpdu_bytes\"}[1m])",
+                    "legendFormat":" rnti {{rnti}}"} ] },
+
+    { "id": 7, "title": "PDCP throughput DL (packets/s)", "type": "timeseries",
+      "gridPos": {"h":8,"w":12,"x":0,"y":24},
+      "datasource": {"type":"prometheus","uid":"prometheus"},
+      "fieldConfig": {"defaults": {"unit":"pps","color":{"mode":"palette-classic"}}},
+      "targets": [ {"expr":"rate(ran_pdcp_bearer{field=\"txpdu_pkts\"}[1m])",
+                    "legendFormat":" rnti {{rnti}}"} ] },
+
+    { "id": 8, "title": "PDCP throughput UL (packets/s)", "type": "timeseries",
+      "gridPos": {"h":8,"w":12,"x":12,"y":24},
+      "datasource": {"type":"prometheus","uid":"prometheus"},
+      "fieldConfig": {"defaults": {"unit":"pps","color":{"mode":"palette-classic"}}},
+      "targets": [ {"expr":"rate(ran_pdcp_bearer{field=\"rxpdu_pkts\"}[1m])",
+                    "legendFormat":" rnti {{rnti}}"} ] },
+
+    { "id": 9, "title": "RLC buffer occupancy (TX bytes)", "type": "timeseries",
+      "gridPos": {"h":8,"w":12,"x":0,"y":32},
+      "datasource": {"type":"prometheus","uid":"prometheus"},
+      "fieldConfig": {"defaults": {"unit":"decbytes","min": 0,
+    "softMax": 1000000,"color":{"mode":"palette-classic"}}},
+      "targets": [ {"expr":"ran_rlc_bearer{field=\"txbuf_occ_bytes\",e2_node=~\"$node\"}",
+                    "legendFormat":"{{e2_node}} rnti {{rnti}} rb {{rbid}}"} ] },
+
+    { "id": 10, "title": "RLC buffer occupancy (RX bytes)", "type": "timeseries",
+      "gridPos": {"h":8,"w":12,"x":12,"y":32},
+      "datasource": {"type":"prometheus","uid":"prometheus"},
+      "fieldConfig": {"defaults": {"unit":"decbytes","min": 0,
+    "softMax": 1000000,"color":{"mode":"palette-classic"}}},
+      "targets": [ {"expr":"ran_rlc_bearer{field=\"rxbuf_occ_bytes\",e2_node=~\"$node\"}",
+                    "legendFormat":"{{e2_node}} rnti {{rnti}} rb {{rbid}}"} ] },
+
+    { "id": 11, "title": "RLC TX PDU throughput (bytes/s)", "type": "timeseries",
+      "gridPos": {"h":8,"w":12,"x":0,"y":40},
+      "datasource": {"type":"prometheus","uid":"prometheus"},
+      "fieldConfig": {"defaults": {"unit":"Bps","color":{"mode":"palette-classic"}}},
+      "targets": [ {"expr":"rate(ran_rlc_bearer{field=\"txpdu_bytes\",e2_node=~\"$node\"}[1m])",
+                    "legendFormat":"{{e2_node}} rnti {{rnti}} rb {{rbid}}"} ] },
+
+    { "id": 12, "title": "RLC RX PDU throughput (bytes/s)", "type": "timeseries",
+      "gridPos": {"h":8,"w":12,"x":12,"y":40},
+      "datasource": {"type":"prometheus","uid":"prometheus"},
+      "fieldConfig": {"defaults": {"unit":"Bps","color":{"mode":"palette-classic"}}},
+      "targets": [ {"expr":"rate(ran_rlc_bearer{field=\"rxpdu_bytes\",e2_node=~\"$node\"}[1m])",
+                    "legendFormat":"{{e2_node}} rnti {{rnti}} rb {{rbid}}"} ] },
+
+    { "id": 13, "title": "RLC TX sdu wait time", "type": "timeseries",
+      "gridPos": {"h":8,"w":12,"x":0,"y":48},
+      "datasource": {"type":"prometheus","uid":"prometheus"},
+      "fieldConfig": {"defaults": {"unit":"ms","color":{"mode":"palette-classic"}}},
+      "targets": [ {"expr":"ran_rlc_bearer{field=\"txsdu_wt_us\",e2_node=~\"$node\"} / 1000",
+                    "legendFormat":"{{e2_node}} rnti {{rnti}} rb {{rbid}}"} ] }
+  ]
+}

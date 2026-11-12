@@ -1,0 +1,83 @@
+cgcc@cgcc:~/Desktop/EWOC/DFS/distributed_deployment$ curl -s http://192.168.1.210:9464/metrics
+# HELP python_gc_objects_collected_total Objects collected during gc
+# TYPE python_gc_objects_collected_total counter
+python_gc_objects_collected_total{generation="0"} 94.0
+python_gc_objects_collected_total{generation="1"} 297.0
+python_gc_objects_collected_total{generation="2"} 0.0
+# HELP python_gc_objects_uncollectable_total Uncollectable objects found during GC
+# TYPE python_gc_objects_uncollectable_total counter
+python_gc_objects_uncollectable_total{generation="0"} 0.0
+python_gc_objects_uncollectable_total{generation="1"} 0.0
+python_gc_objects_uncollectable_total{generation="2"} 0.0
+# HELP python_gc_collections_total Number of times this generation was collected
+# TYPE python_gc_collections_total counter
+python_gc_collections_total{generation="0"} 60.0
+python_gc_collections_total{generation="1"} 5.0
+python_gc_collections_total{generation="2"} 0.0
+# HELP python_info Python platform information
+# TYPE python_info gauge
+python_info{implementation="CPython",major="3",minor="10",patchlevel="12",version="3.10.12"} 1.0
+# HELP process_virtual_memory_bytes Virtual memory size in bytes.
+# TYPE process_virtual_memory_bytes gauge
+process_virtual_memory_bytes 5.8515456e+08
+# HELP process_resident_memory_bytes Resident memory size in bytes.
+# TYPE process_resident_memory_bytes gauge
+process_resident_memory_bytes 5.3518336e+07
+# HELP process_start_time_seconds Start time of the process since unix epoch in seconds.
+# TYPE process_start_time_seconds gauge
+process_start_time_seconds 1.78584226966e+09
+# HELP process_cpu_seconds_total Total user and system CPU time spent in seconds.
+# TYPE process_cpu_seconds_total counter
+process_cpu_seconds_total 169.16000000000003
+# HELP process_open_fds Number of open file descriptors.
+# TYPE process_open_fds gauge
+process_open_fds 11.0
+# HELP process_max_fds Maximum number of open file descriptors.
+# TYPE process_max_fds gauge
+process_max_fds 1024.0
+# HELP ue_residency_seconds Current UE residency time on an E2 node
+# TYPE ue_residency_seconds gauge
+ue_residency_seconds{cu_du_id="0xe01",e2_node="cuup_0xe01",node_type="ngran_gNB_CUUP",rnti="0x0002"} 1079.673269033432
+ue_residency_seconds{cu_du_id="0xe01",e2_node="cuup_0xe01",node_type="ngran_gNB_CUUP",rnti="0x0001"} 1079.6711325645447
+ue_residency_seconds{cu_du_id="0xe01",e2_node="cuup_0xe01",node_type="ngran_gNB_CUUP",rnti="0x0003"} 1079.6711325645447
+ue_residency_seconds{cu_du_id="0xe03",e2_node="du_0xe03",node_type="ngran_gNB_DU",rnti="0x73fd"} 1079.669284582138
+ue_residency_seconds{cu_du_id="0xe03",e2_node="du_0xe03",node_type="ngran_gNB_DU",rnti="0x507f"} 1079.669284582138
+ue_residency_seconds{cu_du_id="0xe03",e2_node="du_0xe03",node_type="ngran_gNB_DU",rnti="0x9628"} 1079.669284582138
+# HELP node_active_ue_count Active UEs currently present on an E2 node
+# TYPE node_active_ue_count gauge
+node_active_ue_count{e2_node="cuup_0xe01",node_type="ngran_gNB_CUUP"} 3.0
+node_active_ue_count{e2_node="du_0xe03",node_type="ngran_gNB_DU"} 3.0
+# HELP ue_session_duration_seconds Finalized UE residency (session) duration
+# TYPE ue_session_duration_seconds summary
+# HELP ue_dl_slice_id Current DL slice id associated to a UE
+# TYPE ue_dl_slice_id gauge
+ue_dl_slice_id{e2_node="du_0xe03",rnti="0x02e2"} 12.0
+ue_dl_slice_id{e2_node="du_0xe03",rnti="0x01cf"} 5.0
+# HELP ran_mac_ue MAC per-UE
+# TYPE ran_mac_ue gauge
+ran_mac_ue{e2_node="du_0xe03",field="dl_aggr_tbs",rnti="0x73fd"} 5.4218069e+07
+ran_mac_ue{e2_node="du_0xe03",field="ul_aggr_tbs",rnti="0x73fd"} 1.04109678e+09
+ran_mac_ue{e2_node="du_0xe03",field="dl_aggr_prb",rnti="0x73fd"} 598269.0
+ran_mac_ue{e2_node="du_0xe03",field="ul_aggr_prb",rnti="0x73fd"} 8.0970338e+07
+ran_mac_ue{e2_node="du_0xe03",field="dl_mcs1",rnti="0x73fd"} 28.0
+ran_mac_ue{e2_node="du_0xe03",field="ul_mcs1",rnti="0x73fd"} 6.0
+ran_mac_ue{e2_node="du_0xe03",field="wb_cqi",rnti="0x73fd"} 0.0
+ran_mac_ue{e2_node="du_0xe03",field="pusch_snr",rnti="0x73fd"} 49.000179290771484
+ran_mac_ue{e2_node="du_0xe03",field="dl_bler",rnti="0x73fd"} 5.605193857299268e-45
+ran_mac_ue{e2_node="du_0xe03",field="ul_bler",rnti="0x73fd"} 5.605193857299268e-45
+ran_mac_ue{e2_node="du_0xe03",field="bsr",rnti="0x73fd"} 0.0
+# HELP ran_rlc_bearer RLC per-bearer
+# TYPE ran_rlc_bearer gauge
+ran_rlc_bearer{e2_node="du_0xe03",field="txpdu_bytes",rbid="1",rnti="0x73fd"} 353553.0
+ran_rlc_bearer{e2_node="du_0xe03",field="rxpdu_bytes",rbid="1",rnti="0x73fd"} 6.39573635e+08
+ran_rlc_bearer{e2_node="du_0xe03",field="txbuf_occ_bytes",rbid="1",rnti="0x73fd"} 0.0
+ran_rlc_bearer{e2_node="du_0xe03",field="rxbuf_occ_bytes",rbid="1",rnti="0x73fd"} 0.0
+ran_rlc_bearer{e2_node="du_0xe03",field="txsdu_wt_us",rbid="1",rnti="0x73fd"} 0.0
+# HELP ran_pdcp_bearer PDCP per-bearer
+# TYPE ran_pdcp_bearer gauge
+ran_pdcp_bearer{e2_node="cuup_0xe01",field="txpdu_bytes",rbid="1",rnti="0x0002"} 40088.0
+ran_pdcp_bearer{e2_node="cuup_0xe01",field="rxpdu_bytes",rbid="1",rnti="0x0002"} 1.254357052e+09
+ran_pdcp_bearer{e2_node="cuup_0xe01",field="txpdu_pkts",rbid="1",rnti="0x0002"} 221.0
+ran_pdcp_bearer{e2_node="cuup_0xe01",field="rxpdu_pkts",rbid="1",rnti="0x0002"} 5.406768e+06
+ran_pdcp_bearer{e2_node="cuup_0xe01",field="txsdu_bytes",rbid="1",rnti="0x0002"} 1.238120031e+09
+ran_pdcp_bearer{e2_node="cuup_0xe01",field="rxsdu_bytes",rbid="1",rnti="0x0002"} 39425.0

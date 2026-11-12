@@ -1,0 +1,57 @@
+# docker-compose-observability.yml
+# Deployed on Core, CO, and Edge.
+# Exposes node + container metrics to Prometheus on Core (192.168.1.210:9090).
+
+services:
+  node_exporter:
+    image: prom/node-exporter:v1.8.2
+    container_name: node_exporter
+    hostname: node_exporter
+    network_mode: host
+    pid: host
+    restart: unless-stopped
+    volumes:
+      - /:/host:ro,rslave
+    command:
+      - --path.rootfs=/host
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
+      - --collector.netdev.device-include=^(eno.*|enp.*|eth.*|br-.*|veth.*)$$
+      - --web.listen-address=:9100
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9100/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: cadvisor
+    hostname: cadvisor
+    network_mode: host
+    pid: host
+    cgroup: host
+    privileged: true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:8081/healthz || exit 1"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    volumes:
+      - /:/rootfs:ro,rslave
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - ${DOCKER_ROOT_DIR:-/var/lib/docker}:/var/lib/docker:ro
+      - /dev/disk:/dev/disk:ro
+      - /var/lib/docker/:/var/lib/docker:ro 
+    command:
+      - --docker_only=true
+      - --port=8081
+      - --housekeeping_interval=5s
+      - --docker_only=true
+      - --store_container_labels=false
+      - --whitelisted_container_labels=com.docker.compose.service,com.docker.compose.project

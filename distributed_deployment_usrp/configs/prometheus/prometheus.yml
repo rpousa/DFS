@@ -1,0 +1,52 @@
+global:
+  scrape_interval: 2s
+  scrape_timeout: 2s
+  evaluation_interval: 2s
+  external_labels:
+    testbed: 5g-distributed
+    collector: core
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+scrape_configs:
+  # --- Host metrics (all 3 machines, via host LAN IPs) ---
+  - job_name: node
+    static_configs:
+      - targets: ['192.168.1.210:9100']
+        labels: { host: core,          role: core }
+      - targets: ['192.168.1.219:9100']
+        labels: { host: centraloffice, role: centraloffice }
+      - targets: ['192.168.1.221:9100']
+        labels: { host: edge,          role: edge }
+
+  # --- Container metrics (all 3 machines) ---
+  - job_name: cadvisor
+    static_configs:
+      - targets: ['192.168.1.210:8081']
+        labels: { host: core,          role: core }
+      - targets: ['192.168.1.219:8081']
+        labels: { host: centraloffice, role: centraloffice }
+      - targets: ['192.168.1.221:8081']
+        labels: { host: edge,          role: edge }
+
+  # --- xApp / FlexRIC KPMs (local to Core, via core_net bridge) ---
+  - job_name: flexric_xapp
+    metrics_path: /metrics
+    scrape_interval: 1s
+    static_configs:
+      - targets: ['192.168.71.150:9464']
+        labels: { component: xapp, role: flexric }
+
+  # --- Prometheus self-scrape ---
+  - job_name: prometheus
+    static_configs:
+      - targets: ['192.168.1.210:9080']
+
+  # --- Iperf Slicing  ---
+  - job_name: 'slice_iperf'
+    honor_labels: true
+    scrape_interval: 1s  
+    scrape_timeout: 1s
+    static_configs:
+      - targets: ['192.168.71.182:9091']

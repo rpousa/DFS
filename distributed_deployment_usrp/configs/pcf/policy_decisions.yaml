@@ -1,0 +1,58 @@
+# decision_supi1:
+#   supi_imsi: "208950000000110"
+#   pcc_rules:
+#     - steering-rule-primary
+# decision_supi2:
+#   supi_imsi: "208950000000111"
+#   pcc_rules:
+#     - steering-rule-primary
+# decision_supi3:
+#   supi_imsi: "208950000000112"
+#   pcc_rules:
+#     - steering-rule-primary
+# decision_supi4:
+#   supi_imsi: "208950000000113"
+#   pcc_rules:
+#     - steering-rule-primary
+# decision_supi5:
+#   supi_imsi: "208950000000214"
+#   pcc_rules:
+#     - steering-rule-primary
+# decision_supi6:
+#   supi_imsi: "208950000000215"
+#   pcc_rules:
+#     - steering-rule-primary
+# decision_supi7:
+#   supi_imsi: "208950000000216"
+#   pcc_rules:
+#     - steering-rule-primary
+# decision_supi8:
+#   supi_imsi: "208950000000217"
+#   pcc_rules:
+#     - steering-rule-primary
+# decision_supi9:
+#   supi_imsi: "208950000000318"
+#   pcc_rules:
+#     - steering-rule-primary
+# decision_supi10:
+#   supi_imsi: "208950000000319"
+#   pcc_rules:
+#     - steering-rule-primary
+# IMSI ...110 is the single UE with eMBB, URLLC and mIoT PDU sessions. A SUPI
+# decision covers all of its sessions, so it must not steer to one slice's DNAI
+# (rule-embb -> internet-embb would send the URLLC/mIoT sessions to upf_co).
+# rule-any has no traffic steering: the SMF picks the UPF by S-NSSAI + DNN,
+# and each UPF registers exactly one (upf_co oai/SST1, upf_e oai.2/SST2,
+# upf_core oai.3/SST3). Previous: { supi_imsi: "208950000000110", pcc_rules: [rule-embb] }
+decision_supi1:  { supi_imsi: "208950000000110", pcc_rules: [rule-any] }
+decision_supi2:  { supi_imsi: "208950000000111", pcc_rules: [rule-embb] }
+decision_supi3:  { supi_imsi: "208950000000112", pcc_rules: [rule-embb] }
+decision_supi4:  { supi_imsi: "208950000000113", pcc_rules: [rule-embb] }
+
+decision_supi5:  { supi_imsi: "208950000000214", pcc_rules: [rule-urllc] }
+decision_supi6:  { supi_imsi: "208950000000215", pcc_rules: [rule-urllc] }
+decision_supi7:  { supi_imsi: "208950000000216", pcc_rules: [rule-urllc] }
+decision_supi8:  { supi_imsi: "208950000000217", pcc_rules: [rule-urllc] }
+
+decision_supi9:  { supi_imsi: "208950000000318", pcc_rules: [rule-miot] }
+decision_supi10: { supi_imsi: "208950000000319", pcc_rules: [rule-miot] }
