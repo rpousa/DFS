@@ -12,9 +12,12 @@
 set -u
 cd "$(dirname "$0")"
 CTL="${RELOC_CTL:-http://192.168.1.210:8095}"
-PIDFILE="logs/reloc_log_agent.pid"
-LOG="logs/reloc_log_agent.log"
-mkdir -p logs
+# Own state dir: docker creates ./logs as root (bind mounts), so the agent
+# cannot write there when it runs as the user.
+STATE=".reloc_agent"
+mkdir -p "$STATE"
+PIDFILE="$STATE/reloc_log_agent.pid"
+LOG="$STATE/reloc_log_agent.log"
 
 stop() {
     if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
