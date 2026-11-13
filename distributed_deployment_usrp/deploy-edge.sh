@@ -260,14 +260,24 @@ bash ./setup-usrp-host.sh edge --check || print_warn "USRP links not ready -- se
 docker compose -f "$COMPOSE_FILE" up -d du_e1 
 wait_for_service "du_e1" 30
 #wait_for_service "du_e2" 30
-print_info "Waiting for DUs to initialize SCTP ..."
-sleep 20
-
+# The DU first does F1 Setup with the CU-CP, then opens the N310 (UHD init
+# takes 20-60 s), then starts transmitting ("rf device ready").
+print_info "Waiting for F1 Setup and the USRP (up to 120 s)..."
 for du in du_e1 ; do
-    if docker logs "$du" 2>&1 | grep -q "rf device ready"; then
-        print_info "✓ $du server listening"
+    f1=0; rf=0
+    for i in $(seq 1 24); do
+        sleep 5
+        logs=$(docker logs "$du" 2>&1)
+        [ $f1 -eq 0 ] && echo "$logs" | grep -q "received F1 Setup Response" && { f1=1; print_info "  ✓ $du F1 Setup with CU-CP (${CORE_IP}:38472)"; }
+        echo "$logs" | grep -q "rf device ready" && { rf=1; break; }
+        echo "$logs" | grep -qiE "AssertFatal|Exiting OAI softmodem|No devices found|segmentation" && break
+    done
+    if [ $rf -eq 1 ]; then
+        print_info "✓ $du on air (USRP $(echo "${EDGE_SDR_ARGS:-}" | grep -oP '(^|,)addr=\K[0-9.]+'))"
     else
-        print_warn "⚠ $du status unclear"
+        [ $f1 -eq 0 ] && print_warn "  ✗ $du: no F1 Setup Response -- check cucp logs and the SCTP fix on the core"
+        print_warn "⚠ $du not on air yet. Last radio lines:"
+        docker logs "$du" 2>&1 | grep -iE "UHD|HW|USRP|rf device|Assert|error" | tail -12 | sed 's/^/    /'
     fi
 done
 echo ""
@@ -304,7 +314,7 @@ if [ -f docker-compose-observability.yml ]; then
 fi
 
 # Stage 6.5/7: F1-U cross-machine routing setup (Edge → CO)
-print_stage "Stage 6.5/7: Starting observability agents..."
+print_stage "Stage 6.5/7: F1-U and N3 cross-machine routes (edge)"
 setup_f1u_routes_edge
 echo ""
 setup_n3_routes_edge
