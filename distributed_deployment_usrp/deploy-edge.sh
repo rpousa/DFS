@@ -257,6 +257,8 @@ echo ""
 # Stage 3/7: DU_e1 on the edge USRP (F1-U cross-machine to CO)
 print_stage "Stage 3/7: Starting DU_e1 (USRP) ..."
 bash ./setup-usrp-host.sh edge --check || print_warn "USRP links not ready -- see setup-usrp-host.sh edge"
+EDGE_MGMT=$(echo "${EDGE_SDR_ARGS:-addr=192.168.30.2}" | grep -oP '(^|,)(mgmt_)?addr=\K[0-9.]+' | head -1)
+bash ./usrp-wait-free.sh "$EDGE_MGMT" du:comnetsemu 90 || print_warn "USRP still claimed -- the DU will fail to start"
 docker compose -f "$COMPOSE_FILE" up -d du_e1 
 wait_for_service "du_e1" 30
 #wait_for_service "du_e2" 30

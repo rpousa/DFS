@@ -31,6 +31,8 @@ echo ""
 
 print_stage "Stage 2/4: Starting ue_0 (centraloffice USRP)"
 [ "${1:-}" = "--restart" ] && docker compose -f "$COMPOSE_FILE" rm -sf ue_0
+CO_MGMT=$(echo "${CO_SDR_ARGS:-addr=192.168.10.2}" | grep -oP '(^|,)(mgmt_)?addr=\K[0-9.]+' | head -1)
+bash ./usrp-wait-free.sh "$CO_MGMT" ue:comnetsemu 90 || exit 1
 docker compose -f "$COMPOSE_FILE" up -d --no-deps ue_0
 print_info "Waiting for the UE to sync to the edge DU and attach (up to 120 s)..."
 for i in $(seq 1 24); do
