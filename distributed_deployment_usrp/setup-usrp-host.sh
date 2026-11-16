@@ -41,6 +41,9 @@ check() {
       printf "  ✗ USRP %s does not answer\n" "$dst"; ok=1
     fi
   done
+  [ "$(sysctl -n kernel.sched_rt_runtime_us)" = "-1" ] \
+    && echo "  ✓ RT throttling off (sched_rt_runtime_us=-1)" \
+    || echo "  ⚠ RT throttling on (sched_rt_runtime_us=$(sysctl -n kernel.sched_rt_runtime_us)): sudo $0 $role"
   systemctl is-active --quiet usrp-cpu-latency \
     && echo "  ✓ deep CPU idle states held off (usrp-cpu-latency)" \
     || echo "  ⚠ deep CPU idle states allowed: sudo $0 $role   (expect TX underruns)"
@@ -64,7 +67,11 @@ if [ "$mode" != "--check" ]; then
   for k in rmem_max wmem_max rmem_default wmem_default; do
     cur=$(sysctl -n net.core.$k); [ "$cur" -ge 33554432 ] || sysctl -q -w net.core.$k=33554432
   done
-  printf 'net.core.rmem_max=%s\nnet.core.wmem_max=%s\nnet.core.rmem_default=%s\nnet.core.wmem_default=%s\n' \
+  # No RT throttling: OAI runs its radio threads SCHED_FIFO; with the default
+  # 950000/1000000 a busy RT core is stopped for 50 ms every second, longer
+  # than the UHD buffers last at 122.88 Msps (RX overflow, TX underrun).
+  sysctl -q -w kernel.sched_rt_runtime_us=-1
+  printf 'net.core.rmem_max=%s\nnet.core.wmem_max=%s\nnet.core.rmem_default=%s\nnet.core.wmem_default=%s\nkernel.sched_rt_runtime_us=-1\n' \
     "$(sysctl -n net.core.rmem_max)" "$(sysctl -n net.core.wmem_max)" \
     "$(sysctl -n net.core.rmem_default)" "$(sysctl -n net.core.wmem_default)" > /etc/sysctl.d/90-usrp.conf
   for g in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do echo performance > "$g" 2>/dev/null; done
