@@ -44,7 +44,7 @@ check() {
   rmem=$(sysctl -n net.core.rmem_max); wmem=$(sysctl -n net.core.wmem_max)
   [ "$rmem" -ge 33554432 ] && [ "$wmem" -ge 33554432 ] \
     && echo "  ✓ socket buffers rmem_max $rmem wmem_max $wmem" \
-    || { echo "  ✗ socket buffers too small (rmem_max $rmem wmem_max $wmem)"; ok=1; }
+    || { echo "  ✗ socket buffers too small (rmem_max $rmem wmem_max $wmem): sudo $0 $role"; ok=1; }
   return $ok
 }
 
@@ -56,8 +56,14 @@ if [ "$mode" != "--check" ]; then
     ip -4 addr show dev "$ifc" | grep -q " $hip/" || ip addr add "$hip/24" dev "$ifc"
     ethtool -G "$ifc" rx 4096 tx 4096 2>/dev/null || true
   done
-  sysctl -q -w net.core.rmem_max=33554432 net.core.wmem_max=33554432 \
-               net.core.rmem_default=33554432 net.core.wmem_default=33554432
+  # UHD wants >= 32 MB socket buffers; keep larger values already set.
+  # Written to /etc/sysctl.d so they survive a reboot.
+  for k in rmem_max wmem_max rmem_default wmem_default; do
+    cur=$(sysctl -n net.core.$k); [ "$cur" -ge 33554432 ] || sysctl -q -w net.core.$k=33554432
+  done
+  printf 'net.core.rmem_max=%s\nnet.core.wmem_max=%s\nnet.core.rmem_default=%s\nnet.core.wmem_default=%s\n' \
+    "$(sysctl -n net.core.rmem_max)" "$(sysctl -n net.core.wmem_max)" \
+    "$(sysctl -n net.core.rmem_default)" "$(sysctl -n net.core.wmem_default)" > /etc/sysctl.d/90-usrp.conf
   for g in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do echo performance > "$g" 2>/dev/null; done
   echo "configured $IF0 ($HIP0) and $IF1 ($HIP1), MTU 9000"
 fi
