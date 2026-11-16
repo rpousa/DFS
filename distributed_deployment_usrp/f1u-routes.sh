@@ -107,7 +107,24 @@ _rt_remove_raw_isolation_drop() {
     return 0
 }
 
+# Docker normally creates "table ip nat" (iptables-nft backend). If it uses
+# another backend (iptables-legacy, or Docker's native nftables mode) the table
+# is missing and every "nft add rule ip nat ..." fails. Create it with the three
+# NAT base chains; this does nothing when the table already exists.
+ensure_ip_nat_table() {
+    sudo nft list table ip nat >/dev/null 2>&1 && return 0
+    echo "[NAT] no 'table ip nat' on this host -- creating it (Docker firewall backend is not iptables-nft)"
+    sudo nft -f - <<'NFT'
+table ip nat {
+    chain PREROUTING  { type nat hook prerouting  priority dstnat; policy accept; }
+    chain OUTPUT      { type nat hook output      priority -100;   policy accept; }
+    chain POSTROUTING { type nat hook postrouting priority srcnat; policy accept; }
+}
+NFT
+}
+
 _rt_exclude_n3_masquerade() {
+    ensure_ip_nat_table
     # Preserve original container source IPs for cross-host N3 traffic.
     # GTP-U is two independent unidirectional flows in conntrack; if we
     # MASQUERADE one direction, the PDR/peer-IP mapping on the other side
