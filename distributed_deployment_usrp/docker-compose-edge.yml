@@ -225,7 +225,7 @@ services:
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
-      - ./configs/du_e1/gnb-du.sa.band78.273prb.usrp.yaml:/opt/oai-gnb/etc/gnb.yaml
+      - ./configs/du_e1/gnb-du.sa.band78.${RADIO_PRB:-273}prb.usrp.yaml:/opt/oai-gnb/etc/gnb.yaml
       - ./logs/du_e1:/opt/oai-gnb/logs
       # vrtsim: the DU publishes its connection socket here; UEs read it.
       # The IQ samples themselves go through shared memory (ipc: host).

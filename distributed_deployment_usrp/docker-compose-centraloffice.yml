@@ -300,8 +300,8 @@ services:
     environment:
       USE_ADDITIONAL_OPTIONS: >-
         --usrp-args ${CO_SDR_ARGS:-addr=192.168.10.2,second_addr=192.168.20.2,clock_source=internal,time_source=internal}
-        -r 273 --numerology 1 --band 78 -C 3450720000
-        --ssb 1518
+        -r ${RADIO_PRB:-273} --numerology 1 --band 78 -C ${UE_CENTER_HZ:-3450720000}
+        --ssb ${UE_SSB_SC:-1518}
         --ue-nb-ant-tx 2 --ue-nb-ant-rx 2
         --ue-fo-compensation
         --uecap_file /opt/oai-nr-ue/etc/uecap.xml
