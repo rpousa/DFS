@@ -41,6 +41,9 @@ check() {
       printf "  ✗ USRP %s does not answer\n" "$dst"; ok=1
     fi
   done
+  systemctl is-active --quiet usrp-cpu-latency \
+    && echo "  ✓ deep CPU idle states held off (usrp-cpu-latency)" \
+    || echo "  ⚠ deep CPU idle states allowed: sudo $0 $role   (expect TX underruns)"
   rmem=$(sysctl -n net.core.rmem_max); wmem=$(sysctl -n net.core.wmem_max)
   [ "$rmem" -ge 33554432 ] && [ "$wmem" -ge 33554432 ] \
     && echo "  ✓ socket buffers rmem_max $rmem wmem_max $wmem" \
@@ -65,6 +68,15 @@ if [ "$mode" != "--check" ]; then
     "$(sysctl -n net.core.rmem_max)" "$(sysctl -n net.core.wmem_max)" \
     "$(sysctl -n net.core.rmem_default)" "$(sysctl -n net.core.wmem_default)" > /etc/sysctl.d/90-usrp.conf
   for g in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do echo performance > "$g" 2>/dev/null; done
+  # Keep the CPUs out of deep idle states: waking from them delays the UHD
+  # send/recv threads (TX underruns, RX overflows on the 1.9 GHz Xeon D).
+  # A transient unit holds /dev/cpu_dma_latency=0 until reboot or
+  # "systemctl stop usrp-cpu-latency".
+  if ! systemctl is-active --quiet usrp-cpu-latency; then
+    systemctl reset-failed usrp-cpu-latency 2>/dev/null
+    systemd-run --quiet --unit=usrp-cpu-latency --description="USRP: hold cpu_dma_latency=0" \
+      bash -c 'exec 3>/dev/cpu_dma_latency; printf "\x00\x00\x00\x00" >&3; exec sleep infinity'
+  fi
   echo "configured $IF0 ($HIP0) and $IF1 ($HIP1), MTU 9000"
 fi
 
