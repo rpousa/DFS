@@ -254,6 +254,8 @@ services:
         --RUs.[0].att_tx ${EDGE_ATT_TX:-0}
         --RUs.[0].att_rx ${EDGE_ATT_RX:-0}
         --RUs.[0].max_rxgain ${EDGE_MAX_RXGAIN:-75}
+        --RUs.[0].nb_tx ${RADIO_ANT:-2} --RUs.[0].nb_rx ${RADIO_ANT:-2}
+        --gNBs.[0].pdsch_AntennaPorts_XP ${RADIO_ANT:-2} --gNBs.[0].pusch_AntennaPorts ${RADIO_ANT:-2}
         --L1s.[0].max_ldpc_iterations 4
         --MACRLCs.[0].ulsch_max_frame_inactivity 0
         --gNBs.[0].min_rxtxtime 8
