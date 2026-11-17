@@ -304,7 +304,7 @@ services:
         --ssb ${UE_SSB_SC:-1518}
         --ue-nb-ant-tx ${RADIO_ANT:-2} --ue-nb-ant-rx ${RADIO_ANT:-2}
         --ue-fo-compensation
-        --uecap_file /opt/oai-nr-ue/etc/uecap.xml
+        ${UE_UECAP_OPT---uecap_file /opt/oai-nr-ue/etc/uecap.xml}
         --log_config.global_log_options level,nocolor,time
         ${CO_UE_EXTRA_OPTS:-}
     cpuset: "${CO_UE_CPUSET:-2-13}"
