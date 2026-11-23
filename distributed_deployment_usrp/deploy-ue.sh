@@ -39,7 +39,7 @@ else
 bash ./usrp-wait-free.sh "$CO_MGMT" ue:comnetsemu 90 || exit 1
 docker compose -f "$COMPOSE_FILE" up -d --no-deps ue_0
 fi
-bash ./pin-rt.sh ue_0 nr-uesoftmodem "${CO_UE_RT_CORES:-4,5,6,7,8,9}" "${CO_UE_OTHER_CORES:-2,3}"
+bash ./pin-rt.sh ue_0 nr-uesoftmodem "${CO_UE_HOT_CORES:-4,5,6}" "${CO_UE_RT_CORES:-7,8,9}" "${CO_UE_OTHER_CORES:-2,3}"
 print_info "Waiting for the UE to sync to the edge DU and attach (up to 120 s)..."
 for i in $(seq 1 24); do
     sleep 5
