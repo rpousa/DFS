@@ -27,7 +27,7 @@ uicc0:
       nssai_sd: 1
 
 #thread-pool: "-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1"
-thread-pool: "-1,-1,-1,-1,-1,-1,-1,-1"   # 8 workers inside CO_UE_CPUSET (one UE, 3 slices, 273 PRB 2x2)
+thread-pool: "10,11,12,13"   # 4 workers, one per isolated core (isolcpus 4-27 never load-balances; other RT threads on 4-9 via pin-rt.sh). 40 MHz 1x1; 273 PRB 2x2 may need more
 
 log_config :
   global_log_level: info
