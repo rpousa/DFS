@@ -32,8 +32,13 @@ echo ""
 print_stage "Stage 2/4: Starting ue_0 (centraloffice USRP)"
 [ "${1:-}" = "--restart" ] && docker compose -f "$COMPOSE_FILE" rm -sf ue_0
 CO_MGMT=$(echo "${CO_SDR_ARGS:-addr=192.168.10.2}" | grep -oP '(^|,)(mgmt_)?addr=\K[0-9.]+' | head -1)
+if [ "$(docker inspect -f '{{.State.Running}}' ue_0 2>/dev/null)" = "true" ]; then
+    # The running UE holds the USRP itself; waiting for it to be free would time out.
+    print_info "ue_0 is already running: checking it (./deploy-ue.sh --restart to start it again)"
+else
 bash ./usrp-wait-free.sh "$CO_MGMT" ue:comnetsemu 90 || exit 1
 docker compose -f "$COMPOSE_FILE" up -d --no-deps ue_0
+fi
 print_info "Waiting for the UE to sync to the edge DU and attach (up to 120 s)..."
 for i in $(seq 1 24); do
     sleep 5
