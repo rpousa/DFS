@@ -307,6 +307,13 @@ services:
         ${UE_UECAP_OPT---uecap_file /opt/oai-nr-ue/etc/uecap.xml}
         --log_config.global_log_options level,nocolor,time
         ${CO_UE_EXTRA_OPTS:-}
+    logging:                       # a slow docker log reader must never block the radio threads' stdout
+      driver: json-file
+      options:
+        mode: non-blocking
+        max-buffer-size: 16m
+        max-size: 200m
+        max-file: "2"
     cpuset: "${CO_UE_CPUSET:-2-13}"
     cpus: ${CO_UE_CPUS:-12.0}
     cpu_shares: 8192

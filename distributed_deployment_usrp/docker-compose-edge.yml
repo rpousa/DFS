@@ -310,6 +310,13 @@ services:
         condition: service_healthy
       # cir-generator:
       #   condition: service_completed_successfully
+    logging:                       # a slow docker log reader must never block the radio threads' stdout
+      driver: json-file
+      options:
+        mode: non-blocking
+        max-buffer-size: 16m
+        max-size: 200m
+        max-file: "2"
     cpuset: "${EDGE_DU_CPUSET:-3-20}"   # the UE has left this machine: its cores go to the DU
     cpus: ${EDGE_DU_CPUS:-18.0}
     cpu_shares: 8192            # absolute top priority — radio
