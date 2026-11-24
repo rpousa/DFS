@@ -18,6 +18,11 @@ set -e
 cd "$(dirname "$0")"
 # USRP / testbed settings: exported so docker compose interpolates them
 [ -f ./testbed.env ] && { set -a; . ./testbed.env; set +a; }
+# ./deploy-edge.sh [--no-reboot]: by default the edge N310 is rebooted first (in the
+# background, while CU-UP_e and UPF_e come up), because a radio that crashed
+# leaves its RFNoC blocks stuck. --no-reboot (or USRP_REBOOT=0) skips it.
+USRP_REBOOT=${USRP_REBOOT:-1}
+for a in "$@"; do [ "$a" = "--no-reboot" ] && USRP_REBOOT=0; done
 
 CORE_IP="192.168.1.210"
 CO_IP="192.168.1.219"
@@ -218,6 +223,13 @@ fi
 print_info "Pre-flight checks passed!"
 echo ""
 
+REBOOT_PID=""
+if [ "$USRP_REBOOT" = "1" ]; then
+    print_info "Rebooting the edge N310 in the background (log .usrp-reboot.log, skip with --no-reboot)"
+    bash ./usrp-reboot.sh edge > .usrp-reboot.log 2>&1 &
+    REBOOT_PID=$!
+fi
+
 # ==========================================
 # Deployment Stages
 # ==========================================
@@ -258,6 +270,11 @@ echo ""
 print_stage "Stage 3/7: Starting DU_e1 (USRP) ..."
 bash ./setup-usrp-host.sh edge --check || print_warn "USRP links not ready -- see setup-usrp-host.sh edge"
 EDGE_MGMT=$(echo "${EDGE_SDR_ARGS:-addr=192.168.30.2}" | grep -oP '(^|,)(mgmt_)?addr=\K[0-9.]+' | head -1)
+if [ -n "$REBOOT_PID" ]; then
+    print_info "Waiting for the N310 reboot to finish..."
+    wait "$REBOOT_PID" || print_warn "N310 reboot did not finish cleanly:"
+    sed 's/^/    /' .usrp-reboot.log
+fi
 bash ./usrp-wait-free.sh "$EDGE_MGMT" du:comnetsemu 90 || print_warn "USRP still claimed -- the DU will fail to start"
 docker compose -f "$COMPOSE_FILE" up -d du_e1 
 wait_for_service "du_e1" 30

@@ -14,8 +14,14 @@ case "${1:-}" in
 esac
 IP=$(echo "$SDR" | grep -oP '(^|,)(mgmt_)?addr=\K[0-9.]+' | head -1)
 docker rm -f "$CT" >/dev/null 2>&1 && echo "removed $CT"
+SSH="ssh -o ConnectTimeout=5 -o BatchMode=yes -o StrictHostKeyChecking=accept-new root@$IP"
+if ! $SSH true 2>/dev/null; then
+  echo "✗ no non-interactive root ssh to the N310 $IP: run once  ssh-copy-id root@$IP"
+  echo "  (or reboot it from its front panel), then run this again"
+  exit 1
+fi
 echo "rebooting N310 $IP ..."
-ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=accept-new root@"$IP" reboot 2>/dev/null
+$SSH reboot 2>/dev/null
 sleep 20
 for i in $(seq 1 36); do
   ping -c1 -W1 "$IP" >/dev/null 2>&1 && break

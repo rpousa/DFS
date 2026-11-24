@@ -5,6 +5,9 @@
 #
 #   ./deploy-ue.sh            start ue_0, wait for its 3 PDU sessions, probe, offer stress
 #   ./deploy-ue.sh --restart  recreate ue_0 first
+#   --no-reboot (or USRP_REBOOT=0): do not reboot the N310 before starting ue_0.
+#   By default it is rebooted, since a radio that crashed leaves its RFNoC
+#   blocks stuck (flush timeouts, op_timeout, segfault at "setting rx channel").
 set -u
 cd "$(dirname "$0")"
 [ -f ./testbed.env ] && { set -a; . ./testbed.env; set +a; }
@@ -29,13 +32,22 @@ print_stage "Stage 1/4: USRP links"
 bash ./setup-usrp-host.sh co --check || print_warn "USRP links not ready -- sudo ./setup-usrp-host.sh co"
 echo ""
 
+RESTART=0; USRP_REBOOT=${USRP_REBOOT:-1}
+for a in "$@"; do
+    case "$a" in --restart) RESTART=1 ;; --no-reboot) USRP_REBOOT=0 ;; esac
+done
+
 print_stage "Stage 2/4: Starting ue_0 (centraloffice USRP)"
-[ "${1:-}" = "--restart" ] && docker compose -f "$COMPOSE_FILE" rm -sf ue_0
+[ "$RESTART" = 1 ] && docker compose -f "$COMPOSE_FILE" rm -sf ue_0
 CO_MGMT=$(echo "${CO_SDR_ARGS:-addr=192.168.10.2}" | grep -oP '(^|,)(mgmt_)?addr=\K[0-9.]+' | head -1)
 if [ "$(docker inspect -f '{{.State.Running}}' ue_0 2>/dev/null)" = "true" ]; then
     # The running UE holds the USRP itself; waiting for it to be free would time out.
     print_info "ue_0 is already running: checking it (./deploy-ue.sh --restart to start it again)"
 else
+if [ "$USRP_REBOOT" = 1 ]; then
+    print_info "Rebooting the centraloffice N310 first (skip with --no-reboot)"
+    bash ./usrp-reboot.sh co || print_warn "N310 reboot did not finish cleanly"
+fi
 bash ./usrp-wait-free.sh "$CO_MGMT" ue:comnetsemu 90 || exit 1
 docker compose -f "$COMPOSE_FILE" up -d --no-deps ue_0
 fi
