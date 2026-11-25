@@ -5,6 +5,11 @@ import sys
 
 CTL = {"type": "frser-sqlite-datasource", "uid": "relocctl"}
 KPM = {"type": "frser-sqlite-datasource", "uid": "edthsvykzynswc"}
+# reloc-ctl as the BROWSER reaches it. The dashboard buttons are plain links, so
+# they need a URL that the viewer's browser can open: 192.168.1.210:8095 on the
+# testbed LAN. Through an ssh tunnel (Grafana on localhost:13000) forward 8095 too
+# (ssh -L 13000:192.168.1.210:3000 -L 8095:192.168.1.210:8095 ...) and set the
+# "reloc-ctl URL" box to http://localhost:8095 (or add &var-ctl=http://localhost:8095).
 CTL_URL = "http://192.168.1.210:8095"
 
 ARGS = ("var-ue=${ue}&var-sst=${sst}&var-target=${target}&var-metric=${metric}&var-cmp=${cmp}"
@@ -161,7 +166,7 @@ panels.append(panel("Runs", "table", 0, 39, 24, 8,
                          "properties": [{"id": "custom.cellOptions", "value": {"type": "color-background"}}]}]}))
 
 variables = [
-    {"type": "constant", "name": "ctl", "query": CTL_URL, "hide": 2, "skipUrlSync": True},
+    {"type": "textbox", "name": "ctl", "label": "reloc-ctl URL", "query": CTL_URL},
     {"type": "query", "name": "ue", "label": "UE", "datasource": KPM, "refresh": 1,
      "query": "SELECT DISTINCT ran_ue_id AS __value, 'UE ' || ran_ue_id AS __text FROM UE_SLICE_MAP ORDER BY 1",
      "definition": "SELECT DISTINCT ran_ue_id AS __value, 'UE ' || ran_ue_id AS __text FROM UE_SLICE_MAP ORDER BY 1",

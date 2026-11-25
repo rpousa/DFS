@@ -28,11 +28,10 @@
   "templating": {
     "list": [
       {
-        "type": "constant",
+        "type": "textbox",
         "name": "ctl",
+        "label": "reloc-ctl URL",
         "query": "http://192.168.1.210:8095",
-        "hide": 2,
-        "skipUrlSync": true,
         "current": {
           "text": "http://192.168.1.210:8095",
           "value": "http://192.168.1.210:8095"

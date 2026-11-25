@@ -1597,7 +1597,7 @@
     ]
   },
   "timezone": "browser",
-  "title": "KPI measurements",
+  "title": "old KPI measurements (multi-UE)",
   "uid": "kpi-multi-ue-old",
   "version": 2
 }
