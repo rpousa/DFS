@@ -415,6 +415,7 @@ services:
       - ./flexric_volumes/probe_nodes.py:/usr/local/etc/flexric/probe_nodes.py
       - ./flexric_volumes/event_ric_watchdog.sh:/usr/local/bin/event_ric_watchdog.sh
       - ./flexric_volumes/reloc_ctl.py:/usr/local/bin/reloc_ctl.py:ro
+      - ./flexric_volumes/db_prune.py:/usr/local/bin/db_prune.py:ro
       #- ./flexric_volumes/ric_watchdog.sh:/usr/local/bin/ric_watchdog.sh
       - ./flexric_volumes/xapp_slice_check.py:/usr/local/flexric/xApp/python3/xapp_daemon.py
       - ./flexric_volumes/topology.py:/usr/local/flexric/xApp/python3/topology.py
@@ -431,6 +432,8 @@ services:
         touch /var/log/ric_watchdog.log
         /usr/local/bin/event_ric_watchdog.sh >> /var/log/ric_watchdog.log 2>&1 &
         python3 /usr/local/bin/reloc_ctl.py >> /usr/local/etc/flexric_logs/reloc_ctl.log 2>&1 &
+        # keep only the last 2 h of KPM rows (the DBs grew to 7 GB and filled the disk)
+        python3 /usr/local/bin/db_prune.py 2 --loop 600 >> /usr/local/etc/flexric_logs/db_prune.log 2>&1 &
         sleep 6
 
         FILES="/var/log/ric_watchdog.log"
