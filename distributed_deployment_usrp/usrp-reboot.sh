@@ -30,4 +30,9 @@ done
 ping -c1 -W1 "$IP" >/dev/null 2>&1 || { echo "✗ $IP not back after 3 min"; exit 1; }
 echo "  $IP answers, waiting for MPM ..."
 sleep 30
-bash ./usrp-wait-free.sh "$IP" "$IMG" 120
+bash ./usrp-wait-free.sh "$IP" "$IMG" 120 || exit 1
+# MPM restarts its RPC server once more shortly after boot ("Launching USRP/MPM"
+# in the radio log); a radio that opens the device then segfaults. Let it settle
+# and check again.
+sleep 20
+bash ./usrp-wait-free.sh "$IP" "$IMG" 60
